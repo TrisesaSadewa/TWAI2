@@ -34,11 +34,12 @@
 
     <!-- Medipro CSS -->
     <link rel="stylesheet" href="/static/css/normalize.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
 <style>
         html {
 			scroll-behavior: smooth;
+			overscroll-behavior-y: none;
 		}
 
         header{
@@ -46,11 +47,11 @@
         }
 
         .sidebar {
-            top: 0;
             width: 200px;
             background-color: #f0f0f0;
             padding: 15px;
-            height: 100vh;
+            overflow-y: auto;
+            will-change: transform;
             position: fixed;
             z-index: 900;
         }
@@ -169,19 +170,20 @@
         }
 
         .ai-report-status {
-            max-width: 360px;
-            margin: 12px auto 0;
             display: none;
+            flex: 1;
+            min-width: 180px;
+            max-width: 320px;
         }
 
         .ai-report-status-text {
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             color: #4b5563;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .ai-report-progress-track {
-            height: 12px;
+            height: 8px;
             width: 100%;
             background: #e9ecef;
             border-radius: 999px;
@@ -195,6 +197,28 @@
             background: linear-gradient(90deg, #20c997 0%, #4CAF50 100%);
             border-radius: 999px;
             transition: width 0.4s ease;
+        }
+
+        .ai-report-sticky-bar {
+            position: sticky;
+            top: 80px;
+            z-index: 800;
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-bottom: 24px;
+        }
+
+        .ai-report-sticky-bar .sticky-bar-label {
+            font-size: 0.88rem;
+            color: #555;
+            white-space: nowrap;
         }
 
         #sidebar-container {
@@ -274,6 +298,7 @@
     </style>
 </head>
 <body>
+<div id="scroll-progress-bar"></div>
 <div class="preloader preloader-deactivate" id="loading">
 <div class="loader">
 <div class="loader-outter"></div>
@@ -309,7 +334,7 @@
 											</ul>
 										</li>
 										<li><a href="#">Quick start </a></li>-->
-<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" role="menuitem" tabindex="-1" target="_blank">Contact Us</a></li>
+
 </ul></div></div>
 <!-- End Mobile Nav -->
 </div>
@@ -327,7 +352,7 @@
 											</ul>
 										</li>
 										<li><a href="#">Quick start </a></li>-->
-<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" target="_blank">Contact Us</a></li>
+
 </ul>
 </nav>
 </div>
@@ -344,7 +369,6 @@
 <div style="height:1px; background-color:#ccc;"></div>
 <div id="sidebar-container">
 <div class="sidebar">
-<br/><br/><br/>
 <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
 <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
 <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -372,8 +396,18 @@
 <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled=""><i class="icofont-download"></i></button>
 </div>
 </div>
-<!-- Main Content -->
+<!-- AI Report Sticky Bar -->
 <div class="main-content">
+<div class="ai-report-sticky-bar">
+    <a id="view-ai-report-btn" href="/report/{{ uuid }}/html?token=ui_token" title="View AI Report" class="btn" style="background-color: #4CAF50; border-color: #4CAF50; color: white; white-space: nowrap;">View AI Report</a>
+    <div id="ai-report-status" class="ai-report-status">
+        <div id="ai-report-status-text" class="ai-report-status-text">AI report is still generating...</div>
+        <div class="ai-report-progress-track">
+            <div id="ai-report-progress-fill" class="ai-report-progress-fill"></div>
+        </div>
+    </div>
+</div>
+<!-- Main Content Inner -->
 <div style="padding: 10px;">
 <h3>Result <br/></h3>
 <label>This section presents the outcomes of the models.</label>
@@ -790,13 +824,6 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 </div>
 <div class="col-lg-12 col-md-12 col-12 text-center" style="margin-bottom: 20px;">
 <button title="Action" aria-label="Action" class="btn" style="display: block; margin: 0 auto; margin-top: 20px;" type="submit">Download Page</button>
-<a id="view-ai-report-btn" href="/report/{{ uuid }}/html?token=ui_token" title="View AI Report" class="btn" style="display: block; margin: 0 auto; margin-top: 10px; background-color: #4CAF50; border-color: #4CAF50; width: fit-content; color: white;">View AI Report</a>
-<div id="ai-report-status" class="ai-report-status">
-<div id="ai-report-status-text" class="ai-report-status-text">AI report is still generating...</div>
-<div class="ai-report-progress-track">
-<div id="ai-report-progress-fill" class="ai-report-progress-fill"></div>
-</div>
-</div>
 </div>
 </form>
 </div>
@@ -994,4 +1021,30 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 
 
     </script>
+<script>
+    (function () {
+        function adjustStickyBar() {
+            var headerInner = document.querySelector('.header-inner');
+            var bar = document.querySelector('.ai-report-sticky-bar');
+            var sidebar = document.querySelector('.sidebar');
+            if (headerInner) {
+                var h = headerInner.offsetHeight;
+                if (bar) bar.style.top = h + 'px';
+                if (sidebar) sidebar.style.top = h + 'px';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', adjustStickyBar);
+        window.addEventListener('resize', adjustStickyBar);
+
+        var progressBar = document.getElementById('scroll-progress-bar');
+        function updateProgress() {
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            if (progressBar) progressBar.style.height = pct + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        document.addEventListener('DOMContentLoaded', updateProgress);
+    })();
+</script>
 <a href="/Statistical_Analysis/result/{{ uuid }}/#top" id="scrollUp" style="position: fixed; z-index: 2147483647;"><span><i class="fa fa-angle-up"></i></span></a></body></html>

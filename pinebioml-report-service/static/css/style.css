@@ -48,6 +48,41 @@ Version:	1.1
 /*=============================
 	Global CSS 
 ===============================*/
+/* Scroll progress bar — replaces native scrollbar */
+html {
+    scrollbar-width: none;
+    overscroll-behavior-y: none;
+}
+html::-webkit-scrollbar {
+    display: none;
+}
+body {
+    overflow-anchor: none;
+}
+
+#scroll-progress-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 0%;
+    background: linear-gradient(180deg, #1A76D1, #20c997);
+    z-index: 99999;
+    pointer-events: none;
+    transition: height 0.1s linear;
+}
+
+#scroll-progress-bar::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100vh;
+    background: rgba(26, 118, 209, 0.15);
+    z-index: -1;
+}
+
 body{
     font-family: 'Poppins', sans-serif;
 	font-weight: 400;

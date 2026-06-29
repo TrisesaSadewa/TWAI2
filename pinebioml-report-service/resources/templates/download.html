@@ -22,19 +22,20 @@
 <link href="/static/download_assets/animate.min.css" rel="stylesheet"/>
 <link href="/static/download_assets/magnific-popup.css" rel="stylesheet"/>
 <link href="/static/download_assets/normalize.css" rel="stylesheet"/>
-<link href="/static/download_assets/style.css" rel="stylesheet"/>
+<link href="/static/download_assets/style.css?v=20260630" rel="stylesheet"/>
 <link href="/static/download_assets/responsive.css" rel="stylesheet"/>
 <style>
+        html { overscroll-behavior-y: none; }
         header{
             z-index: 999;
         }
 
         .sidebar {
-            top: 0;
             width: 200px;
             background-color: #f0f0f0;
             padding: 15px;
-            height: 100vh;
+            overflow-y: auto;
+            will-change: transform;
             position: fixed;
             z-index: 900;
         }
@@ -179,6 +180,7 @@
     </style>
 </head>
 <body>
+<div id="scroll-progress-bar"></div>
 <div class="preloader preloader-deactivate" id="loading">
 <div class="loader">
 <div class="loader-outter"></div>
@@ -209,7 +211,7 @@
 											</ul>
 										</li>
 										<li><a href="#">Quick start </a></li>-->
-<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" role="menuitem" tabindex="-1" target="_blank">Contact Us</a></li>
+
 </ul></div></div>
 </div>
 <div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
@@ -225,7 +227,7 @@
 											</ul>
 										</li>
 										<li><a href="#">Quick start </a></li>-->
-<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" target="_blank">Contact Us</a></li>
+
 </ul>
 </nav>
 </div>
@@ -238,7 +240,6 @@
 <div style="height:1px; background-color:#ccc;"></div>
 <div id="sidebar-container">
 <div class="sidebar">
-<br/><br/><br/>
 <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
 <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
 <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -728,4 +729,27 @@
             }
         }
     </script>
+<script>
+    (function () {
+        function adjustSidebar() {
+            var headerInner = document.querySelector('.header-inner');
+            var sidebar = document.querySelector('.sidebar');
+            if (headerInner && sidebar) {
+                sidebar.style.top = headerInner.offsetHeight + 'px';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', adjustSidebar);
+        window.addEventListener('resize', adjustSidebar);
+
+        var progressBar = document.getElementById('scroll-progress-bar');
+        function updateProgress() {
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            if (progressBar) progressBar.style.height = pct + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        document.addEventListener('DOMContentLoaded', updateProgress);
+    })();
+</script>
 <a href="/Statistical_Analysis/download/{{ uuid }}/#top" id="scrollUp" style="position: fixed; z-index: 2147483647;"><span><i class="fa fa-angle-up"></i></span></a></body></html>

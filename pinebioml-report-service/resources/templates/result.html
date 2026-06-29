@@ -44,19 +44,20 @@
 
     <!-- Medipro CSS -->
     <link rel="stylesheet" href="/static/css/normalize.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
     <style>
+        html { overscroll-behavior-y: none; }
         header{
             z-index: 999;
         }
 
         .sidebar {
-            top: 0;
             width: 200px;
             background-color: #f0f0f0;
             padding: 15px;
-            height: 100vh;
+            overflow-y: auto;
+            will-change: transform;
             position: fixed;
             z-index: 900;
         }
@@ -84,9 +85,9 @@
         .main-content {
             margin-left: 220px;
             padding: 20px;
-            min-height: calc(100vh - 100px);
+            padding-bottom: 80px;
+            min-height: 100vh;
         }
-
         .sidebar-item:hover {
             background-color: #d6d6d6;
         }
@@ -239,6 +240,7 @@
 </head>
 
 <body>
+<div id="scroll-progress-bar"></div>
     <div class="preloader" id="loading">
 		<div class="loader">
 			<div class="loader-outter"></div>
@@ -255,7 +257,7 @@
 
 
     <!-- Header Area -->
-    <header class="header">
+    <header class="header sticky">
 		<div class="header-inner">
 			<div class="container">
 				<div class="inner">
@@ -286,7 +288,7 @@
 											</ul>
 										</li>
 										<li><a href="#">Quick start </a></li>-->
-										<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" target="_blank" rel="noopener noreferrer">Contact Us</a></li>
+										
 									</ul>
 								</nav>
 							</div>
@@ -302,7 +304,6 @@
 <div style="height:1px; background-color:#ccc;"></div>
 <div id="sidebar-container">
 <div class="sidebar">
-<br/><br/><br/>
 <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
 <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
 <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -876,6 +877,27 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script> -->
-</body>
+<script>
+    (function () {
+        function adjustSidebar() {
+            var headerInner = document.querySelector('.header-inner');
+            var sidebar = document.querySelector('.sidebar');
+            if (headerInner && sidebar) {
+                sidebar.style.top = headerInner.offsetHeight + 'px';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', adjustSidebar);
+        window.addEventListener('resize', adjustSidebar);
+
+        var progressBar = document.getElementById('scroll-progress-bar');
+        function updateProgress() {
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            if (progressBar) progressBar.style.height = pct + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        document.addEventListener('DOMContentLoaded', updateProgress);
+    })();
 
 </html>

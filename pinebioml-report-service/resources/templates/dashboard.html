@@ -98,6 +98,7 @@
 </head>
 
 <body class="bg-gray-50 overscroll-none">
+<div id="scroll-progress-bar"></div>
   <!-- Header -->
   <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
     <div class="container mx-auto px-4 py-4">
@@ -2360,7 +2361,7 @@ F,16.13,20.68,108.1,798.8,0.117`;
             let pct = (data.progress_pct - 50) * 2;
             if (pct < 0) pct = 0;
             if (pct > 100) pct = 100;
-            progressBar.style.width = pct + "%";
+            progressBar.style.height = pct + "%";
             progressText.innerText = pct + "%";
           }
           if (data.message) {
@@ -2386,6 +2387,27 @@ F,16.13,20.68,108.1,798.8,0.117`;
       };
     }
   </script>
-</body>
+<script>
+    (function () {
+        function adjustSidebar() {
+            var headerInner = document.querySelector('.header-inner');
+            var sidebar = document.querySelector('.sidebar');
+            if (headerInner && sidebar) {
+                sidebar.style.top = headerInner.offsetHeight + 'px';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', adjustSidebar);
+        window.addEventListener('resize', adjustSidebar);
+
+        var progressBar = document.getElementById('scroll-progress-bar');
+        function updateProgress() {
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            if (progressBar) progressBar.style.height = pct + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        document.addEventListener('DOMContentLoaded', updateProgress);
+    })();
 
 </html>
