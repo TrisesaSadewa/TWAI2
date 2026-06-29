@@ -123,10 +123,10 @@ def run_dynamic_pipeline(
         import plotly.express as px
         import numpy as np
         
-        def _save_current_plot(filename: str):
-            plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, filename), bbox_inches='tight', dpi=160)
-            plt.close()
+        def _save_fig(fig, filename: str):
+            fig.tight_layout()
+            fig.savefig(os.path.join(output_dir, filename), bbox_inches='tight', dpi=160)
+            plt.close(fig)
         
         # Correlation Heatmap. Limit very wide datasets to the most informative
         # features so labels and color values remain readable in the result page.
@@ -136,7 +136,7 @@ def run_dynamic_pipeline(
             fig, ax = plt.subplots(figsize=(8, 4.5))
             ax.text(0.5, 0.5, "Correlation heatmap not available\nNo numeric feature columns with variance.", ha="center", va="center")
             ax.axis("off")
-            _save_current_plot("_Correlation Heatmap.png")
+            _save_fig(fig, "_Correlation Heatmap.png")
         else:
             max_heatmap_features = 24
             if corr_source.shape[1] > max_heatmap_features:
@@ -163,7 +163,7 @@ def run_dynamic_pipeline(
             ax.set_title(f"Correlation Heatmap{title_suffix}")
             ax.tick_params(axis='x', labelrotation=45, labelsize=7)
             ax.tick_params(axis='y', labelrotation=0, labelsize=7)
-            _save_current_plot("_Correlation Heatmap.png")
+            _save_fig(fig, "_Correlation Heatmap.png")
         
         # PCA
         numeric_x_clean = numeric_x.dropna(axis=1, how='all')
@@ -177,8 +177,10 @@ def run_dynamic_pipeline(
         ax.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0] * 100:.1f}% variance)")
         ax.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1] * 100:.1f}% variance)")
         ax.grid(alpha=0.2)
-        ax.legend(title=str(target_col), bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0)
-        _save_current_plot("_PCA.png")
+        ax.legend(title=str(target_col), loc="best")
+        fig.tight_layout()
+        fig.savefig(os.path.join(output_dir, "_PCA.png"), bbox_inches='tight', dpi=160)
+        plt.close(fig)
         
         fig_pca = px.scatter(x=pcs[:,0], y=pcs[:,1], color=train_y_orig.astype(str), title="PCA Plot")
         fig_pca.write_html(os.path.join(output_dir, "pca_plot.html"))
@@ -192,8 +194,10 @@ def run_dynamic_pipeline(
         ax.set_xlabel("UMAP 1")
         ax.set_ylabel("UMAP 2")
         ax.grid(alpha=0.2)
-        ax.legend(title=str(target_col), bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0)
-        _save_current_plot("_UMAP.png")
+        ax.legend(title=str(target_col), loc="best")
+        fig.tight_layout()
+        fig.savefig(os.path.join(output_dir, "_UMAP.png"), bbox_inches='tight', dpi=160)
+        plt.close(fig)
         
         fig_umap = px.scatter(x=umap_emb[:,0], y=umap_emb[:,1], color=train_y_orig.astype(str), title="UMAP Plot")
         fig_umap.write_html(os.path.join(output_dir, "umap_plot.html"))
@@ -212,8 +216,10 @@ def run_dynamic_pipeline(
         ax.set_xlabel("PLS component 1")
         ax.set_ylabel("PLS component 2")
         ax.grid(alpha=0.2)
-        ax.legend(title=str(target_col), bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0)
-        _save_current_plot("_PLS.png")
+        ax.legend(title=str(target_col), loc="best")
+        fig.tight_layout()
+        fig.savefig(os.path.join(output_dir, "_PLS.png"), bbox_inches='tight', dpi=160)
+        plt.close(fig)
         
         fig_pls = px.scatter(x=pls_emb[:,0], y=pls_emb[:,1], color=train_y_orig.astype(str), title="PLS Plot")
         fig_pls.write_html(os.path.join(output_dir, "pls_plot.html"))
@@ -1053,9 +1059,12 @@ img {{
                         f"max|shap|={float(np.max(np.abs(vals))):.4g}, mean|shap|={float(np.mean(np.abs(vals))):.4g}"
                     )
 
-                    shap.summary_plot(vals, sample_x, show=False, max_display=min(20, len(sample_x.columns)))
-                    fig = plt.gcf()
-                    _write_shap_html(fig)
+                    plt.close("all")
+                    n_features = min(20, len(sample_x.columns))
+                    fig_height = max(4.5, 0.35 * n_features + 1.5)
+                    fig = plt.figure(figsize=(10, fig_height))
+                    shap.summary_plot(vals, sample_x, show=False, max_display=n_features)
+                    _write_shap_html(plt.gcf())
             except Exception as e:
                 logger.warning(f"Error generating SHAP plot: {e}")
                 with open(os.path.join(output_dir, "shap_plot.html"), "w", encoding="utf-8") as f:
