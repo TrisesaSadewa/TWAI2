@@ -481,40 +481,6 @@
             color: var(--text-primary);
         }
 
-        .layman-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .layman-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            position: relative;
-        }
-        
-        .layman-card-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .layman-card-content {
-            font-size: 1.4rem;
-            font-weight: 500;
-            line-height: 1.4;
-            color: var(--text-primary);
-        }
-        
-        .layman-highlight {
-            font-weight: 700;
-        }
-
         /* Tooltip styles */
         .tooltip-trigger {
             border-bottom: 2px dashed var(--accent-teal);
@@ -1165,13 +1131,6 @@
                 findings: `{{ expert_findings }}`,
                 conclusion: `{{ expert_conclusion }}`,
                 recommendations: `{{ expert_recommendations }}`
-            },
-            layman: {
-                verdict: `{{ layman_verdict }}`,
-                executive_summary: `{{ layman_executive_summary }}`,
-                findings: `{{ layman_findings }}`,
-                conclusion: `{{ layman_conclusion }}`,
-                recommendations: `{{ layman_recommendations }}`
             }
         };
 
@@ -1323,31 +1282,45 @@
                     return kl === 'modeling' || kl === 'model' || kl === 'model_name' || kl.includes('model');
                 }) || keys.find(k => typeof allModels[0][k] === 'string') || keys[0];
 
-                // Priority columns to display (prefer test_ over train_)
+                const findMetricKey = (candidates) => {
+                    return candidates
+                        .map(name => keys.find(k => k.toLowerCase() === name))
+                        .find(Boolean);
+                };
+
+                // Priority columns to display (prefer test_ over cv_ over train_)
                 const preferredCols = [
                     { label: 'Model', key: modelKey },
-                    { label: 'Test Accuracy', key: keys.find(k => k.toLowerCase() === 'test_accuracy') || keys.find(k => k.toLowerCase() === 'accuracy') },
-                    { label: 'Test AUC', key: keys.find(k => k.toLowerCase() === 'test_auc') || keys.find(k => k.toLowerCase().includes('auc')) },
-                    { label: 'Test F1', key: keys.find(k => k.toLowerCase() === 'test_f1') || keys.find(k => k.toLowerCase().includes('f1')) },
-                    { label: 'Test Specificity', key: keys.find(k => k.toLowerCase() === 'test_specificity') || keys.find(k => k.toLowerCase().includes('specificity')) },
-                    { label: 'Test MCC', key: keys.find(k => k.toLowerCase() === 'test_mcc') || keys.find(k => k.toLowerCase().includes('mcc')) },
-                    { label: 'Preprocessing', key: keys.find(k => k.toLowerCase() === 'missingvalueprocessing') },
-                    { label: 'Standardization', key: keys.find(k => k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
-                    { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection') },
+                    { label: 'Test Accuracy', key: findMetricKey(['test_accuracy', 'test_acc', 'cv_accuracy', 'accuracy', 'acc']) },
+                    { label: 'Test AUC', key: keys.find(k => k.toLowerCase() === 'test_auc') || keys.find(k => k.toLowerCase() === 'cv_auc') || keys.find(k => k.toLowerCase().includes('auc')) },
+                    { label: 'Test F1', key: keys.find(k => k.toLowerCase() === 'test_f1') || keys.find(k => k.toLowerCase() === 'cv_f1') || keys.find(k => k.toLowerCase().includes('f1')) },
+                    { label: 'Test Specificity', key: keys.find(k => k.toLowerCase() === 'test_specificity') || keys.find(k => k.toLowerCase() === 'cv_specificity') || keys.find(k => k.toLowerCase().includes('specificity')) },
+                    { label: 'Test MCC', key: keys.find(k => k.toLowerCase() === 'test_mcc') || keys.find(k => k.toLowerCase() === 'cv_mcc') || keys.find(k => k.toLowerCase().includes('mcc')) },
+                    { label: 'Missing Value', key: keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing') },
+                    { label: 'Normalization', key: keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
+                    { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection') },
+                    { label: 'Hyperparameters', key: keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters') },
                 ].filter(c => c.key);
 
                 // Find best model (highest test_accuracy)
-                const accKey = preferredCols.find(c => c.label === 'Test Accuracy')?.key || modelKey;
+                const accKey = preferredCols.find(c => c.label === 'Test Accuracy')?.key;
                 let bestIdx = 0;
                 let bestVal = -Infinity;
-                allModels.forEach((m, i) => {
-                    const v = parseFloat(m[accKey]) || 0;
-                    if (v > bestVal) { bestVal = v; bestIdx = i; }
-                });
+                if (accKey) {
+                    allModels.forEach((m, i) => {
+                        const v = Number.parseFloat(m[accKey]);
+                        if (Number.isFinite(v) && v > bestVal) { bestVal = v; bestIdx = i; }
+                    });
+                }
 
                 // Add a best model callout at the top
                 const bestModel = allModels[bestIdx][modelKey] || 'Unknown';
-                const bestAcc = bestVal <= 1 ? `${(bestVal * 100).toFixed(1)}%` : `${bestVal.toFixed(1)}%`;
+                const fallbackAccuracy = Number.parseFloat(String(fallbackMetrics.accuracy || '').replace('%', ''));
+                const bestAcc = Number.isFinite(bestVal)
+                    ? (bestVal <= 1 ? `${(bestVal * 100).toFixed(1)}%` : `${bestVal.toFixed(1)}%`)
+                    : (Number.isFinite(fallbackAccuracy)
+                        ? (String(fallbackMetrics.accuracy).includes('%') ? `${fallbackAccuracy.toFixed(1)}%` : `${(fallbackAccuracy * 100).toFixed(1)}%`)
+                        : 'N/A');
                 const calloutHtml = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;box-shadow: 0 4px 12px rgba(16,185,129,0.05);">
                     <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Best Model</span>
                     <strong style="color:var(--text-primary);font-size:1.05rem;font-weight:600;">${bestModel}</strong>
@@ -1414,43 +1387,6 @@
                 tableHtml += '</tbody></table></div>';
 
                 bodyEl.innerHTML = tableHtml;
-
-            } else {
-                // Layman Mode Model Performance
-                if (prepEl) prepEl.style.display = 'none';
-                const verdict = narratives.layman.verdict;
-                const verdictBadge = document.getElementById('verdict-badge');
-                if (verdictBadge && typeof verdict === 'string' && verdict !== 'undefined') {
-                    verdictBadge.textContent = verdict;
-                    verdictBadge.className = 'verdict-badge';
-                    if (verdict.toLowerCase().includes('fair')) verdictBadge.classList.add('fair');
-                    if (verdict.toLowerCase().includes('needs review')) verdictBadge.classList.add('needs-review');
-                    document.getElementById('verdict-container').style.display = 'block';
-                }
-
-                if (allModels.length === 0) {
-                    bodyEl.innerHTML = renderFallbackMetricPerformance();
-                    return;
-                }
-                if (reportTaskType.toLowerCase().includes('regression')) {
-                    bodyEl.innerHTML = renderRegressionModelComparison(false);
-                    return;
-                }
-
-                const keys = Object.keys(allModels[0]);
-                const modelKey = keys.find(k => k.toLowerCase() === 'modeling' || k.toLowerCase().includes('model')) || keys[0];
-                const accKey = keys.find(k => k.toLowerCase() === 'test_accuracy') || keys.find(k => k.toLowerCase().includes('accuracy'));
-                const sorted = [...allModels].sort((a, b) => (parseFloat(b[accKey]) || 0) - (parseFloat(a[accKey]) || 0));
-                const best = sorted[0];
-                const bestName = best[modelKey] || 'the top model';
-                const bestAccVal = parseFloat(best[accKey]) || 0;
-                const bestAccStr = bestAccVal <= 1 ? `${(bestAccVal * 100).toFixed(1)}%` : `${bestAccVal.toFixed(1)}%`;
-
-                bodyEl.innerHTML = `<p>We tested <strong>${allModels.length} different AI algorithms</strong> on your dataset. 
-                The <strong style="color:var(--accent-teal);">${bestName}</strong> algorithm performed best, 
-                achieving a test accuracy of <strong>${bestAccStr}</strong>. 
-                The Clinical Insights Report Card above shows the top 3 models ranked by accuracy.</p>
-                <p>This comparison ensures you get the most reliable AI model for your data — not just the first one we tried.</p>`;
             }
         }
 
@@ -1520,9 +1456,10 @@
                 { label: 'Model', key: modelKey },
                 { label: r2Key ? 'Test R2' : 'Score', key: scoreKey },
                 ...errorKeys,
-                { label: 'Preprocessing', key: keys.find(k => k.toLowerCase() === 'missingvalueprocessing') },
-                { label: 'Standardization', key: keys.find(k => k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
-                { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection') }
+                { label: 'Missing Value', key: keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing') },
+                { label: 'Normalization', key: keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
+                { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection') },
+                { label: 'Hyperparameters', key: keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters') },
             ].filter(c => c.key);
 
             let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;">

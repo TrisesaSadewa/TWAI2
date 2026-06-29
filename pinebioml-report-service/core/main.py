@@ -555,9 +555,6 @@ def edit_report_section(report_id: str = Path(...), edit: schemas.SectionEdit = 
         if edit.mode in ("expert", "both"):
             if sec_key in narrative["expert"]:
                 narrative["expert"][sec_key] = edit.content
-        if edit.mode in ("layman", "both"):
-            if sec_key in narrative["layman"]:
-                narrative["layman"][sec_key] = edit.content
                 
         report_data["updated_at"] = datetime.utcnow().isoformat() + "Z"
         
@@ -604,8 +601,6 @@ def clone_report(report_id: str = Path(...), edit: schemas.SectionEdit = Body(No
             sec_key = edit.key
             if edit.mode in ("expert", "both") and sec_key in narrative["expert"]:
                 narrative["expert"][sec_key] = edit.content
-            if edit.mode in ("layman", "both") and sec_key in narrative["layman"]:
-                narrative["layman"][sec_key] = edit.content
                 
         report_data["created_at"] = datetime.utcnow().isoformat() + "Z"
         report_data["updated_at"] = report_data["created_at"]

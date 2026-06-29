@@ -156,8 +156,17 @@ class ReportEngine:
             progress_callback(50, "Consulting biomedical ML guidelines...")
         # (Placeholder for RAG retrieval)
         
-        # Extract preprocessing metadata from best model to feed to LLM
+        # Extract preprocessing and class-imbalance metadata to feed to the LLM.
+        # Prefer manifest metadata, but also load the pipeline artifact written by
+        # workers/ml_pipeline_runner.py so the narrative can fact-check the exact
+        # imbalance handling that was actually applied.
         prep_meta = manifest.get("imbalance_metadata", {}) or {}
+        if not prep_meta and artifacts.get("imbalance_metadata_json"):
+            try:
+                with open(artifacts["imbalance_metadata_json"], "r", encoding="utf-8") as f:
+                    prep_meta = json.load(f) or {}
+            except Exception as e:
+                logger.warning(f"Failed to load imbalance metadata artifact: {e}")
         if str(task_type).lower().find("regression") >= 0:
             report_card_bars_html = self._render_fallback_metrics_table(metrics)
             stars_html = '<span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span>'
@@ -216,6 +225,7 @@ class ReportEngine:
             "all_models": all_models,
             "per_class": per_class,
             "overfit_analysis": overfit_analysis,
+            "imbalance_metadata": prep_meta,
             "imbalance_warning": imbalance_warning,
             "selected_features": selected_features,
             "visuals": {k: v["path"] for k, v in combined_visuals_summary.items()},
@@ -963,6 +973,13 @@ class ReportEngine:
         if not model_key:
             model_key = keys[0]
 
+        def find_metric_key(candidates):
+            lowered = {k.lower(): k for k in keys}
+            for candidate in candidates:
+                if candidate in lowered:
+                    return lowered[candidate]
+            return None
+
         score_key = next((k for k in keys if k.lower() == "test_r2"), None)
         if not score_key:
             score_key = next((k for k in keys if "r2" in k.lower()), None)
@@ -979,9 +996,10 @@ class ReportEngine:
             if key:
                 cols.append((label, key))
         for label, match in (
-            ("Preprocessing", lambda k: k.lower() == "missingvalueprocessing"),
-            ("Standardization", lambda k: k.lower() in ("standarization", "standardization")),
-            ("Feature Selection", lambda k: k.lower() == "selection"),
+            ("Missing Value",     lambda k: k.lower() in ("missing", "missingvalueprocessing")),
+            ("Normalization",     lambda k: k.lower() in ("normalization", "standarization", "standardization")),
+            ("Feature Selection", lambda k: k.lower() in ("selection", "feature_selection")),
+            ("Hyperparameters",   lambda k: k.lower() in ("best_params", "params", "hyperparameters")),
         ):
             key = next((k for k in keys if match(k)), None)
             if key:
@@ -1045,19 +1063,27 @@ class ReportEngine:
             model_key = keys[0]
         
         # Priority display columns: label → key lookup (in order of preference)
+        def find_metric_key(candidates):
+            lowered = {k.lower(): k for k in keys}
+            for candidate in candidates:
+                if candidate in lowered:
+                    return lowered[candidate]
+            return None
+
         col_specs = [
             ("Model",             [k for k in keys if k == model_key]),
-            ("Test Accuracy",     [k for k in keys if k.lower() == "test_accuracy"] or [k for k in keys if k.lower() == "accuracy"]),
-            ("Test AUC",          [k for k in keys if k.lower() == "test_auc"] or [k for k in keys if "auc" in k.lower()]),
-            ("Test F1",           [k for k in keys if k.lower() == "test_f1"] or [k for k in keys if "f1" in k.lower()]),
-            ("Test Specificity",  [k for k in keys if k.lower() == "test_specificity"] or [k for k in keys if "specificity" in k.lower()]),
-            ("Test MCC",          [k for k in keys if k.lower() == "test_mcc"] or [k for k in keys if "mcc" in k.lower()]),
-            ("Preprocessing",     [k for k in keys if k.lower() == "missingvalueprocessing"]),
-            ("Standardization",   [k for k in keys if k.lower() in ("standarization", "standardization")]),
-            ("Feature Selection", [k for k in keys if k.lower() == "selection"]),
+            ("Test Accuracy",     [find_metric_key(("test_accuracy", "test_acc", "cv_accuracy", "accuracy", "acc"))]),
+            ("Test AUC",          [k for k in keys if k.lower() == "test_auc"] or [k for k in keys if k.lower() == "cv_auc"] or [k for k in keys if "auc" in k.lower()]),
+            ("Test F1",           [k for k in keys if k.lower() == "test_f1"] or [k for k in keys if k.lower() == "cv_f1"] or [k for k in keys if "f1" in k.lower()]),
+            ("Test Specificity",  [k for k in keys if k.lower() == "test_specificity"] or [k for k in keys if k.lower() == "cv_specificity"] or [k for k in keys if "specificity" in k.lower()]),
+            ("Test MCC",          [k for k in keys if k.lower() == "test_mcc"] or [k for k in keys if k.lower() == "cv_mcc"] or [k for k in keys if "mcc" in k.lower()]),
+            ("Missing Value",     [k for k in keys if k.lower() in ("missing", "missingvalueprocessing")]),
+            ("Normalization",     [k for k in keys if k.lower() in ("normalization", "standarization", "standardization")]),
+            ("Feature Selection", [k for k in keys if k.lower() in ("selection", "feature_selection")]),
+            ("Hyperparameters",   [k for k in keys if k.lower() in ("best_params", "params", "hyperparameters")]),
         ]
         # Resolve each column — skip if no matching key found
-        cols = [(label, key_list[0]) for label, key_list in col_specs if key_list]
+        cols = [(label, key_list[0]) for label, key_list in col_specs if key_list and key_list[0]]
         
         # Find best model index (highest test_accuracy / accuracy)
         acc_col_key = next((k for label, k in cols if label == "Test Accuracy"), None)
@@ -1089,8 +1115,17 @@ class ReportEngine:
         best = all_models[best_idx]
         best_name = best.get(model_key, "Unknown")
         if acc_col_key:
-            best_acc_raw = float(best.get(acc_col_key, 0) or 0)
-            best_acc_str = f"{best_acc_raw * 100:.1f}%" if best_acc_raw <= 1.0 else f"{best_acc_raw:.1f}%"
+            try:
+                best_acc_raw = float(best.get(acc_col_key))
+                best_acc_str = f"{best_acc_raw * 100:.1f}%" if best_acc_raw <= 1.0 else f"{best_acc_raw:.1f}%"
+            except Exception:
+                best_acc_str = "N/A"
+        elif metrics and metrics.get("accuracy") not in (None, "N/A", ""):
+            try:
+                best_acc_raw = self._metric_to_unit_interval(metrics.get("accuracy"))
+                best_acc_str = f"{best_acc_raw * 100:.1f}%" if best_acc_raw is not None else str(metrics.get("accuracy"))
+            except Exception:
+                best_acc_str = str(metrics.get("accuracy"))
         else:
             best_acc_str = "N/A"
             
@@ -1335,7 +1370,6 @@ class ReportEngine:
         
         # Narratives for expert (rendered as direct strings for JS block)
         expert = data["narrative"]["expert"]
-        layman = data["narrative"]["layman"]
         
         # Load external glossary
         glossary_path = os.path.join(os.path.dirname(__file__), "glossaries", "default.json")
@@ -1358,13 +1392,7 @@ class ReportEngine:
         html = html.replace("{{ expert_findings }}", js_escape(expert["findings"]))
         html = html.replace("{{ expert_conclusion }}", js_escape(expert.get("conclusion", "")))
         html = html.replace("{{ expert_recommendations }}", js_escape(expert.get("recommendations", "")))
-        
-        html = html.replace("{{ layman_verdict }}", js_escape(layman.get("verdict", "Good")))
-        html = html.replace("{{ layman_executive_summary }}", js_escape(layman.get("executive_summary", "")))
-        html = html.replace("{{ layman_findings }}", js_escape(layman.get("findings", "")))
-        html = html.replace("{{ layman_conclusion }}", js_escape(layman.get("conclusion", "")))
-        html = html.replace("{{ layman_recommendations }}", js_escape(layman.get("recommendations", "")))
-        
+
         # Inject JSON configs
         import json
         html = html.replace("{{ glossary_json }}", json.dumps(glossary))

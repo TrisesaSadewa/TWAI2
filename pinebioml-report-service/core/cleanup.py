@@ -12,7 +12,7 @@ Two passes run daily (scheduled in main.py) and on-demand:
     Delete all artifacts for reports older than N days:
       storage/reports/<id>.json + <id>.html
       storage/media/<id>/          (entire directory tree)
-      storage/exports/<id>.pdf + <id>_layman.pdf + <id>.docx
+      storage/exports/<id>.pdf + <id>.docx
     Also deletes orphaned media dirs (no matching report JSON, older than N days)
     and stale failed_llm_*.json debug dumps (older than 7 days).
 
@@ -154,7 +154,6 @@ def _purge_reports(storage_dir: str, media_root: str, retention_days: int) -> in
         _safe_remove(os.path.join(reports_dir, f"{report_id}.html"), "report HTML")
         _safe_remove(os.path.join(media_root, report_id), "media dir")
         _safe_remove(os.path.join(exports_dir, f"{report_id}.pdf"), "export PDF")
-        _safe_remove(os.path.join(exports_dir, f"{report_id}_layman.pdf"), "export layman PDF")
         _safe_remove(os.path.join(exports_dir, f"{report_id}.docx"), "export DOCX")
         deleted += 1
 

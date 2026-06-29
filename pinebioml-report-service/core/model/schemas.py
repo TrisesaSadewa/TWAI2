@@ -34,7 +34,7 @@ class ReportStatus(BaseModel):
 class SectionEdit(BaseModel):
     key: str = Field(..., description="Section key to edit, e.g. executive_summary, findings, or recommendations")
     content: str = Field(..., description="New markdown content for the section")
-    mode: str = Field("both", description="expert, layman, or both (default)")
+    mode: str = Field("expert", description="expert only (layman mode removed)")
 
 class EditResponse(BaseModel):
     success: bool

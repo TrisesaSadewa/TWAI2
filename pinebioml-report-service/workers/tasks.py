@@ -126,6 +126,7 @@ def train_and_generate_report_task_sync(payload: dict):
             "umap_plot_png": "_UMAP.png",
             "feature_importance_html": "feature_importance.html",
             "shap_plot_html": "shap_plot.html",
+            "imbalance_metadata_json": "imbalance_metadata.json",
         }
         artifacts = {}
         for key, filename in artifact_candidates.items():

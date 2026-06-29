@@ -61,7 +61,7 @@ def _feature_allowed(feature_label: str, allowed_features: set[str]) -> bool:
 
 class NarrativeGenerator:
     """
-    Generates expert and layman narratives using an LLM (OpenAI-compatible).
+    Generates expert narratives using an LLM (OpenAI-compatible).
     If the LLM is unavailable or fails validation, it returns a transparent
     narrative-unavailable notice instead of pretending to provide AI analysis.
 
@@ -237,6 +237,13 @@ class NarrativeGenerator:
                 lines.append(f"  - DECISION THRESHOLD: the binary decision threshold was tuned to {tt} (maximizing {tm or 'f1'} for the minority class on out-of-fold predictions) instead of the default 0.5/argmax. Reported sensitivity/specificity reflect this tuned threshold.")
             if lines:
                 sections.append(f"DATA QUALITY & PREPROCESSING:\n" + "\n".join(lines))
+        elif "regression" not in str(task_type or "").lower():
+            sections.append(
+                "DATA QUALITY & PREPROCESSING:\n"
+                "  - CLASS IMBALANCE METADATA: not recorded in the pipeline output for this run.\n"
+                "  - IMBALANCE HANDLING: not recorded. Do not claim the data are balanced, and do not claim that SMOTE, oversampling, class weighting, or threshold tuning was or was not used unless explicitly stated elsewhere in DATA.\n"
+                "  - If discussing class balance, use only PER-CLASS PERFORMANCE support counts when available; otherwise say that class-distribution metadata were not available."
+            )
 
         return "\n\n".join(sections)
 
@@ -306,7 +313,7 @@ class NarrativeGenerator:
 {data_block}
 === END DATA ===
 
-Generate a JSON object with three keys: "expert", "layman", and "glossary". Every section value must be a single Markdown string.
+Generate a JSON object with two keys: "expert" and "glossary". Every section value must be a single Markdown string.
 
 EXPERT REPORT:
 - "executive_summary": Summarize the continuous prediction task for dataset {dataset_name}. Discuss R2, RMSE, MAE, and MSE only if present in the DATA. Do not mention accuracy, ROC-AUC, confusion matrices, false positives, false negatives, sensitivity, specificity, or class imbalance.
@@ -315,14 +322,6 @@ EXPERT REPORT:
 - "visuals_analysis": Explain each available regression plot with [PLOT: plot_name] directly above the explanation. Focus on true-vs-predicted, residuals, feature importance, SHAP, PCA, PLS, UMAP, and correlation plots when present.
 - "conclusion": Give a careful conclusion about regression model reliability, limitations, and whether additional validation is needed.
 - "recommendations": Give practical recommendations for improving continuous-target prediction and validating the model.
-
-LAYMAN REPORT:
-- "verdict": Strictly one of: "Excellent", "Good", "Fair", "Needs Review".
-- "executive_summary": Plain-language summary in English and Traditional Chinese (zh-TW). Explain this as predicting a number, not sorting people into classes.
-- "findings": Use [PLOT: true_vs_predicted] and [PLOT: residuals] if available. Explain prediction closeness and error size. Include a simple Markdown table using available regression metrics only.
-- "visuals_analysis": Explain charts simply, with plot placeholders above the relevant explanation.
-- "conclusion": Plain-language conclusion in English and Traditional Chinese (zh-TW).
-- "recommendations": Practical next steps in clear bullet points.
 
 GLOSSARY:
 Include definitions for R2, RMSE, MAE, MSE, residual, and SHAP.
@@ -342,7 +341,7 @@ RULES:
         Tier 1: Simple, explicit prompt for basic models (qwen2.5-coder, gpt-4o-mini).
         No example prose. Just data + strict schema.
         """
-        data_quality_text = "Standard data preprocessing and quality checks were applied."
+        data_quality_text = "Class-imbalance handling is not recorded in the DATA. Do not infer balanced classes or absence of correction."
         if imbalance_metadata:
             data_quality_text = "Data quality and preprocessing analysis identified the following key metadata: " + ", ".join([f"{k} ({v})" for k,v in imbalance_metadata.items() if not isinstance(v, dict)])
             
@@ -367,19 +366,11 @@ Write a JSON object with this EXACT structure. All values MUST be a single Markd
     "conclusion": "Conclusion of the model. MUST BE A SINGLE STRING of at least 5-10 sentences.",
     "recommendations": "1) Dataset fix / how to improve data quality. 2) Recommendations on model usage. 3) Other tips. MUST BE A SINGLE STRING of at least 5-10 sentences."
   }},
-  "layman": {{
-    "verdict": "Excellent or Good or Fair or Needs Review",
-    "executive_summary": "Plain-language summary. Explain things in a highly readable, mature, and respectful tone as if explaining to a grandparent (who is intelligent and mature but lacks a technical background). Use spacing and short paragraphs with line breaks to ensure it is not exhausting on the eyes. Do not use babyish terms. Include English and Traditional Chinese (zh-TW).",
-    "findings": "Simple explanation of findings. Place [PLOT: confusion_matrix] above false alarm/missed case explanation. Place [PLOT: roc_curve] above sorting capability. Place [PLOT: feature_importance] above key drivers. Format layman metrics as a table: | Metric / Score | Value | What This Means For You |. Use short, spaced paragraphs. Include English and Traditional Chinese (zh-TW).",
-    "visuals_analysis": "Explain each chart simply as a SINGLE MARKDOWN STRING, placing [PLOT: plot_name] directly above the relevant explanation.",
-    "conclusion": "Plain language conclusion in a mature, grandparent-friendly tone.",
-    "recommendations": "Practical next-step recommendations in plain language, formatted as clear, readable bullet points."
-  }},
   "glossary": {{
-    "Accuracy": "English definition | zh-TW definition",
-    "AUC-ROC": "English definition | zh-TW definition",
-    "false alarms": "English definition | zh-TW definition",
-    "missed cases": "English definition | zh-TW definition"
+    "Accuracy": "English definition",
+    "AUC-ROC": "English definition",
+    "false alarms": "English definition",
+    "missed cases": "English definition"
   }}
 }}
 
@@ -388,10 +379,11 @@ RULES:
 2. The expert findings MUST reference specific values (e.g., "Precision of 77.31%").
 3. If per-class data is provided, include a per-class breakdown table.
 4. If anomaly flags are present, explain them in findings.
-5. If an ACCURACY / CLASS IMBALANCE WARNING is present, explicitly state that accuracy alone may be misleading in the expert executive_summary, expert findings, layman executive_summary, and layman findings.
+5. If an ACCURACY / CLASS IMBALANCE WARNING is present, explicitly state that accuracy alone may be misleading in the expert executive_summary and expert findings.
 6. Write at least 150 words per section.
 7. Do NOT claim 100%, perfect, flawless, or error-free performance unless that exact value is present in the DATA.
-8. Do NOT repeat these instructions in your output."""
+8. For class balance and imbalance correction, use only DATA QUALITY & PREPROCESSING facts. If imbalance metadata says "not recorded", write that it was not recorded; do NOT infer the data are balanced or that no correction was used.
+9. Do NOT repeat these instructions in your output."""
 
         return [
             {"role": "system", "content": system},
@@ -414,20 +406,20 @@ RULES:
 {data_block}
 === END DATA ===
 
-Generate a JSON object with three keys: "expert", "layman", "glossary".
+Generate a JSON object with two keys: "expert" and "glossary".
 
 EXPERT REPORT (Follow these EXACT sections and instructions. All section values MUST be a single Markdown string, NO nested JSON objects or arrays):
-- "executive_summary": 
+- "executive_summary":
    1) Short Summary of results.
    2) Example of the performance (e.g., "In 100 patients, the model can...").
    3) Key Points Identified.
    *Rule: Must be readable in 30 seconds. NO dramatic language or grand proclamations (e.g., avoid "struck a balance", "harmonic balance").*
 
-- "preprocessing_and_data_quality": 
+- "preprocessing_and_data_quality":
    1) Provide a detailed, definitive, and actionable explanation of the input data quality and preprocessing. MUST BE AT LEAST 5-10 SENTENCES.
-   *Rule: You MUST explicitly mention the class distribution and the exact imbalance strategy/tools used (e.g., "The data was processed using SMOTE..."). Do NOT use speculative language like "likely", "appears", or "I feel like". State facts based ONLY on the provided DATA section.*
+   *Rule: You MUST explicitly mention the class distribution and exact imbalance strategy/tools only when they are recorded in DATA QUALITY & PREPROCESSING or PER-CLASS PERFORMANCE. If imbalance metadata is "not recorded", say it was not recorded and do NOT infer balanced classes, no imbalance correction, SMOTE, oversampling, class weighting, or threshold tuning. Do NOT use speculative language like "likely", "appears", or "I feel like". State facts based ONLY on the provided DATA section.*
 
-- "findings": 
+- "findings":
    **MUST BE A SINGLE MARKDOWN STRING OF AT LEAST 5-10 SENTENCES. DO NOT OUTPUT AS NESTED JSON OBJECTS.**
    **Quantitative Analysis & Findings**
    1) Put [PLOT: roc_curve, pr_curve] at the very top of this section.
@@ -446,26 +438,13 @@ EXPERT REPORT (Follow these EXACT sections and instructions. All section values 
    Explain each available plot with the relevant [PLOT: plot_name] placeholder directly above the explanation.
    Focus on how to read the axes, colors, bars, clusters, or curves. Do not invent values. Do not repeat unsupported performance scores.
 
-- "conclusion": 
+- "conclusion":
    - Detailed conclusion of what has been discussed. Read in 60 seconds. NO dramatic language. Avoid technical/convoluted words. MUST BE A SINGLE STRING OF AT LEAST 5-10 SENTENCES.
 
-- "recommendations": 
+- "recommendations":
    1) Dataset fix / how to improve the quality of the data.
    2) Recommendations on model usage.
    3) Other tips and Recommendations. MUST BE A SINGLE STRING OF AT LEAST 5-10 SENTENCES.
-
-LAYMAN REPORT (clear, non-technical language):
-- "verdict": Strictly one of: "Excellent", "Good", "Fair", "Needs Review"
-- "executive_summary": Plain-language summary. Explain things in a highly readable, mature, and respectful tone as if explaining to a grandparent (who is intelligent and mature but lacks a technical background). Use spacing and short paragraphs with line breaks to ensure it is not exhausting on the eyes. Do not use babyish terms (like "computer helper" or "wonderful results"). Include BOTH English and Traditional Chinese (zh-TW) translations.
-- "findings": 
-   1) Start with [PLOT: confusion_matrix]. Explain "Avoiding False Alarms" and "Not Missing Cases" in a grandparent-friendly tone.
-   2) Put [PLOT: roc_curve]. Explain the model's overall sorting capability.
-   3) Put [PLOT: feature_importance]. Explain "Key Drivers of Prediction".
-   4) Format the layman metrics as a Markdown table: | Metric / Score | Value | What This Means For You |, translating technical metric names to layman equivalents.
-   5) Include both English and zh-TW translations, using clean line breaks.
-- "visuals_analysis": Explain charts as if to a patient, putting the [PLOT: plot_name] directly above each explanation. Focus purely on explaining how to read each plot conceptually (e.g., what the axes represent, and how to interpret the colors or bars). Do NOT list or repeat overall performance scores or key drivers.
-- "conclusion": Plain language conclusion in a mature, grandparent-friendly tone.
-- "recommendations": Practical next steps in clear, readable bullet points.
 
 Output ONLY the JSON object. Do NOT include markdown code fences around it."""
 
@@ -611,7 +590,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                     return str(val)
 
                 # Normalize sections that must be single markdown strings
-                for mode in ("expert", "layman"):
+                for mode in ("expert",):
                     if mode in parsed_json:
                         for section in ("findings", "visuals_analysis", "preprocessing_and_data_quality"):
                             if section in parsed_json[mode]:
@@ -804,7 +783,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
             for a in allowed
         )
 
-        for mode in ("expert", "layman"):
+        for mode in ("expert",):
             mode_data = narrative.get(mode, {})
             if not isinstance(mode_data, dict):
                 continue
@@ -933,7 +912,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
 
         # 2. Section completeness (each section should have substantive content)
         min_length = 80  # characters
-        for mode in ("expert", "layman"):
+        for mode in ("expert",):
             mode_data = narrative.get(mode, {})
             required_sections = ["executive_summary", "findings", "visuals_analysis", "recommendations"]
             if mode == "expert":
@@ -1045,14 +1024,6 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 "visuals_analysis": "No LLM-written visual analysis is available. The generated plot files are still embedded in the report for direct inspection.",
                 "conclusion": "No LLM-written conclusion is available because narrative generation failed or was not configured.",
                 "recommendations": "Review the deterministic ML outputs directly, check the LLM service/model configuration, and rerun narrative generation when the LLM is available."
-            },
-            "layman": {
-                "verdict": "Narrative Unavailable",
-                "executive_summary": notice,
-                "findings": "The automatic explanation is not available. The charts and score cards below still show the actual model results.",
-                "visuals_analysis": "The plots are available, but no LLM-written explanation was produced.",
-                "conclusion": "The report should be read as ML results only, without an AI narrative interpretation.",
-                "recommendations": "Ask an administrator to check the LLM service and rerun the report narrative."
             },
             "glossary": {
                 "LLM narrative": "A written interpretation generated by a language model.",

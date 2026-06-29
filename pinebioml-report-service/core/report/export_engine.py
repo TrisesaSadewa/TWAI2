@@ -66,14 +66,8 @@ class ExportEngine:
             
         md.append("\\pagebreak\n\n") # Page break for PDF
         
-        # Layman Narrative
-        md.append("# Layman / Public Narrative\n\n")
-        for sec_key in ["executive_summary", "findings", "visuals_analysis", "recommendations"]:
-            sec_name = sec_key.replace("_", " ").title()
-            md.append(f"## {sec_name}\n\n")
-            content = narrative.get("layman", {}).get(sec_key, "N/A")
-            md.append(f"{replace_plots_with_markdown_images(content)}\n\n")
-            
+        # Expert Narrative sections are already included above
+
         return "".join(md)
 
     def export_to_pdf(self, report_content: Any, output_pdf_path: str) -> bool:
