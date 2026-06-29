@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "PineBioML"
+dynamic = ["version"]
+description = "PineBioML is an easy-to-use ML toolkit."
+readme = "README.md"
+license = { text = "MIT" }
+
+authors = [
+  { name = "ICMOL" }
+]
+
+requires-python = ">=3.10,<3.13"
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "numpy==2.3.5",
+  "pandas==2.3.3",
+  "openpyxl",
+  "xlrd",
+  "pyxlsb",
+  "python-calamine",
+  "xarray",
+  "tqdm",
+  "matplotlib",
+  "seaborn",
+  "plotly",
+  "joblib",
+  "optuna==4.6.0",
+  "scikit-learn==1.8.0",
+  "scikit-learn-intelex==2025.10.1",
+  "umap-learn",
+  "statsmodels",
+  "xgboost==3.1.2",
+  "lightgbm==4.6.0",
+  "catboost==1.2.8",
+  "pyarrow",
+  "shap"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/ICMOL/PineBioML"
+Repository = "https://github.com/ICMOL/PineBioML"
+
+
+[tool.setuptools]
+packages = { find = {} }
+
+
+[tool.setuptools.dynamic]
+version = { attr = "PineBioML.__version__" }

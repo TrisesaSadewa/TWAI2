@@ -1,0 +1,30 @@
+.git/
+.vscode/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Local secrets and machine-specific config
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+
+# Generated runtime data
+pinebioml-report-service/storage/
+pinebioml-report-service/output/
+pinebioml-report-service/scratch/
+pinebioml-report-service/bench/
+PineBioML/output/
+output/
+
+# Local reference captures and generated docs not needed in the container image
+ORGINAL HTML/
+PineBioML/documents/
+
+# Local package/build artifacts
+PineBioML/build/
+PineBioML/*.egg-info/

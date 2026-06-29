@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50 overscroll-none">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PinBioML - Upload</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Prevent overscroll bouncing effectively */
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+    }
+
+    /* Custom styles */
+    .upload-area {
+      transition: all 0.3s ease;
+    }
+
+    .upload-area.drag-over {
+      border-color: #6366f1;
+      background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .step-indicator {
+      transition: all 0.3s ease;
+    }
+
+    .step-indicator.active {
+      background-color: #6366f1;
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .step-indicator.completed {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .test-data-card {
+      transition: transform 0.3s ease;
+    }
+
+    .test-data-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .file-type-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  </style>
+  <style>
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .animate-blob {
+      animation: blob 7s infinite;
+    }
+
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+
+    @keyframes blob {
+      0% {
+        transform: translate(0px, 0px) scale(1);
+      }
+
+      33% {
+        transform: translate(30px, -50px) scale(1.1);
+      }
+
+      66% {
+        transform: translate(-20px, 20px) scale(0.9);
+      }
+
+      100% {
+        transform: translate(0px, 0px) scale(1);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 overscroll-none">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <!-- Outline pin icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-800">PinBioML</h1>
+            <p class="text-xs text-gray-500">Statistical Analysis</p>
+          </div>
+        </div>
+        <nav class="hidden md:flex space-x-6">
+          <a href="#" class="text-gray-700 hover:text-emerald-600 transition-colors">Home</a>
+          <a href="#" class="text-gray-700 hover:text-emerald-600 transition-colors">Tools</a>
+          <a href="#" class="text-emerald-600 font-medium">Upload</a>
+          <a href="#" class="text-gray-700 hover:text-emerald-600 transition-colors">About</a>
+        </nav>
+        <button title="Action" aria-label="Action" class="md:hidden text-gray-700">
+          <i data-lucide="menu" class="w-8 h-8"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8 md:py-12">
+    <!-- Breadcrumb -->
+    <div class="mb-6 text-sm text-gray-500">
+      <a href="#" class="hover:text-emerald-600">Home</a> >
+      <span class="text-gray-800 font-medium">Upload</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Upload Section -->
+      <div id="main-column" class="lg:col-span-2 space-y-8 transition-all duration-300">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-2">Upload Data</h2>
+          <p class="text-gray-600"></p>
+        </div>
+
+        <!-- Upload Steps -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <!-- AI Analysis Pipeline Progress -->
+          <div class="mb-10">
+            <h3 class="text-sm font-bold text-gray-800 mb-6 text-center">AI Analysis</h3>
+            <div class="relative flex justify-between w-full mx-auto">
+              <!-- Connecting Line Background -->
+              <div class="absolute left-[12.5%] right-[12.5%] top-5 h-1 bg-gray-200 z-0 transform -translate-y-1/2">
+              </div>
+              <!-- Connecting Line Active -->
+              <div id="progress-line"
+                class="absolute left-[12.5%] top-5 w-0 h-1 bg-emerald-600 z-0 transform -translate-y-1/2 transition-all duration-500">
+              </div>
+
+              <!-- Step 1 -->
+              <div class="relative z-10 flex flex-col items-center w-1/4">
+                <div id="step1-circle"
+                  class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md ring-4 ring-emerald-50 transition-colors">
+                  1</div>
+                <div id="step1-title" class="text-sm font-bold text-emerald-700 mt-2 text-center transition-colors">
+                  Upload</div>
+                <div id="step1-sub"
+                  class="text-[10px] uppercase tracking-wider font-semibold text-emerald-500 text-center mt-1 transition-colors">
+                  Upload data</div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="relative z-10 flex flex-col items-center w-1/4">
+                <div id="step2-circle"
+                  class="w-10 h-10 rounded-full bg-white border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold transition-colors">
+                  2</div>
+                <div id="step2-title" class="text-sm font-medium text-gray-500 mt-2 text-center transition-colors">
+                  Setting</div>
+                <div id="step2-sub"
+                  class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 text-center mt-1 transition-colors">
+                  Configure Training</div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="relative z-10 flex flex-col items-center w-1/4">
+                <div id="step3-circle"
+                  class="w-10 h-10 rounded-full bg-white border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold transition-colors">
+                  3</div>
+                <div id="step3-title" class="text-sm font-medium text-gray-500 mt-2 text-center transition-colors">
+                  Result</div>
+                <div id="step3-sub"
+                  class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 text-center mt-1 transition-colors">
+                  Results</div>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="relative z-10 flex flex-col items-center w-1/4">
+                <div id="step4-circle"
+                  class="w-10 h-10 rounded-full bg-white border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold transition-colors">
+                  4</div>
+                <div id="step4-title" class="text-sm font-medium text-gray-500 mt-2 text-center transition-colors">
+                  Download</div>
+                <div id="step4-sub"
+                  class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 text-center mt-1 transition-colors">
+                  Download</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-upload-form">
+          <!-- File Upload -->
+          <div>
+            <h3 class="text-lg font-semibold mb-3 text-gray-800">1. Upload Your Data File</h3>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center upload-area"
+              ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+              <input type="file" id="file-input" class="hidden" accept=".tsv,.csv,.xlsx"
+                onchange="handleFileSelect(event)" title="input" aria-label="input">
+              <div id="upload-placeholder" class="space-y-4">
+                <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                  <i data-lucide="cloud-upload" class="w-8 h-8 text-emerald-600"></i>
+                </div>
+                <div>
+                  <p class="text-lg font-medium text-gray-700">Drag and drop your file here, or <span
+                      class="text-emerald-600 underline">browse</span> to select</p>
+                  <p class="text-sm text-gray-500 mt-1">Supported formats: <span
+                      class="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">.tsv</span>, <span
+                      class="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">.csv</span>, <span
+                      class="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">.xlsx</span></p>
+                </div>
+              </div>
+              <div id="file-selected" class="hidden">
+                <div class="bg-green-100 border border-green-200 rounded-lg p-4 flex items-center">
+                  <div class="flex-1">
+                    <div class="font-medium text-green-800">File Ready for Upload</div>
+                    <div class="flex items-center mt-2">
+                      <i data-lucide="file" class="w-4 h-4 text-gray-500 mr-2"></i>
+                      <span id="file-name" class="text-sm text-gray-600 font-mono truncate max-w-[250px]">No file
+                        selected</span>
+                      <span id="file-type-badge" class="file-type-badge bg-gray-200 text-gray-700 ml-3 hidden"></span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                      <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                      File type will be automatically detected
+                    </p>
+                  </div>
+                  <button title="Action" aria-label="Action" onclick="removeFile()"
+                    class="text-red-600 hover:text-red-800">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-6 flex justify-end">
+            <button title="Action" aria-label="Action" onclick="resetUpload()"
+              class="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center mr-4">
+              <i data-lucide="rotate-cw" class="w-4 h-4 mr-2"></i>
+              Reset
+            </button>
+            <button title="Action" aria-label="Action" onclick="processUpload()" id="upload-btn"
+              class="px-6 py-2 bg-emerald-600 rounded-lg text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center">
+              <span id="upload-btn-text">Upload Data</span>
+              <i data-lucide="check" class="w-4 h-4 ml-2 hidden"></i>
+            </button>
+          </div>
+        </div> <!-- End step-upload-form -->
+
+        <!-- Data Check View (Still part of Upload Step) -->
+        <div id="step-upload-data-check" class="hidden">
+          <div class="mb-6 mt-8 border-t border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-800">Check your data.</h2>
+            <p class="text-gray-600 mt-1">Please verify the accuracy of your data and configure your analysis.</p>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl p-6 bg-gray-50/50">
+            <div class="mb-6 flex items-center">
+              <span class="font-bold text-gray-700 mr-2">Selected file:</span>
+              <span id="setting-file-name"
+                class="font-mono text-gray-600 bg-white px-3 py-1 rounded border border-gray-200">Dataset.csv</span>
+            </div>
+
+            <!-- Step 1: Select Analysis Type -->
+            <div class="mb-8">
+              <label class="block font-bold text-gray-800 text-base mb-3">1. Choose Analysis Type</label>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Classification Card -->
+                <div onclick="selectAnalysisType('classification')" id="card-classification"
+                  class="cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <div class="flex items-start justify-between">
+                    <div
+                      class="p-2 bg-emerald-50 rounded-lg text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                      <i data-lucide="tag" class="w-5 h-5"></i>
+                    </div>
+                    <div id="check-classification" class="text-emerald-600 opacity-0 transition-opacity">
+                      <i data-lucide="check-circle" class="w-5 h-5 fill-emerald-600 text-white"></i>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <h4 class="font-bold text-gray-800 text-sm">Predict a Category</h4>
+                    <p class="text-[11px] text-gray-500 mt-1">Classification: Target is a label (e.g. Benign/Malignant)
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Regression Card -->
+                <div onclick="selectAnalysisType('regression')" id="card-regression"
+                  class="cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <div class="flex items-start justify-between">
+                    <div class="p-2 bg-green-50 rounded-lg text-green-600 group-hover:bg-green-100 transition-colors">
+                      <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    </div>
+                    <div id="check-regression" class="text-green-600 opacity-0 transition-opacity">
+                      <i data-lucide="check-circle" class="w-5 h-5 fill-green-600 text-white"></i>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <h4 class="font-bold text-gray-800 text-sm">Predict a Number</h4>
+                    <p class="text-[11px] text-gray-500 mt-1">Regression: Target is a quantity (e.g. Age, Size, Price)
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Clustering Card -->
+                <div onclick="selectAnalysisType('clustering')" id="card-clustering"
+                  class="cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <div class="flex items-start justify-between">
+                    <div class="p-2 bg-teal-50 rounded-lg text-teal-600 group-hover:bg-teal-100 transition-colors">
+                      <i data-lucide="network" class="w-5 h-5"></i>
+                    </div>
+                    <div id="check-clustering" class="text-teal-600 opacity-0 transition-opacity">
+                      <i data-lucide="check-circle" class="w-5 h-5 fill-teal-600 text-white"></i>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <h4 class="font-bold text-gray-800 text-sm">Find Hidden Groups</h4>
+                    <p class="text-[11px] text-gray-500 mt-1">Clustering: Discover natural cohorts without any labels
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Configure Target Column (Hidden initially) -->
+            <div id="target-config-container" class="mb-8 hidden">
+              <div class="border border-emerald-100 rounded-xl p-5 bg-emerald-50/10">
+                <!-- Dropdown target picker (for Classification/Regression) -->
+                <div id="target-select-wrapper" class="hidden">
+                  <label class="block font-bold text-gray-800 text-base mb-1">2. Identify the Target Column</label>
+                  <p class="text-xs text-gray-500 mb-3">Which column in your dataset do you want the AI model to
+                    predict?</p>
+                  <div class="max-w-md">
+                    <select id="target-column-select"
+                      class="w-full border border-gray-300 rounded-lg p-2.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition-all shadow-sm">
+                      <option disabled selected>Select Target</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Clustering Info Banner (for Clustering) -->
+                <div id="clustering-info-wrapper" class="hidden">
+                  <div class="flex items-start space-x-3">
+                    <div class="bg-emerald-100 text-emerald-700 rounded-full p-1.5 mt-0.5 flex-shrink-0">
+                      <i data-lucide="info" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-emerald-900 text-sm">No Target Column Required</h5>
+                      <p class="text-xs text-emerald-700 mt-0.5 leading-relaxed">
+                        Clustering is an <strong>unsupervised machine learning</strong> task. The model automatically
+                        groups samples based on all characteristics (features), so you don't need to select a target
+                        column.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+              <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap relative">
+                  <thead id="data-table-head"
+                    class="bg-gray-50 border-b border-gray-200 text-gray-600 sticky top-0 z-10 shadow-sm">
+                    <tr>
+                      <th class="p-4 font-semibold border-r border-gray-200">Class</th>
+                      <th class="p-4 font-semibold border-r border-gray-200">radius1</th>
+                      <th class="p-4 font-semibold border-r border-gray-200">texture1</th>
+                      <th class="p-4 font-semibold border-r border-gray-200">perimeter1</th>
+                      <th class="p-4 font-semibold border-r border-gray-200">area1</th>
+                      <th class="p-4 font-semibold">smoothness1</th>
+                    </tr>
+                  </thead>
+                  <tbody id="data-table-body" class="divide-y divide-gray-200 text-gray-600">
+                    <tr class="hover:bg-gray-50">
+                      <td class="p-4 border-r border-gray-200">M</td>
+                      <td class="p-4 border-r border-gray-200">17.99</td>
+                      <td class="p-4 border-r border-gray-200">10.38</td>
+                      <td class="p-4 border-r border-gray-200">122.8</td>
+                      <td class="p-4 border-r border-gray-200">1001.0</td>
+                      <td class="p-4">0.118</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="p-4 border-r border-gray-200">M</td>
+                      <td class="p-4 border-r border-gray-200">20.57</td>
+                      <td class="p-4 border-r border-gray-200">17.77</td>
+                      <td class="p-4 border-r border-gray-200">132.9</td>
+                      <td class="p-4 border-r border-gray-200">1326.0</td>
+                      <td class="p-4">0.085</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="p-4 border-r border-gray-200">M</td>
+                      <td class="p-4 border-r border-gray-200">19.69</td>
+                      <td class="p-4 border-r border-gray-200">21.25</td>
+                      <td class="p-4 border-r border-gray-200">130.0</td>
+                      <td class="p-4 border-r border-gray-200">1203.0</td>
+                      <td class="p-4">0.110</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="p-4 border-r border-gray-200">M</td>
+                      <td class="p-4 border-r border-gray-200">11.42</td>
+                      <td class="p-4 border-r border-gray-200">20.38</td>
+                      <td class="p-4 border-r border-gray-200">77.58</td>
+                      <td class="p-4 border-r border-gray-200">386.1</td>
+                      <td class="p-4">0.142</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="p-4 border-r border-gray-200">M</td>
+                      <td class="p-4 border-r border-gray-200">20.29</td>
+                      <td class="p-4 border-r border-gray-200">14.34</td>
+                      <td class="p-4 border-r border-gray-200">135.1</td>
+                      <td class="p-4 border-r border-gray-200">1297.0</td>
+                      <td class="p-4">0.100</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between mt-10">
+              <button title="Action" aria-label="Action" onclick="goBackToUpload()"
+                class="px-6 py-2 bg-blue-600 rounded-lg text-white font-medium hover:bg-blue-700 transition-colors shadow-sm">Back</button>
+              <button title="Action" aria-label="Action" onclick="goToSetting()"
+                class="px-6 py-2 bg-blue-600 rounded-lg text-white font-medium hover:bg-blue-700 transition-colors shadow-sm">Proceed
+                to Settings</button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Step 2: Settings View -->
+        <div id="step-setting-form" class="hidden">
+          <div class="mb-6 mt-8 border-t border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-800">Setting</h2>
+            <p class="text-gray-600 mt-1">Please select the appropriate choices for the settings.</p>
+          </div>
+
+          <div class="space-y-8">
+            <!-- 1. Missing Value -->
+            <div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-bold text-gray-800">1. Missing Value</h3>
+                <p class="text-sm text-gray-500">Please choose the method to process missing values.</p>
+              </div>
+              <div class="p-6">
+                <div id="missing-value-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-sm transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="toggleAllInGrid(this, 'missing-value-grid')"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 select-all-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 text-sm group-has-[:checked]:text-emerald-900 transition-colors">
+                        ALL</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">Select
+                        all methods below.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('missing-value-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 option-checkbox"
+                        checked title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Mean</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">Use
+                        the
+                        mean of each feature to impute
+                        missing values.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('missing-value-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Median
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Use the median of each feature to impute
+                        missing values.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('missing-value-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Constant
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Use a constant value to impute missing
+                        values.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('missing-value-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        KNN</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Using the K-Nearest Neighbors method to fill
+                        in missing values.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('missing-value-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        None
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Do not impute missing values.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Normalization -->
+            <div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-bold text-gray-800">2. Normalization</h3>
+                <p class="text-sm text-gray-500">Please choose the method to normalize data.</p>
+              </div>
+              <div class="p-6">
+                <div id="normalization-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-sm transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="toggleAllInGrid(this, 'normalization-grid')"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 select-all-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 text-sm group-has-[:checked]:text-emerald-900 transition-colors">
+                        ALL</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">Select
+                        all methods below.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 option-checkbox"
+                        checked title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        StandardScaler</h4>
+                      <p
+                        class="text-[11px] text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed font-mono">
+                        (x - x.mean) / x.std</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        RobustScaler</h4>
+                      <p
+                        class="text-[11px] text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed font-mono">
+                        (x - x.median) / (q3 - q1)</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        MinMaxScaler</h4>
+                      <p
+                        class="text-[11px] text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed font-mono">
+                        (x - min) / (max - min)</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Normalizer</h4>
+                      <p
+                        class="text-[11px] text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed font-mono">
+                        x / x.norm(d)</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        PowerTransformer</h4>
+                      <p
+                        class="text-[11px] text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed font-mono">
+                        Yeo-Johnson transform</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('normalization-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        None
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Do not do normalization.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Feature Selection -->
+            <div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-bold text-gray-800">3. Feature Selection</h3>
+                <p class="text-sm text-gray-500">Please choose methods to process feature selection.</p>
+              </div>
+              <div class="p-6">
+                <div id="feature-selection-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-sm transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="toggleAllInGrid(this, 'feature-selection-grid')"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 select-all-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 text-sm group-has-[:checked]:text-emerald-900 transition-colors">
+                        ALL</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">Select
+                        all methods below.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 option-checkbox"
+                        checked title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Lasso</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">L1
+                        penalty regression to force feature
+                        weights to zero.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Multi-task Lasso</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Solves multiple related tasks to identify
+                        common features.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        SVM</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Select features that best distinguish the
+                        data.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        RandomForest</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Use feature importance ranking from Random
+                        Forest.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Decision
+                        Stump</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Simple decision tree with only one split.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        XGBoost
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Gradient boosting model to identify
+                        important features.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        LightGBM
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Enhanced tree model for fast feature
+                        selection.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        Ensemble
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Combine multiple models for robust feature
+                        selection.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('feature-selection-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        None
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Do not do feature selection.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Modeling -->
+            <div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-bold text-gray-800">4. Modeling</h3>
+                <p class="text-sm text-gray-500">Please choose methods to build the model.</p>
+              </div>
+              <div class="p-6">
+                <div id="modeling-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-sm transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="toggleAllInGrid(this, 'modeling-grid')"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 select-all-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 text-sm group-has-[:checked]:text-emerald-900 transition-colors">
+                        ALL</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">Select
+                        all methods below.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 option-checkbox"
+                        checked title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        LogisticRegression</h4>
+                      <p class="text-xs text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Estimates parameters of a logistic model.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        ElasticLogit</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Logistic regression with Elastic Net
+                        regularization.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        RandomForest</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Model composed of multiple decision trees.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        SVM</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Finds the optimal boundary between classes.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        XGBoost
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Handles complex data fast and efficiently.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        LightGBM
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Efficient gradient boosting model, great for
+                        big data.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        AdaBoost
+                      </h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Combines multiple weak classifiers to
+                        improve accuracy.</p>
+                    </div>
+                  </label>
+
+                  <label
+                    class="cursor-pointer border border-gray-200 rounded-xl p-4 hover:border-emerald-400 hover:bg-emerald-50/30 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 transition-all flex items-start gap-3 group">
+                    <div class="mt-0.5 flex-shrink-0">
+                      <input type="checkbox" onchange="checkGridAllState('modeling-grid', this)"
+                        class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 option-checkbox"
+                        title="input" aria-label="input">
+                    </div>
+                    <div>
+                      <h4
+                        class="font-bold text-gray-800 group-has-[:checked]:text-emerald-900 text-sm transition-colors">
+                        DecisionTree</h4>
+                      <p
+                        class="text-xs text-gray-500 group-has-[:checked]:text-gray-500 group-has-[:checked]:text-emerald-700 mt-1 leading-relaxed">
+                        Achieves classification by splitting data.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <!-- 5. Validation & 6. Feature Selection Numbers -->
+              <div class="space-y-6">
+                <div class="border border-gray-200 rounded-xl bg-white shadow-sm p-6">
+                  <h3 class="text-lg font-bold text-gray-800 mb-2">5. Validation</h3>
+                  <p class="text-sm text-gray-500 mb-4">Please choose methods to do validation.</p>
+                  <select
+                    class="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 shadow-sm">
+                    <option selected>k-fold cross validation</option>
+                    <option>Leave-one-out cross validation</option>
+                  </select>
+                </div>
+
+                <div class="border border-gray-200 rounded-xl bg-white shadow-sm p-6">
+                  <h3 class="text-lg font-bold text-gray-800 mb-2">6. Feature Selection Numbers</h3>
+                  <p class="text-sm text-gray-500 mb-4">Please select the numbers of feature selection.</p>
+                  <div class="flex items-center">
+                    <input type="number" value="20" min="1"
+                      class="w-24 border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm text-center font-mono"
+                      title="input" aria-label="input">
+                    <span class="ml-3 text-sm text-gray-600 font-medium">Features</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7. Train data size -->
+              <div class="border border-gray-200 rounded-xl bg-white shadow-sm p-6">
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800 mb-2">7. Train Data Size</h3>
+                  <p class="text-sm text-gray-500 mb-4">Please select the size of train data ratio.</p>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                  <div class="flex justify-between text-sm font-bold text-gray-700 mb-4">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
+                      Train: <span id="train-ratio-display" class="text-emerald-600">80%</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                      Test: <span id="test-ratio-display" class="text-teal-600">20%</span>
+                    </span>
+                  </div>
+                  <input type="range" min="50" max="95" value="80"
+                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                    id="train-ratio-slider"
+                    oninput="document.getElementById('train-ratio-display').innerText = this.value + '%'; document.getElementById('test-ratio-display').innerText = (100 - this.value) + '%';"
+                    title="input" aria-label="input">
+                  <div class="flex justify-between text-xs text-gray-400 mt-2 font-medium">
+                    <span>50%</span>
+                    <span>95%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between mt-10 border-t border-gray-200 pt-8">
+              <button title="Action" aria-label="Action" onclick="goBackToDataCheck()"
+                class="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm">Back</button>
+              <button title="Action" aria-label="Action" onclick="goToResult()"
+                class="px-6 py-2.5 bg-emerald-600 rounded-lg text-white font-medium hover:bg-emerald-700 transition-colors shadow-sm flex items-center">
+                <span>Start Training</span>
+                <i data-lucide="play" class="w-4 h-4 ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 & 4: Loading Screen & Result Viewer -->
+        <div id="step-loading" class="hidden">
+          <div
+            class="bg-white rounded-xl shadow-lg p-16 flex flex-col items-center justify-center min-h-[500px] border border-gray-100 relative overflow-hidden">
+            <!-- Animated background -->
+            <div
+              class="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-100 via-transparent to-transparent">
+            </div>
+
+            <div class="relative z-10 flex flex-col items-center w-full max-w-md mx-auto">
+              <!-- Loading Spinner -->
+              <div class="relative w-24 h-24 mb-8">
+                <div class="absolute inset-0 rounded-full border-4 border-gray-100"></div>
+                <div
+                  class="absolute inset-0 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin">
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <i data-lucide="cpu" class="w-8 h-8 text-emerald-600"></i>
+                </div>
+              </div>
+
+              <h3 class="text-2xl font-bold text-gray-900 mb-2">Analyzing Data</h3>
+              <p id="loading-progress-text" class="text-gray-500 mb-8 text-center h-6">Initializing AI Pipeline...</p>
+
+              <!-- Progress Bar -->
+              <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-4 shadow-inner">
+                <div id="loading-progress-bar"
+                  class="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all duration-500 ease-out"
+                  style="width: 5%"></div>
+              </div>
+
+              <div class="w-full flex justify-between text-sm mb-6">
+                <span class="text-gray-400 font-medium">Progress</span>
+                <span id="loading-eta" class="text-emerald-600 font-bold">ETA: ~45s</span>
+              </div>
+
+              <!-- Live Task Logs -->
+              <div
+                class="w-full text-left bg-gray-900 rounded-lg p-4 max-h-40 overflow-y-auto font-mono text-xs text-green-400 shadow-inner">
+                <div class="text-gray-500 mb-2 border-b border-gray-700 pb-1 flex justify-between">
+                  <span>Terminal Logs</span>
+                  <i data-lucide="terminal" class="w-4 h-4"></i>
+                </div>
+                <div id="task-logs" class="space-y-1">
+                  <div>Initializing system...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-result-viewer" class="hidden">
+          <!-- The iframe will be injected here dynamically by pollProgress -->
+        </div>
+
+
+
+      </div>
+
+      <!-- Sidebar Content -->
+      <div id="sidebar-content" class="space-y-8 transition-all duration-300">
+        <!-- Test Data & Input Example Combined -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <!-- Test Data Section -->
+          <div class="flex items-center mb-4">
+            <div class="bg-teal-100 rounded-lg p-2 mr-3">
+              <i data-lucide="database" class="w-5 h-5 text-teal-600"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Test Data</h3>
+          </div>
+
+          <p class="text-sm text-gray-600 mb-4">
+            Try our analysis with these sample datasets:
+          </p>
+
+          <div class="space-y-3">
+            <div
+              class="flex w-full rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-teal-400 transition-all group overflow-hidden test-data-card">
+              <!-- Left: Download -->
+              <a href="#" title="Download Dataset"
+                class="flex-shrink-0 bg-white px-4 flex items-center justify-center border-r border-gray-200 hover:bg-gray-100 transition-colors">
+                <i data-lucide="download" class="w-5 h-5 text-gray-500 group-hover:text-teal-600 transition-colors"></i>
+              </a>
+              <!-- Right: Choose/Use -->
+              <button title="Action" aria-label="Action" onclick="selectTestData('breast_cancer_wisconsin.csv', 125000)"
+                class="flex-1 bg-gradient-to-r from-white to-gray-50 p-4 text-left hover:bg-teal-50 transition-colors focus:outline-none">
+                <div class="flex justify-between items-start">
+                  <h4 class="font-medium text-gray-800 group-hover:text-teal-700 transition-colors">Breast Cancer
+                    Wisconsin (diagnostic)</h4>
+                  <i data-lucide="arrow-right-circle"
+                    class="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors"></i>
+                </div>
+                <p class="text-xs text-teal-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to load this dataset
+                </p>
+              </button>
+            </div>
+
+            <div class="opacity-50 pointer-events-none">
+              <a href="#"
+                class="test-data-card block bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-400 transition-all group">
+                <div class="flex justify-between items-start">
+                  <h4 class="font-medium text-gray-800 group-hover:text-gray-700 transition-colors">Pine Cancer Dataset
+                  </h4>
+                  <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <p class="text-xs text-gray-600 mt-2">
+                  Coming soon: Public pine cancer omics data
+                </p>
+              </a>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <hr class="my-6 border-gray-200">
+
+          <!-- Input Example (integrated below) -->
+          <div class="flex items-center mb-4">
+            <div class="bg-teal-100 rounded-lg p-2 mr-3">
+              <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Input Example Table</h3>
+          </div>
+
+          <!-- Simple example visualization -->
+          <div class="bg-gray-100 rounded-lg p-3 overflow-x-auto">
+            <table class="w-full text-xs text-left min-w-max">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                <tr>
+                  <th class="px-2 py-2 rounded-l-md">Sample</th>
+                  <th class="px-2 py-2">Feature1</th>
+                  <th class="px-2 py-2">Feature2</th>
+                  <th class="px-2 py-2 rounded-r-md">Label</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-white border-b">
+                  <td class="px-2 py-2">S1</td>
+                  <td class="px-2 py-2">0.5</td>
+                  <td class="px-2 py-2">2.8</td>
+                  <td class="px-2 py-2">Positive</td>
+                </tr>
+                <tr class="bg-white border-b">
+                  <td class="px-2 py-2">S2</td>
+                  <td class="px-2 py-2">1.2</td>
+                  <td class="px-2 py-2">1.4</td>
+                  <td class="px-2 py-2">Negative</td>
+                </tr>
+                <tr class="bg-white">
+                  <td class="px-2 py-2">S3</td>
+                  <td class="px-2 py-2">0.8</td>
+                  <td class="px-2 py-2">3.1</td>
+                  <td class="px-2 py-2">Positive</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-3">
+            *Your file must include headers and appropriate data formatting
+          </p>
+        </div>
+
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation: Resources -->
+  <footer class="w-full bg-emerald-900 mt-auto shadow-inner">
+    <div class="container mx-auto px-4 py-4 flex justify-around items-center text-white">
+      <a href="#" class="flex flex-col items-center text-sm hover:text-emerald-200 transition-colors">
+        <i data-lucide="file-text" class="w-6 h-6 mb-1"></i>
+        <span>Guidelines</span>
+      </a>
+      <a href="#" class="flex flex-col items-center text-sm hover:text-emerald-200 transition-colors">
+        <i data-lucide="database" class="w-6 h-6 mb-1"></i>
+        <span>Datasets</span>
+      </a>
+      <a href="#" class="flex flex-col items-center text-sm hover:text-emerald-200 transition-colors">
+        <i data-lucide="book-open" class="w-6 h-6 mb-1"></i>
+        <span>Docs</span>
+      </a>
+      <a href="#" class="flex flex-col items-center text-sm hover:text-emerald-200 transition-colors">
+        <i data-lucide="phone" class="w-6 h-6 mb-1"></i>
+        <span>Support</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- Success Modal (Hidden by default) -->
+  <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all scale-100">
+      <div class="flex justify-center mb-6">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <i data-lucide="check-circle" class="w-10 h-10 text-green-600"></i>
+        </div>
+      </div>
+      <div class="text-center">
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Upload Successful!</h3>
+        <p class="text-gray-600 mb-6">Your data has been uploaded successfully and is ready for analysis.</p>
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">File type:</span>
+            <span id="modal-file-type" class="font-medium">tsv</span>
+          </div>
+          <div class="flex justify-between text-sm mt-2">
+            <span class="text-gray-600">File name:</span>
+            <span id="modal-file-name" class="font-medium truncate max-w-[150px]">data.tsv</span>
+          </div>
+          <div class="flex justify-between text-sm mt-2">
+            <span class="text-gray-600">Size:</span>
+            <span id="modal-file-size" class="font-medium">0 KB</span>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <button title="Action" aria-label="Action" onclick="closeModal()"
+            class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            Close
+          </button>
+          <button title="Action" aria-label="Action" onclick="goToAnalysis()"
+            class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+            Start Analysis
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // State management
+    let selectedFile = null;
+    let detectedFileType = null;
+    let selectedAnalysisType = null;
+    let parsedHeaders = ['Class', 'radius1', 'texture1', 'perimeter1', 'area1', 'smoothness1'];
+    let parsedRows = [
+      ['M', '17.99', '10.38', '122.8', '1001.0', '0.118'],
+      ['M', '20.57', '17.77', '132.9', '1326.0', '0.085'],
+      ['M', '19.69', '21.25', '130.0', '1203.0', '0.110'],
+      ['M', '11.42', '20.38', '77.58', '386.1', '0.142'],
+      ['M', '20.29', '14.34', '135.1', '1297.0', '0.100']
+    ];
+
+    // Embedded Breast Cancer Wisconsin Dataset for quick loading
+    const BREAST_CANCER_DATA = `Class,radius1,texture1,perimeter1,area1,smoothness1
+M,17.99,10.38,122.8,1001.0,0.118
+M,20.57,17.77,132.9,1326.0,0.085
+M,19.69,21.25,130.0,1203.0,0.11
+M,11.42,20.38,77.58,386.1,0.142
+M,20.29,14.34,135.1,1297.0,0.1
+M,12.45,15.7,82.57,477.1,0.128
+M,18.25,19.98,119.6,1040.0,0.095
+M,13.71,20.83,90.2,577.9,0.119
+M,13.0,21.82,87.5,519.8,0.127
+M,12.46,24.04,83.97,475.9,0.119
+F,16.02,23.24,102.7,797.8,0.082
+F,13.54,14.36,87.46,566.3,0.098
+F,13.08,15.71,85.63,520.0,0.108
+F,9.504,12.44,60.34,273.9,0.102
+F,13.03,18.42,82.61,523.8,0.09
+F,14.22,23.12,94.37,609.9,0.108
+F,12.78,16.49,81.37,502.5,0.098
+F,11.94,18.24,75.71,437.6,0.082
+F,15.46,19.48,101.7,748.9,0.109
+F,16.13,20.68,108.1,798.8,0.117`;
+
+    // File upload handling
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(event) {
+      event.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        processFile(files[0]);
+      }
+    }
+
+    function handleFileSelect(event) {
+      if (event.target.files.length > 0) {
+        processFile(event.target.files[0]);
+      }
+    }
+
+    function processFile(file) {
+      // Auto-detect file type from extension
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      // Map common extensions to display types
+      const typeMapping = {
+        'tsv': { display: 'tsv', label: 'Tab-separated values', badgeColor: 'bg-teal-100 text-teal-700' },
+        'csv': { display: 'csv', label: 'Comma-separated values', badgeColor: 'bg-green-100 text-green-700' },
+        'xlsx': { display: 'xlsx', label: 'Excel workbook', badgeColor: 'bg-blue-100 text-blue-700' },
+        'xls': { display: 'xlsx', label: 'Excel workbook', badgeColor: 'bg-blue-100 text-blue-700' }
+      };
+
+      detectedFileType = typeMapping[fileExtension];
+
+      if (!detectedFileType) {
+        alert(`Unsupported file type: ".${fileExtension}". Please use tsv, csv, or xlsx files.`);
+        return;
+      }
+
+      selectedFile = file;
+
+      // Update UI
+      document.getElementById('upload-placeholder').classList.add('hidden');
+      document.getElementById('file-selected').classList.remove('hidden');
+      document.getElementById('file-name').textContent = file.name;
+
+      // Show file type badge
+      const badge = document.getElementById('file-type-badge');
+      badge.textContent = detectedFileType.display.toUpperCase();
+      badge.className = `file-type-badge ${detectedFileType.badgeColor}`;
+      badge.classList.remove('hidden');
+
+      // Enable upload button
+      const uploadBtn = document.getElementById('upload-btn');
+      uploadBtn.disabled = false;
+
+      // Show file size
+      const fileSize = (file.size / 1024).toFixed(1);
+      const sizeElement = document.getElementById('modal-file-size');
+      sizeElement.textContent = `${fileSize} KB`;
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      detectedFileType = null;
+
+      document.getElementById('upload-placeholder').classList.remove('hidden');
+      document.getElementById('file-selected').classList.add('hidden');
+      document.getElementById('file-input').value = '';
+
+      const badge = document.getElementById('file-type-badge');
+      badge.classList.add('hidden');
+
+      // Disable upload button
+      const uploadBtn = document.getElementById('upload-btn');
+      uploadBtn.disabled = true;
+    }
+
+    let uploadedFileId = null;
+
+    async function processUpload() {
+      if (!selectedFile) {
+        alert('Please select a file to upload');
+        return;
+      }
+
+      const uploadBtn = document.getElementById('upload-btn');
+      const uploadBtnText = document.getElementById('upload-btn-text');
+
+      uploadBtn.disabled = true;
+      uploadBtnText.textContent = 'Uploading to Server...';
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Upload failed");
+
+        const data = await response.json();
+        uploadedFileId = data.file_id;
+
+        // Show success modal
+        document.getElementById('modal-file-type').textContent = detectedFileType ? detectedFileType.display.toUpperCase() : 'Unknown';
+        document.getElementById('modal-file-name').textContent = selectedFile.name;
+        document.getElementById('success-modal').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+      } catch (err) {
+        alert("Upload error: " + err.message);
+      } finally {
+        uploadBtnText.textContent = 'Upload Data';
+        uploadBtn.disabled = false;
+      }
+    }
+
+    function resetUpload() {
+      if (confirm('Are you sure you want to reset the upload form?')) {
+        removeFile();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('success-modal').classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function goToAnalysis() {
+      // Close success modal
+      closeModal();
+
+      // Update UI Views: Hide upload form, show data check. 
+      // Do NOT change pipeline progress, we are still on Step 1 (Upload).
+      document.getElementById('step-upload-form').classList.add('hidden');
+      document.getElementById('step-upload-data-check').classList.remove('hidden');
+
+      // Set filename
+      if (selectedFile) {
+        document.getElementById('setting-file-name').textContent = selectedFile.name;
+
+        // Parse and render the loaded data dynamically
+        if (selectedFile.isMock) {
+          loadDataFromString(BREAST_CANCER_DATA, 'csv');
+        } else {
+          loadDataFromFile(selectedFile);
+        }
+      }
+
+      // Reset analysis type selection flow
+      selectedAnalysisType = null;
+      const types = ['classification', 'regression', 'clustering'];
+      types.forEach(t => {
+        const card = document.getElementById(`card-${t}`);
+        const check = document.getElementById(`check-${t}`);
+        if (card) {
+          card.className = "cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group";
+        }
+        if (check) {
+          check.className = "opacity-0 transition-opacity";
+          check.innerHTML = '';
+        }
+      });
+      const container = document.getElementById('target-config-container');
+      if (container) {
+        container.classList.add('hidden');
+        container.style.maxHeight = '';
+        container.style.opacity = '';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // CSV/TSV Parsing Logic
+    function parseCSV(text, delimiter) {
+      const lines = text.split(/\r?\n/);
+      const result = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        let row = [];
+        if (line.includes('"')) {
+          let insideQuote = false;
+          let entry = '';
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+              insideQuote = !insideQuote;
+            } else if (char === delimiter && !insideQuote) {
+              row.push(entry.trim());
+              entry = '';
+            } else {
+              entry += char;
+            }
+          }
+          row.push(entry.trim());
+        } else {
+          row = line.split(delimiter);
+        }
+        result.push(row);
+      }
+      return result;
+    }
+
+    function loadDataFromString(text, type) {
+      const delimiter = (type === 'tsv') ? '\t' : ',';
+      const rows = parseCSV(text, delimiter);
+      if (rows.length > 0) {
+        parsedHeaders = rows[0];
+        parsedRows = rows.slice(1);
+
+        populateTargetColumnSelect();
+        renderTable();
+      }
+    }
+
+    function loadDataFromFile(file) {
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Fallback for Excel sheets in prototype (simulated dataset)
+        generateDemoData(file.name);
+        return;
+      }
+
+      const type = (fileExtension === 'tsv') ? 'tsv' : 'csv';
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const text = e.target.result;
+        loadDataFromString(text, type);
+      };
+      reader.onerror = function () {
+        alert('Failed to read file.');
+      };
+      reader.readAsText(file);
+    }
+
+    function generateDemoData(fileName) {
+      const dummyHeaders = ['Sample_ID', 'Feature_A', 'Feature_B', 'Feature_C', 'Outcome_Class'];
+      const dummyRows = [];
+      for (let i = 1; i <= 24; i++) {
+        dummyRows.push([
+          `SMP_${100 + i}`,
+          (Math.random() * 8 + 2).toFixed(2),
+          (Math.random() * 50 + 10).toFixed(1),
+          Math.random() > 0.4 ? 'Normal' : 'Abnormal',
+          Math.random() > 0.5 ? 'Response_Positive' : 'Response_Negative'
+        ]);
+      }
+      parsedHeaders = dummyHeaders;
+      parsedRows = dummyRows;
+
+      populateTargetColumnSelect();
+      renderTable();
+    }
+
+    function populateTargetColumnSelect() {
+      const select = document.getElementById('target-column-select');
+      select.innerHTML = '<option disabled selected>Select Target</option>';
+
+      parsedHeaders.forEach(header => {
+        const option = document.createElement('option');
+        option.value = header;
+        option.textContent = header;
+        select.appendChild(option);
+      });
+    }
+
+    function renderTable() {
+      const tableHead = document.getElementById('data-table-head');
+      const tableBody = document.getElementById('data-table-body');
+
+      if (!tableHead || !tableBody) return;
+
+      // Render Headers
+      let headHTML = '<tr>';
+      parsedHeaders.forEach((header, index) => {
+        const isLast = index === parsedHeaders.length - 1;
+        const borderClass = isLast ? '' : 'border-r border-gray-200';
+        headHTML += `<th class="p-4 font-semibold ${borderClass}">${header}</th>`;
+      });
+      headHTML += '</tr>';
+      tableHead.innerHTML = headHTML;
+
+      // Render Rows
+      const maxRows = 100; // Limit preview to 100 rows
+      const displayRows = parsedRows.slice(0, maxRows);
+
+      let bodyHTML = '';
+      if (displayRows.length === 0) {
+        bodyHTML = `<tr><td colspan="${parsedHeaders.length}" class="p-4 text-center text-gray-500">No data records found</td></tr>`;
+      } else {
+        displayRows.forEach(row => {
+          bodyHTML += '<tr class="hover:bg-gray-50">';
+          row.forEach((cell, index) => {
+            const isLast = index === row.length - 1;
+            const borderClass = isLast ? '' : 'border-r border-gray-200';
+            bodyHTML += `<td class="p-4 ${borderClass}">${cell}</td>`;
+          });
+          bodyHTML += '</tr>';
+        });
+      }
+      tableBody.innerHTML = bodyHTML;
+    }
+
+    function goBackToUpload() {
+      document.getElementById('step-upload-data-check').classList.add('hidden');
+      document.getElementById('step-upload-form').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goToSetting() {
+      if (!selectedAnalysisType) {
+        alert('Please choose an analysis type first.');
+        return;
+      }
+
+      if (selectedAnalysisType !== 'clustering') {
+        const select = document.getElementById('target-column-select');
+        if (!select || select.value === 'Select Target') {
+          alert('Please select a target column for your analysis.');
+          return;
+        }
+      }
+
+      document.getElementById('progress-line').style.width = "37.5%";
+
+      document.getElementById('step1-circle').className = "w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md transition-colors";
+      document.getElementById('step1-title').className = "text-sm font-medium text-gray-500 mt-2 text-center transition-colors";
+      document.getElementById('step1-sub').className = "text-[10px] uppercase tracking-wider font-semibold text-gray-400 text-center mt-1 transition-colors";
+
+      document.getElementById('step2-circle').className = "w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md ring-4 ring-emerald-50 transition-colors";
+      document.getElementById('step2-title').className = "text-sm font-bold text-emerald-700 mt-2 text-center transition-colors";
+      document.getElementById('step2-sub').className = "text-[10px] uppercase tracking-wider font-semibold text-emerald-500 text-center mt-1 transition-colors";
+
+      document.getElementById('step-upload-data-check').classList.add('hidden');
+      document.getElementById('step-setting-form').classList.remove('hidden');
+
+      // Expand layout and hide sidebar
+      const mainCol = document.getElementById('main-column');
+      const sideCol = document.getElementById('sidebar-content');
+      if (mainCol && sideCol) {
+        mainCol.classList.remove('lg:col-span-2');
+        mainCol.classList.add('lg:col-span-3');
+        sideCol.classList.add('hidden');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function goBackToDataCheck() {
+      document.getElementById('progress-line').style.width = "12.5%";
+
+      document.getElementById('step2-circle').className = "w-10 h-10 rounded-full bg-white border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold transition-colors";
+      document.getElementById('step2-title').className = "text-sm font-medium text-gray-500 mt-2 text-center transition-colors";
+      document.getElementById('step2-sub').className = "text-[10px] uppercase tracking-wider font-semibold text-gray-400 text-center mt-1 transition-colors";
+
+      document.getElementById('step1-circle').className = "w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md ring-4 ring-emerald-50 transition-colors";
+      document.getElementById('step1-title').className = "text-sm font-bold text-emerald-700 mt-2 text-center transition-colors";
+      document.getElementById('step1-sub').className = "text-[10px] uppercase tracking-wider font-semibold text-emerald-500 text-center mt-1 transition-colors";
+
+      document.getElementById('step-setting-form').classList.add('hidden');
+      document.getElementById('step-upload-data-check').classList.remove('hidden');
+
+      // Restore layout and show sidebar
+      const mainCol = document.getElementById('main-column');
+      const sideCol = document.getElementById('sidebar-content');
+      if (mainCol && sideCol) {
+        mainCol.classList.remove('lg:col-span-3');
+        mainCol.classList.add('lg:col-span-2');
+        sideCol.classList.remove('hidden');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    async function goToResult() {
+      if (!uploadedFileId) {
+        alert("Please upload a dataset first!");
+        return;
+      }
+
+      const grids = [
+        {
+          id: 'missing-value-grid',
+          name: 'Missing Value',
+          key: 'missing_value_methods',
+          values: { Mean: 'Mean', Median: 'Median', KNN: 'KNN', None: 'None' }
+        },
+        {
+          id: 'normalization-grid',
+          name: 'Normalization',
+          key: 'normalization_methods',
+          values: { StandardScaler: 'StandardScaler', RobustScaler: 'RobustScaler', MinMaxScaler: 'MinMaxScaler', Normalizer: 'norm_all', None: 'None' }
+        },
+        {
+          id: 'feature-selection-grid',
+          name: 'Feature Selection',
+          key: 'feature_selection_methods',
+          values: {
+            Lasso: 'SelectKBest',
+            'Multi-task Lasso': 'SelectKBest',
+            SVM: 'SelectKBest',
+            RandomForest: 'SelectKBest',
+            'Decision Stump': 'SelectKBest',
+            XGBoost: 'SelectKBest',
+            LightGBM: 'SelectKBest',
+            Ensemble: 'feature_all',
+            None: 'None'
+          }
+        },
+        {
+          id: 'modeling-grid',
+          name: 'Modeling',
+          key: 'modeling_methods',
+          values: {
+            LogisticRegression: 'lr',
+            ElasticLogit: 'lr',
+            RandomForest: 'rf',
+            SVM: 'svm',
+            XGBoost: 'xgboost',
+            LightGBM: 'lightgbm',
+            AdaBoost: 'rf',
+            DecisionTree: 'rf'
+          }
+        }
+      ];
+
+      const settings = {};
+
+      for (const grid of grids) {
+        const container = document.getElementById(grid.id);
+        if (container) {
+          const checkedOptions = Array.from(container.querySelectorAll('.option-checkbox:checked'));
+          if (checkedOptions.length === 0) {
+            alert(`Error: ${grid.name} is a required setting. Please select at least one option.`);
+            return;
+          }
+          const selectedValues = checkedOptions
+            .map(cb => cb.closest('.group').querySelector('.font-bold').innerText.trim().replace(/\s+/g, ' '))
+            .map(label => grid.values[label] || label);
+          settings[grid.key] = [...new Set(selectedValues)];
+        }
+      }
+
+      const targetCol = document.getElementById('target-column-select') ? document.getElementById('target-column-select').value : null;
+      if (!targetCol && targetType !== 'clustering') {
+        alert("Please select a target column.");
+        return;
+      }
+
+      const payload = {
+        file_id: uploadedFileId,
+        task_type: targetType,
+        target_column: targetCol,
+        settings: settings
+      };
+
+      // Show Loading Screen
+      document.getElementById('step-setting-form').classList.add('hidden');
+      document.getElementById('step-loading').classList.remove('hidden');
+
+      try {
+        const response = await fetch("/api/train", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Failed to start training");
+
+        const data = await response.json();
+        pollProgress(data.report_id, data.access_token);
+
+      } catch (err) {
+        alert("Training start error: " + err.message);
+        document.getElementById('step-loading').classList.add('hidden');
+        document.getElementById('step-setting-form').classList.remove('hidden');
+      }
+    }
+
+    function pollProgress(reportId, token) {
+      const progressBar = document.getElementById('loading-progress-bar');
+      const progressText = document.getElementById('loading-progress-text');
+      const etaText = document.getElementById('loading-eta');
+
+      const eventSource = new EventSource(`/report/stream/${reportId}?token=${token}`);
+
+      eventSource.onmessage = function (event) {
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          progressBar.style.width = "100%";
+          progressText.innerText = "Completed!";
+          etaText.innerText = "Redirecting to report...";
+
+          setTimeout(() => {
+            document.getElementById('step-loading').classList.add('hidden');
+            const resultContainer = document.getElementById('step-result-viewer');
+            resultContainer.classList.remove('hidden');
+            document.getElementById('main-column').classList.remove('lg:col-span-2');
+            document.getElementById('main-column').classList.add('lg:col-span-3');
+            document.getElementById('sidebar-content').classList.add('hidden');
+            renderResultView(reportId);
+          }, 1000);
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          if (data.content) {
+            // content could be JSON or string
+            try {
+              const parsed = JSON.parse(data.content);
+              if (parsed.progress_pct !== undefined) progressBar.style.width = parsed.progress_pct + "%";
+              if (parsed.message) progressText.innerText = parsed.message;
+              if (parsed.log) {
+                const logContainer = document.getElementById('task-logs');
+                if (logContainer) {
+                  // Clean up ansi escape codes just in case
+                  const cleanLog = parsed.log.replace(/\x1b\[[0-9;]*m/g, '');
+                  logContainer.innerHTML += `<div>${cleanLog}</div>`;
+                  logContainer.scrollTop = logContainer.scrollHeight;
+                }
+              }
+            } catch (e) {
+              // Ignore JSON parse errors for narrative stream, but we can print them as logs too if needed
+              const logContainer = document.getElementById('task-logs');
+              if (logContainer) {
+                // For narrative token streaming, we might not want to print it character by character in the terminal log,
+                // but if we do, we can just append it. For now, we'll just ignore it or log it inline.
+                // Let's just append it inline.
+                logContainer.innerHTML += `<span>${data.content.replace(/\\n/g, '<br>')}</span>`;
+                logContainer.scrollTop = logContainer.scrollHeight;
+              }
+            }
+          }
+        } catch (e) { }
+      };
+
+      eventSource.onerror = function () {
+        // Fallback polling
+        eventSource.close();
+        let intv = setInterval(async () => {
+          const res = await fetch(`/report/status/${reportId}?token=${token}`);
+          const data = await res.json();
+          progressBar.style.width = data.progress_pct + "%";
+          progressText.innerText = data.message;
+          if (data.status === "SUCCESS") {
+            clearInterval(intv);
+            setTimeout(() => {
+              document.getElementById('step-loading').classList.add('hidden');
+              const resultContainer = document.getElementById('step-result-viewer');
+              resultContainer.classList.remove('hidden');
+              document.getElementById('main-column').classList.remove('lg:col-span-2');
+              document.getElementById('main-column').classList.add('lg:col-span-3');
+              document.getElementById('sidebar-content').classList.add('hidden');
+              renderResultView(reportId);
+            }, 1000);
+          } else if (data.status === "FAILED") {
+            clearInterval(intv);
+            progressText.innerText = "Error: " + data.message;
+          }
+        }, 3000);
+      };
+    }
+    let targetType = 'classification';
+
+    function selectTestData(fileName, sizeBytes) {
+      const blob = new Blob([BREAST_CANCER_DATA], { type: 'text/csv' });
+      const mockFile = new File([blob], fileName, { type: 'text/csv' });
+      mockFile.isMock = true;
+      processFile(mockFile);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectAnalysisType(type) {
+      selectedAnalysisType = type;
+      targetType = type;
+
+      const cardClassification = document.getElementById('card-classification');
+      const cardRegression = document.getElementById('card-regression');
+      const cardClustering = document.getElementById('card-clustering');
+
+      const checkClassification = document.getElementById('check-classification');
+      const checkRegression = document.getElementById('check-regression');
+      const checkClustering = document.getElementById('check-clustering');
+
+      // Reset cards style
+      if (cardClassification) cardClassification.className = "cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group";
+      if (checkClassification) {
+        checkClassification.className = "opacity-0 transition-opacity";
+        checkClassification.innerHTML = '';
+      }
+
+      if (cardRegression) cardRegression.className = "cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group";
+      if (checkRegression) {
+        checkRegression.className = "opacity-0 transition-opacity";
+        checkRegression.innerHTML = '';
+      }
+
+      if (cardClustering) cardClustering.className = "cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group";
+      if (checkClustering) {
+        checkClustering.className = "opacity-0 transition-opacity";
+        checkClustering.innerHTML = '';
+      }
+
+      // Highlight selected card
+      if (type === 'classification') {
+        if (cardClassification) cardClassification.className = "cursor-pointer border-2 border-emerald-600 rounded-xl p-4 bg-emerald-50/30 hover:border-emerald-600 hover:shadow-md transition-all flex flex-col justify-between group ring-2 ring-emerald-600/10";
+        if (checkClassification) {
+          checkClassification.className = "text-emerald-600 opacity-100 transition-opacity";
+          checkClassification.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 fill-emerald-600 text-white"></i>';
+        }
+      } else if (type === 'regression') {
+        if (cardRegression) cardRegression.className = "cursor-pointer border-2 border-green-600 rounded-xl p-4 bg-green-50/30 hover:border-green-600 hover:shadow-md transition-all flex flex-col justify-between group ring-2 ring-green-600/10";
+        if (checkRegression) {
+          checkRegression.className = "text-green-600 opacity-100 transition-opacity";
+          checkRegression.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 fill-green-600 text-white"></i>';
+        }
+      } else if (type === 'clustering') {
+        if (cardClustering) cardClustering.className = "cursor-pointer border-2 border-teal-600 rounded-xl p-4 bg-teal-50/30 hover:border-teal-600 hover:shadow-md transition-all flex flex-col justify-between group ring-2 ring-teal-600/10";
+        if (checkClustering) {
+          checkClustering.className = "text-teal-600 opacity-100 transition-opacity";
+          checkClustering.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 fill-teal-600 text-white"></i>';
+        }
+      }
+
+      const container = document.getElementById('target-config-container');
+      const targetWrapper = document.getElementById('target-select-wrapper');
+      const clusteringWrapper = document.getElementById('clustering-info-wrapper');
+
+      if (container) {
+        container.classList.remove('hidden');
+      }
+
+      if (type === 'clustering') {
+        if (targetWrapper) targetWrapper.classList.add('hidden');
+        if (clusteringWrapper) clusteringWrapper.classList.remove('hidden');
+      } else {
+        if (clusteringWrapper) clusteringWrapper.classList.add('hidden');
+        if (targetWrapper) targetWrapper.classList.remove('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    function toggleAllInGrid(selectAllCheckbox, gridId) {
+      const container = document.getElementById(gridId);
+      if (!container) return;
+
+      const isChecked = selectAllCheckbox.checked;
+      if (!isChecked) {
+        alert("Error: You cannot unselect all options. At least one option is required.");
+        selectAllCheckbox.checked = true;
+        return;
+      }
+
+      const optionCheckboxes = container.querySelectorAll('.option-checkbox');
+      optionCheckboxes.forEach(cb => {
+        if (cb.checked !== isChecked) {
+          cb.checked = isChecked;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
+
+    function checkGridAllState(gridId, changedCheckbox) {
+      const container = document.getElementById(gridId);
+      if (!container) return;
+      const selectAllCheckbox = container.querySelector('.select-all-checkbox');
+      const optionCheckboxes = Array.from(container.querySelectorAll('.option-checkbox'));
+
+      const checkedCount = optionCheckboxes.filter(cb => cb.checked).length;
+
+      if (checkedCount === 0 && changedCheckbox) {
+        alert("Error: You must select at least one option.");
+        changedCheckbox.checked = true; // Revert the uncheck
+        // Trigger style update
+        changedCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+
+      const allChecked = optionCheckboxes.every(cb => cb.checked);
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = allChecked;
+      }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+      const modal = document.getElementById('success-modal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+
+    async function renderResultView(reportId) {
+      const container = document.getElementById('step-result-viewer');
+      container.innerHTML = `<div class="p-8 text-center"><div class="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-indigo-600 rounded-full" role="status" aria-label="loading"></div><p class="mt-4 text-gray-600">Loading your statistical results...</p></div>`;
+
+      try {
+        const res = await fetch(`/api/report/${reportId}/manifest`);
+        if (!res.ok) throw new Error("Manifest not found");
+        const manifest = await res.json();
+
+        const modelsData = manifest.all_models_data || [];
+
+        let tableRows = '';
+        modelsData.forEach((row, i) => {
+          tableRows += `
+            <tr class="hover:bg-gray-50 border-b border-gray-100">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${i}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">${row.MissingValueProcessing || ''}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${row.Standarization || ''}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${row.Selection || ''}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">${row.Modeling || ''}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${Number(row.test_accuracy || 0).toFixed(4)}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${Number(row.test_auc || 0).toFixed(4)}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${Number(row.test_f1 || 0).toFixed(4)}</td>
+            </tr>
+          `;
+        });
+
+        let htmlContent = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-12">
+            
+            <!-- Header -->
+            <div class="border-b border-gray-100 pb-6">
+              <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Statistical Analysis Results</h2>
+              <p class="mt-2 text-gray-500 text-lg">Your pipeline has completed successfully. Review the model performance and generated figures below.</p>
+            </div>
+            
+            <!-- Section 1: Optimal Model -->
+            <section class="space-y-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">1</div>
+                <h3 class="text-xl font-bold text-gray-900">Model Performance Summary</h3>
+              </div>
+              <p class="text-gray-600">The table below details the performance metrics for all pipeline configurations tested across training, cross-validation, and test sets. The models are ranked according to their total performance.</p>
+              
+              <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h4 class="text-md font-semibold text-gray-800">All-model-result.csv</h4>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Value</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Standarization</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selection</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modeling</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Accuracy</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test AUC</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test F1</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      ${tableRows}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Section 2: Visual Artifacts -->
+            <section class="space-y-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">2</div>
+                <h3 class="text-xl font-bold text-gray-900">Visual Artifacts</h3>
+              </div>
+              <p class="text-gray-600">The visual artifacts generated by your optimal model configuration.</p>
+              
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Correlation Heatmap -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">Correlation Heatmap</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_Correlation%20Heatmap.png" alt="Correlation Heatmap" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+
+                <!-- PCA -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">PCA</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_PCA.png" alt="PCA" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+
+                <!-- PLS -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">PLS</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_PLS.png" alt="PLS" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+
+                <!-- UMAP -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">UMAP</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_UMAP.png" alt="UMAP" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+                
+                <!-- Feature Importance -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">Feature Importance</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <iframe src="/api/artifacts/${reportId}/feature_importance.html" title="Feature Importance" class="w-full h-96 border-0"></iframe>
+                  </div>
+                </div>
+                
+                <!-- Confusion Matrix -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">Confusion Matrix</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_Confusion%20Matrix.png" alt="Confusion Matrix" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+
+                <!-- ROC Curve -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">ROC Curve</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <img src="/api/artifacts/${reportId}/_ROC%20Curve.png" alt="ROC Curve" class="max-h-96 object-contain" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+'; this.classList.add('opacity-20');" />
+                  </div>
+                </div>
+
+                <!-- SHAP Plot -->
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h4 class="text-md font-semibold text-gray-800">SHAP Summary Plot</h4>
+                  </div>
+                  <div class="p-6 bg-white flex justify-center">
+                    <iframe src="/api/artifacts/${reportId}/shap_plot.html" title="SHAP Plot" class="w-full h-96 border-0"></iframe>
+                  </div>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Section 3: AI Narrative Generation -->
+            <section class="border-t border-gray-100 pt-10 text-center">
+              <h3 class="text-2xl font-bold text-gray-900 mb-4">Generate Clinical AI Narrative</h3>
+              <p class="text-gray-500 mb-8 max-w-2xl mx-auto">Leverage advanced LLMs to automatically generate a comprehensive, clinically-relevant narrative report explaining these statistical results in detail.</p>
+              
+              <button title="Action" aria-label="Action" id="btn-generate-ai" onclick="generateAI('${reportId}')" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:scale-105">
+                <i data-lucide="file-text" class="w-5 h-5 mr-2"></i>
+                Open AI Report
+              </button>
+              
+              <!-- AI Loading Stream -->
+              <div id="ai-progress-container" class="hidden mt-8 max-w-3xl mx-auto text-left">
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 shadow-inner">
+                  <div class="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span id="ai-status-text">Initializing AI Report Engine...</span>
+                    <span id="ai-progress-text">0%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                    <div id="ai-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                  </div>
+                  
+                  <div class="mt-4 bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto">
+                    <div id="ai-terminal-logs" class="font-mono text-xs text-green-400 space-y-1"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- AI Final HTML Output -->
+              <div id="ai-report-content" class="hidden mt-12 text-left">
+                 <!-- The HTML report will be embedded here -->
+              </div>
+            </section>
+            
+          </div>
+        `;
+
+        container.innerHTML = htmlContent;
+        if (window.lucide) lucide.createIcons();
+
+      } catch (err) {
+        container.innerHTML = `<div class="p-8 text-center text-red-600"><p>Failed to load results: ${err.message}</p></div>`;
+      }
+    }
+
+    function generateAI(reportId) {
+      window.location.href = `/report/${reportId}/html?direct=true`;
+    }
+
+    function pollAIProgress(reportId) {
+      const eventSource = new EventSource(`/report/stream/${reportId}`);
+      const logsDiv = document.getElementById('ai-terminal-logs');
+      const progressBar = document.getElementById('ai-progress-bar');
+      const statusText = document.getElementById('ai-status-text');
+      const progressText = document.getElementById('ai-progress-text');
+
+      eventSource.onmessage = function (event) {
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          statusText.innerText = "AI Narrative Generated Successfully!";
+          progressBar.style.width = "100%";
+          progressText.innerText = "100%";
+
+          // Fetch the generated HTML report natively
+          fetch(`/report/${reportId}/html?direct=true`)
+            .then(res => res.text())
+            .then(html => {
+              document.getElementById('ai-progress-container').classList.add('hidden');
+              const reportDiv = document.getElementById('ai-report-content');
+              reportDiv.classList.remove('hidden');
+              reportDiv.innerHTML = html;
+            });
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          if (data.progress_pct) {
+            let pct = (data.progress_pct - 50) * 2;
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            progressBar.style.width = pct + "%";
+            progressText.innerText = pct + "%";
+          }
+          if (data.message) {
+            statusText.innerText = data.message;
+          }
+          if (data.log) {
+            const line = document.createElement('div');
+            line.innerText = "> " + data.log.replace(/\x1b\[[0-9;]*m/g, '');
+            logsDiv.appendChild(line);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+          }
+          if (data.status === 'FAILED') {
+            eventSource.close();
+            statusText.innerText = "Failed: " + data.message;
+            statusText.classList.add("text-red-500");
+          }
+        } catch (e) { }
+      };
+
+      eventSource.onerror = function () {
+        eventSource.close();
+        statusText.innerText = "Connection lost.";
+      };
+    }
+  </script>
+</body>
+
+</html>

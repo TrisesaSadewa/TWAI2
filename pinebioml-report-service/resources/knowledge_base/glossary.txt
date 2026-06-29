@@ -1,0 +1,10 @@
+Biomedical Machine Learning Glossary (Layperson Definitions):
+- Algorithm / Model: A mathematical formula or set of rules trained to recognize patterns in data to make predictions.
+- Biomarker: A measurable biological indicator (like a specific protein or gene) that signals the presence or state of a disease.
+- Cross-Validation: A testing method where the dataset is repeatedly chopped into different pieces to test the model multiple times, ensuring the model's reliability isn't just a fluke.
+- False Positive: The model incorrectly predicts that a patient has the condition when they actually do not (a "false alarm").
+- False Negative: The model incorrectly predicts that a patient is healthy when they actually have the condition (a "miss").
+- Feature: A single measurable property or characteristic (e.g., patient age, gene expression level).
+- Target / Class: What the model is trying to predict (e.g., "Cancer" vs "Healthy").
+- Overfitting: When a model memorizes the training data too specifically, like memorizing answers to a practice test, but fails on the real exam.
+- Dimensionality Reduction: Techniques (like PCA or UMAP) used to compress thousands of features into a 2D or 3D map so humans can visualize the underlying patterns.

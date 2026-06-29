@@ -1,0 +1,634 @@
+from sklearn import metrics
+from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.pipeline import Pipeline
+from pandas import DataFrame, Series, concat
+from sklearn.base import is_classifier, is_regressor
+from numpy import sqrt
+import time
+from sklearn.base import BaseEstimator
+
+
+class data_source():
+    """
+    The data_source is a placeholder for various data source. it will override the data flow of Pine.
+    Notice that the label y and the order should the same for each datasource.
+    """
+
+    def __init__(
+        self,
+        train_x: DataFrame,
+        test_x: DataFrame = None,
+    ):
+        self.train_x = train_x
+        self.test_x = test_x
+
+    def fit(self, x: DataFrame, y: Series):
+
+        return self
+
+    def transform(self, x: DataFrame):
+
+        return self.test_x
+
+    def fit_transform(self, x: DataFrame, y: Series):
+
+        return self.train_x
+
+
+class sklearn_esitimator_wrapper(BaseEstimator):
+    """
+    A basic wrapper for sklearn_esitimator. It transfer the data pipeline of sklearn from numpy.array to pandas.DataFrame.    
+    If you want to pass any model with api in sklearn style into Pine, you should wrap it in wrapper.
+    """
+
+    def __init__(self, kernel: object):
+        """
+
+        Args:
+            kernel (object): a sklearn esitimator. for example: sklearn.ensemble.RandomForestClassifier or sklearn.ensemble.RandomForestRegressor
+        """
+
+        self.kernel = kernel
+
+    def fit(self, x: DataFrame, y: Series, retune=True) -> object:
+        """
+        sklearn esitimator api: fit
+
+        Args:
+            x (DataFrame): feature
+            y (Series): label
+            retune (bool, optional): To retune the model or not. For sklearn_esitimator_wrapper, it is just a placeholder without acutual facility. Defaults to True.
+
+        Returns:
+            object: A sklearn_esitimator within pandas data flow.
+        """
+        self.label_name_ = y.name
+        self.kernel.fit(x, y)
+        return self
+
+    def predict(self, x: DataFrame) -> Series:
+        """
+        sklearn esitimator api: predict
+
+        Args:
+            x (DataFrame): feature
+
+        Returns:
+            Series: kernel prediction
+        """
+
+        return Series(self.kernel.predict(x),
+                      index=getattr(x, "index", None),
+                      name=self.label_name_)
+
+    def predict_proba(self, x: DataFrame) -> DataFrame:
+        """
+        sklearn esitimator api: predict_proba for classification
+
+        Args:
+            x (DataFrame): feature
+
+        Raises:
+            NotImplementedError: Regression has no attribute 'predict_proba'
+
+        Returns:
+            DataFrame: predicted probability with shape (n_sample, n_class)
+        """
+        if "predict_proba" in dir(self.kernel):
+            return DataFrame(self.kernel.predict_proba(x),
+                             index=getattr(x, "index", None),
+                             columns=self.kernel.classes_)
+        else:
+            raise NotImplementedError(
+                "{} do not have attribute 'predict_proba'.".format(
+                    self.kernel.__str__()))
+
+    def is_regression(self) -> bool:
+        return is_regressor(self.kernel)
+
+    def pine_ordering(self):
+        return 0
+
+    def detail(self):
+        return None
+
+
+class classification_scorer():
+    """
+    A utility to calculate classification scores.    
+    The result will contain mcc(matthews corrcoef), acc(accuracy) and support(the number of samples), furthermore:    
+        if target_label was given(not None), then sensitivity, specificity and coresponding roc-auc score will be added to result.    
+        if multi_class_extra is True, then one vs rest macro_auc, cross_entropy and cohen_kappa will be added to result.    
+    """
+
+    def __init__(self,
+                 target_label: str = None,
+                 prefix: str = "",
+                 multi_class_extra: bool = False):
+        """
+
+        Args:
+            target_label (str, optional): the name of target_label. For example, the label in a binary classification task might be {'pos', 'neg'}. Then you can assign 'neg' to target_label, and the result will contain sensitivity, specificity and roc-auc score of label 'neg'. Defaults to None.
+            prefix (str, optional): prefix before score names. For example suppose prefix="Train_", then all the scores in result will be like "Train_mcc". Defaults to "".
+            multi_class_extra (bool, optional): _description_. Defaults to False.
+        """
+
+        self.prefix = prefix
+        self.target_label = target_label
+        self.multi_class_extra = multi_class_extra
+
+    def score(self,
+              y_true: Series,
+              y_pred_prob: DataFrame,
+              y_pred: Series = None) -> dict[str, float]:
+        """
+        Scoring y_true and y_pred_prob.
+
+        Args:
+            y_true (Series): The ground True.
+            y_pred_prob (DataFrame): The prediction from an estimator. Shape should be (n_sample, n_classes)
+            y_pred (Series, optional): The prediction made by model. For Binary classification models, the prediction may differ from prob.argmax because of threshold tuning. Defaults to None.
+
+        Returns:
+            dict[str, float]: The result stored in a dict, be like {'score_name': score}.
+        """
+        if y_pred is None:
+            y_pred = y_pred_prob.idxmax(axis=1)
+
+        result = {}
+        if not self.target_label is None:
+            (_, result["sensitivity"], result["f1"],
+             _) = metrics.precision_recall_fscore_support(
+                 y_true=(y_true == self.target_label),
+                 y_pred=(y_pred == self.target_label),
+                 average="binary",
+                 pos_label=True)
+
+            (_, result["specificity"], _,
+             _) = metrics.precision_recall_fscore_support(
+                 y_true=(y_true == self.target_label),
+                 y_pred=(y_pred == self.target_label),
+                 average="binary",
+                 pos_label=False)
+
+            # binary
+            result["auc"] = metrics.roc_auc_score(
+                y_true == self.target_label, y_pred_prob[self.target_label])
+
+        if self.multi_class_extra:
+            result["macro_auc"] = metrics.roc_auc_score(
+                y_true,
+                y_pred_prob,
+                multi_class="ovr",
+                labels=y_pred_prob.columns)
+            result["macro_f1"] = metrics.f1_score(y_true,
+                                                  y_pred,
+                                                  average="macro")
+            result["cross_entropy"] = metrics.log_loss(y_true, y_pred_prob)
+            result["cohen_kappa"] = metrics.cohen_kappa_score(y_true, y_pred)
+
+        result["mcc"] = metrics.matthews_corrcoef(y_true, y_pred)
+        result["accuracy"] = metrics.accuracy_score(y_true, y_pred)
+        result["support"] = len(y_true)
+
+        prefix_result = {}
+        for score in result:
+            prefix_result[self.prefix + score] = result[score]
+
+        return prefix_result
+
+
+class regression_scorer():
+    """
+    A utility to calculate regression scores. rmse(rooted mean squared error), r2(R squared) and support(the number of samples) are included.    
+    if y_true and y_pred are all positive, then mape(mean absolute percentage error) will be added.    
+    """
+
+    def __init__(self, prefix: str = "", target_label: str = None):
+        """
+
+        Args:
+            prefix (str, optional): prefix before score names. For example suppose prefix="Train_", then all the scores in result will be like "Train_mse". Defaults to "".
+            target_label (str, optional): A placehold without any facility. Defaults to None.
+        """
+
+        self.prefix = prefix
+
+    def score(self,
+              y_true: Series,
+              y_pred: Series,
+              place_holder=None) -> dict[str, float]:
+        """
+        calculate the scores
+
+        Args:
+            y_true (Series): Ground true.
+            y_pred (Series): predicted values.
+            place_holder (None): A placeholder corresponding to classification_scorer's pred argument.
+
+        Returns:
+            dict[str, float]: The result stored in a dict, be like {'score_name': score}.
+        """
+
+        result = {}
+        result["rmse"] = metrics.root_mean_squared_error(y_true, y_pred)
+        result["r2"] = metrics.r2_score(y_true, y_pred)
+        if (y_true > 0).all() and (y_pred > 0).all():
+            result["mape"] = metrics.mean_absolute_percentage_error(
+                y_true, y_pred)
+        result["support"] = len(y_true)
+
+        prefix_result = {}
+        for score in result:
+            prefix_result[self.prefix + score] = result[score]
+
+        return prefix_result
+
+
+# ToDo: the Integration of .predict and .transform
+class Pine():
+    """
+    Deep first traversal the given experiment setting.    
+    the last step of experiment sould be model.    
+    Please refer to example_Pine.ipynb for usage.    
+
+
+    note: experiment step and experiment stage is the same thing.    
+    """
+
+    def __init__(self,
+                 experiment: list[tuple[str, dict[str, object]]],
+                 target_label: str = None,
+                 cv_result: bool = False,
+                 evaluate_ncv: int = 5):
+        """
+        Args:
+            experiment (list[tuple[str, dict[str, object]]]): list of experiment steps. step should be in the form: ('step_name', {'method_name': method}). it could be several method in one step and they will fork in deep first traversal. Each method should be either sklearn estimator or transformer.
+            target_label (str, optional): the name of target_label. For example, the label in a binary classification task might be {'pos', 'neg'}. Then you can assign 'neg' to target_label, and the result will contain sensitivity, specificity and roc-auc score of label 'neg'. Defaults to None.
+            cv_result (bool, optional): Rcording the scores and prediction of cross validation. Defaults to False.
+            evaluate_cv (int, optional): The number of folds to evaluate cv_result after pipeline tuned. Defaults to 5.
+        """
+
+        self.experiment = experiment
+        self.total_stage = len(experiment)
+        self.target_label = target_label
+        self.cv_result = cv_result
+        self.evaluate_ncv = evaluate_ncv
+
+        self.result = []
+
+        self.train_pred = []
+        self.cv_pred = []
+        self.test_pred = []
+
+    def do_stage(self, train_x: DataFrame, train_y: Series, test_x: DataFrame,
+                 test_y: Series, stage: int, record_path: dict,
+                 record_time: dict) -> None:
+        """
+        the recursive function to traversal the experiment.    
+        the socres and path will be stored in self.result amd self.____pred, so there is no return in recursive function.     
+
+        Args:
+            train_x (pd.DataFrame): training x
+            train_y (pd.Series): training y
+            test_x (pd.DataFrame): training x
+            test_y (pd.Series): training y
+            stage (int): the order of current stage in the experiment setting
+            record_path (dict): record_path the traversal path in a dict of str
+            record_time (dict): record_time the traversal time in a dict of str
+        """
+
+        # unzip the stage, stage = (stage_name, {operator_name: operator})
+        stage_name, operators = self.experiment[stage]
+
+        # fork to next stage according to the diffirent operator (opt)
+        for opt_name in operators:
+            record_path[stage_name] = opt_name
+
+            opt = operators[opt_name]
+
+            # if not the last stage
+            if stage < self.total_stage - 1:
+                time_start = time.time()
+
+                # transform by operators
+                processed_train_x = opt.fit_transform(train_x, train_y)
+                if test_x is not None:
+                    processed_test_x = opt.transform(test_x)
+                else:
+                    processed_test_x = test_x
+
+                time_end = time.time()
+                record_time[stage_name + "_time"] = time_end - time_start
+                # reccursivly call
+                self.do_stage(processed_train_x, train_y, processed_test_x,
+                              test_y, stage + 1, record_path, record_time)
+
+            # the last layer, it should be models
+            else:
+                model = opt
+                record_path["model_ordering"] = model.pine_ordering()
+
+                if not model.is_regression():
+                    # is not regression
+                    f = model.predict_proba
+                    scorer = classification_scorer
+                else:
+                    # is regression
+                    f = model.predict
+                    scorer = regression_scorer
+                time_start = time.time()
+                # tune/fit the model on training data
+                model.fit(train_x, train_y)
+                time_end = time.time()
+                record_time[stage_name + "_fit_time"] = time_end - time_start
+
+                # compute the training score
+                time_start = time.time()
+                train_pred = f(train_x)
+                time_end = time.time()
+                record_time[stage_name +
+                            "_predict_time"] = time_end - time_start
+
+                # compute the prediction for those who has a tuned threshold in binary classification task.
+                train_prediction = model.predict(train_x)
+
+                self.train_pred.append(train_pred)
+                train_scores = scorer(prefix="train_",
+                                      target_label=self.target_label).score(
+                                          train_y, train_pred,
+                                          train_prediction)
+
+                if test_x is not None:
+                    # if there is testing data, compute the testing score.
+                    test_pred = f(test_x)
+                    test_prediction = model.predict(test_x)
+                    self.test_pred.append(test_pred)
+                    test_scores = scorer(prefix="test_",
+                                         target_label=self.target_label).score(
+                                             test_y, test_pred,
+                                             test_prediction)
+                else:
+                    test_scores = {}
+
+                if self.cv_result:
+                    # compute the cross validation score on training set
+                    fold_scores = []
+                    cv_pred = []
+
+                    if model.is_regression():
+                        if self.evaluate_ncv == -1:
+                            from sklearn.model_selection import LeaveOneOut
+                            cross_validation = LeaveOneOut()
+                        else:
+                            cross_validation = KFold(n_splits=self.evaluate_ncv,
+                                                     shuffle=True,
+                                                     random_state=133)
+                    else:
+                        if self.evaluate_ncv == -1:
+                            from sklearn.model_selection import LeaveOneOut
+                            cross_validation = LeaveOneOut()
+                        else:
+                            cross_validation = StratifiedKFold(
+                                n_splits=self.evaluate_ncv,
+                                shuffle=True,
+                                random_state=133)
+
+                    for (train_idx, valid_idx) in cross_validation.split(
+                            train_x, train_y):
+
+                        # fit on training fold
+                        model.fit(train_x.iloc[train_idx],
+                                  train_y.iloc[train_idx],
+                                  retune=False)
+
+                        # score on testing fold
+                        fold_pred = f(train_x.iloc[valid_idx])
+                        #fold_prediction = model.predict(train_x.iloc[valid_idx])
+
+                        cv_pred.append(fold_pred)
+                        fold_scores.append(
+                            scorer(prefix="cv_",
+                                   target_label=self.target_label).score(
+                                       train_y.iloc[valid_idx], fold_pred))
+                    # average the fold scores
+                    self.cv_pred.append(concat(cv_pred, axis=0))
+                    valid_scores = DataFrame(fold_scores).mean().to_dict()
+                    # TODO accurate statistic estimate of std.
+                    if self.evaluate_ncv == -1:
+                        valid_std = {}
+                    else:
+                        valid_std = (DataFrame(fold_scores).std() *
+                                     sqrt(self.evaluate_ncv /
+                                          (self.evaluate_ncv - 1))).to_dict()
+                        valid_std = {f"{k}_std": v for k, v in valid_std.items()}
+                else:
+                    valid_scores = {}
+                    valid_std = {}
+
+                # re-fit
+                model.fit(train_x, train_y, retune=False)
+
+                # concatenate the score dicts
+                all_scores = dict(**record_path, **record_time, **train_scores,
+                                  **valid_scores, **valid_std, **test_scores)
+                self.result.append(all_scores)
+
+    def do_experiment(self, train_x, train_y, test_x=None, test_y=None):
+        """
+        the first call of recurssive fuction.
+
+        Args:
+            train_x (pd.DataFrame): training x
+            train_y (pd.Series): training y
+            test_x (pd.DataFrame): training x
+            test_y (pd.Series): training y
+
+        Returns:
+            pd.DataFrame: the result
+        """
+        # clear the results.
+        self.result = []
+        self.do_stage(train_x, train_y, test_x, test_y, 0, {}, {})
+            
+        # ── FastAPI Export Hook ──────────────────────────────────────
+        try:
+            import requests, json, os
+
+        # Determine task type string (bridges the gap from boolean)
+            is_regr = any(
+                self.experiment[-1][1][m].is_regression()
+                for m in self.experiment[-1][1]
+            )
+            task_type_str = "Predict a Number (Regression)" if is_regr else "Predict a Category (Classification)"
+
+        # Map Pine.result → notebook's all_models_data schema
+            all_models_mapped = []
+            for r in self.result:
+                test_acc = r.get("test_accuracy", r.get("train_accuracy", r.get("test_r2", r.get("train_r2", 0))))
+                test_auc = r.get("test_auc", r.get("train_auc", 0))
+                test_f1 = r.get("test_f1", r.get("train_f1", 0))
+                entry = {
+                    "model_name": r.get(self.experiment[-1][0], "Unknown"),
+                    "test_accuracy": test_acc,
+                    "test_auc": test_auc,
+                    "test_f1": test_f1,
+                    "best_params": str({k: r[k] for k in r if k not in [
+                        "model_ordering", "train_mcc", "train_accuracy", "test_mcc",
+                        "test_accuracy", "test_auc", "test_f1", "cv_mcc", "cv_accuracy"
+                    ] and not k.endswith("_time")})
+                }
+                all_models_mapped.append(entry)
+
+        # Find best model's metrics (maps to notebook's pipeline_results)
+            best_idx = 0
+            best_val = -float('inf')
+            for i, r in enumerate(self.result):
+                score = r.get("test_mcc", r.get("train_mcc", r.get("test_r2", r.get("train_r2", 0))))
+                if score > best_val:
+                    best_val = score
+                    best_idx = i
+            best = self.result[best_idx] if self.result else {}
+
+            metrics_mapped = {
+                "accuracy": f"{best.get('test_accuracy', best.get('train_accuracy', 0))*100:.2f}%",
+                "ROC-AUC": f"{best.get('test_auc', best.get('train_auc', 0)):.4f}",
+                "F1-Score": f"{best.get('test_f1', best.get('train_f1', 0)):.4f}",
+                "mcc": f"{best.get('test_mcc', best.get('train_mcc', 0)):.4f}",
+                "specificity": f"{best.get('test_specificity', best.get('train_specificity', 0))*100:.2f}%",
+            }
+
+            export_payload = {
+                "job_id": os.environ.get("PINEBIOML_JOB_ID", f"pine_{id(self)}"),
+                "dataset_name": os.environ.get("PINEBIOML_DATASET", "PineBioML_run"),
+                "task_type": task_type_str,
+                "metrics": metrics_mapped,
+                "all_models_data": all_models_mapped,
+                "selected_features": list(train_x.columns),
+                "imbalance_metadata": {},
+                "artifacts": {}
+            }
+
+            # ── 1. Save all_models_data to CSV ───────────────────────────
+            try:
+                import pandas as pd
+                csv_dir = "./output/images/"
+                os.makedirs(csv_dir, exist_ok=True)
+                job_id = os.environ.get("PINEBIOML_JOB_ID", f"pine_{id(self)}")
+                csv_path = os.path.join(csv_dir, f"{job_id}_all_models.csv")
+                pd.DataFrame(all_models_mapped).to_csv(csv_path, index=False)
+            except Exception as e:
+                print(f"⚠️ Failed to save models CSV: {e}")
+
+            # ── 2. Trigger the new Plot Artifacts ────────────────────────
+            try:
+                from PineBioML.report.utils import feature_importance_plot, learning_curve_plot, pr_curve_plot
+                # We need the actual best model object from the last stage
+                best_model_obj = self.experiment[-1][1][best.get(self.experiment[-1][0])]
+                
+                # Feature Importance
+                feature_importance_plot(prefix=job_id, save_path=csv_dir).make_figure(best_model_obj, list(train_x.columns))
+                
+                # Learning Curve (only works if model is MLP)
+                learning_curve_plot(prefix=job_id, save_path=csv_dir).make_figure(best_model_obj)
+                
+                # PR Curve (classification only)
+                if not is_regr:
+                    # We need the best model's predictions. This is stored in self.test_pred[best_idx]
+                    best_test_pred = self.test_pred[best_idx] if self.test_pred else self.train_pred[best_idx]
+                    eval_y = test_y if test_x is not None else train_y
+                    pr_curve_plot(prefix=job_id, save_path=csv_dir).make_figure(eval_y, best_test_pred)
+                    
+            except Exception as e:
+                print(f"⚠️ Failed to generate advanced plots: {e}")
+            # ─────────────────────────────────────────────────────────────
+
+            resp = requests.post(
+                os.environ.get("FASTAPI_EXPORT_URL", "http://127.0.0.1:8001/report/generate"),
+                json=export_payload,
+                headers={"X-API-Key": os.environ.get("PINEBIOML_API_KEY", "pinebioml_default_key_change_me")},
+                timeout=5
+            )
+            if resp.ok:
+                resp_json = resp.json()
+                print(f"✅ Exported pipeline results to FastAPI!")
+                print(f"--------------------------------------------------")
+                print(f"📄 View your AI Report here:")
+                print(f"   Portal: http://127.0.0.1:8001/access")
+                print(f"   Report ID: {resp_json.get('report_id')}")
+                print(f"   Token: {resp_json.get('access_token')}")
+                print(f"--------------------------------------------------")
+        except Exception as e:
+            print(f"⚠️ FastAPI export skipped: {e}")
+        # ─────────────────────────────────────────────────────────────
+        
+        return self.experiment_results()
+
+    def experiment_results(self, timer=False, std=False) -> DataFrame:
+        """
+        Args:
+            timer (bool): To return the time records.
+            std (bool): To return the cv std.
+
+        Returns:
+            DataFrame: The experiment results.
+        """
+
+        result = DataFrame(self.result)
+        to_drop = []
+        if not timer:
+            to_drop += [i for i in result.columns if i[-5:] == "_time"]
+        if not std:
+            to_drop += [i for i in result.columns if i[-4:] == "_std"]
+
+        if len(to_drop) == 0:
+            return result
+        else:
+            return result.drop(to_drop, axis=1)
+
+    def experiment_predictions(self):
+        """
+        cv_pred will be empty if cv_result was False in initialization.
+
+        Returns:
+            train_pred, cv_pred, test_pred: the prediction of training set, cross validation and  testing set
+        """
+        return self.train_pred, self.cv_pred, self.test_pred
+
+    def recall_model(self, id):
+        """
+        query the last experiment result by id and build the pipeline object.
+
+        Todo: A proper way to fit the pipeline object.
+
+        Args:
+            id (int): the order of experiment path.
+
+        Returns:
+            sklearn.pipeline.Pipeline: ready to use object.
+        """
+
+        model_spec = self.result[id]
+        model_pipeline = []
+        for (step_name, methods) in self.experiment:
+            using_method = model_spec[step_name]
+            model_pipeline.append((step_name, methods[using_method]))
+        return Pipeline(model_pipeline)
+
+    def experiment_detail(self):
+        """
+        show the experiment settings including:    
+            1. models parameters searching range and results of the last experiment round.
+
+        Returns:
+            pandas.DataFrame
+        """
+        _, models = self.experiment[-1]
+
+        params = []
+        for n in list(models):
+            m = models[n]
+            tmp = m.detail()
+            if tmp is not None:
+                params.append(tmp)
+        return concat(params, axis=0)

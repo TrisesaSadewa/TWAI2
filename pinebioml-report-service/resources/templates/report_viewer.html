@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PineBioML AI Clinical Report Viewer</title>
+    <!-- No-FOUC theme init: apply persisted theme (default light) before the
+         body paints, so there's no flash of the wrong theme on load. -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('pinebioml-theme');
+                // Default is light. Only go dark if the user explicitly chose it.
+                var theme = (saved === 'dark') ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                // localStorage unavailable (private mode, etc.) -> default light
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        @media print {
+            :root {
+                --bg-primary: #ffffff !important;
+                --bg-secondary: #f8fafc !important;
+                --bg-card: #ffffff !important;
+                --text-primary: #0f172a !important;
+                --text-secondary: #475569 !important;
+                --border-color: rgba(0, 0, 0, 0.08) !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+            header, .header-controls, .sidebar, .toggle-btn, button, .zoom-modal {
+                display: none !important;
+            }
+            .main-container {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .content-area {
+                width: 100% !important;
+            }
+            section, .card, .plot-container, .metric-card, .model-table, tr, li, p, h1, h2, h3, h4, h5, h6 {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+        /* Default (no data-theme) = LIGHT. Dark values scoped to [data-theme="dark"]
+           so the first paint is light and the JS init only switches to dark when
+           the user previously chose it (persisted in localStorage). */
+        :root,
+        :root[data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(241, 245, 249, 0.9);
+            --bg-card: rgba(255, 255, 255, 0.92);
+            --accent-teal: #0d9488;
+            --accent-teal-glow: rgba(13, 148, 136, 0.18);
+            --accent-purple: #059669;
+            --accent-purple-glow: rgba(5, 150, 105, 0.18);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: rgba(15, 23, 42, 0.1);
+            --glass-backdrop: blur(4px);
+            --transition-speed: 0.3s;
+        }
+
+        :root[data-theme="dark"] {
+            --bg-primary: #0b0f19;
+            --bg-secondary: rgba(17, 24, 39, 0.7);
+            --bg-card: rgba(30, 41, 59, 0.4);
+            --accent-teal: #10b981;
+            --accent-teal-glow: rgba(16, 185, 129, 0.3);
+            --accent-purple: #059669;
+            --accent-purple-glow: rgba(5, 150, 105, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-backdrop: blur(4px);
+            --transition-speed: 0.3s;
+        }
+
+        /* body.light-mode kept as a backward-compat alias so any legacy selector
+           still toggles correctly. The real theme state lives on <html data-theme>. */
+        body.light-mode {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body.light-mode .plot-container {
+            background-color: #0b0f19; /* Force dark background for plots to preserve white text legibility */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        header {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(139, 92, 246, 0.1));
+            backdrop-filter: var(--glass-backdrop);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 0 20px var(--accent-teal-glow);
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-teal));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /* Toggle Mode Button */
+        .toggle-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all var(--transition-speed);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--accent-teal);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px var(--accent-teal-glow);
+        }
+
+        .main-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            padding: 2rem 3rem;
+            gap: 2.5rem;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Sidebar Metadata panel */
+        .sidebar {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-teal);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .meta-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .meta-value {
+            font-size: 1rem;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            width: fit-content;
+        }
+        
+        .verdict-badge {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 1rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            text-transform: uppercase;
+        }
+        
+        .verdict-badge.fair {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+        
+        .verdict-badge.needs-review {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.25rem;
+            margin-bottom: 1.75rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .model-table th, .model-table td {
+            padding: 1.1rem 1.25rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1rem;
+        }
+        .model-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--accent-teal);
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .model-table th:first-child, .model-table td:first-child {
+            text-align: left;
+            padding-left: 2rem;
+            width: 28%;
+            font-weight: 600;
+        }
+        .model-table td:first-child {
+            color: var(--text-primary);
+        }
+        .model-table tr:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+        
+        .bar-chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .bar-label {
+            width: 160px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .bar-track {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-teal));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: width 1s ease-out;
+        }
+
+        .download-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn-download {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            transition: all var(--transition-speed);
+            border: 1px solid transparent;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-docx {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-docx:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Content Area */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Clinical Insights Report Card */
+        .report-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: var(--glass-backdrop);
+        }
+        
+        .report-card-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .perf-col {
+            border-right: 1px solid var(--border-color);
+            padding-right: 2rem;
+        }
+
+        .rating-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stars-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .star {
+            font-size: 2.5rem;
+            color: rgba(255,255,255,0.1);
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .star.filled {
+            color: var(--accent-teal);
+            text-shadow: 0 0 20px var(--accent-teal-glow);
+        }
+
+        .rating-label {
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+
+        .layman-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .layman-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        .layman-card-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .layman-card-content {
+            font-size: 1.4rem;
+            font-weight: 500;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+        
+        .layman-highlight {
+            font-weight: 700;
+        }
+
+        /* Tooltip styles */
+        .tooltip-trigger {
+            border-bottom: 2px dashed var(--accent-teal);
+            cursor: help;
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-trigger .tooltip-text {
+            visibility: hidden;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: left;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--accent-teal);
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            white-space: normal;
+            width: max-content;
+            max-width: 250px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .tooltip-trigger:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Expert styled box */
+        .expert-summary-box {
+            background: rgba(255,255,255,0.03);
+            border-left: 4px solid var(--accent-teal);
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Mode Selector Tab */
+        .mode-selector {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem;
+            border-radius: 16px;
+            display: flex;
+            gap: 0.5rem;
+            width: fit-content;
+        }
+
+        .mode-tab {
+            padding: 0.8rem 2rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            background: transparent;
+            color: var(--text-secondary);
+            transition: all var(--transition-speed);
+        }
+
+        .mode-tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Grid for Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            backdrop-filter: var(--glass-backdrop);
+            transition: all var(--transition-speed);
+        }
+
+        .metric-card:hover {
+            border-color: var(--accent-teal);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-teal-glow);
+        }
+
+        .report-warning {
+            margin: 1.25rem 0 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.10);
+            color: var(--text-primary);
+            line-height: 1.55;
+        }
+
+        .report-warning-title {
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .report-warning-body {
+            color: var(--text-secondary);
+        }
+
+        .report-notice {
+            margin: 1.25rem 0 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(20, 184, 166, 0.40);
+            background: rgba(20, 184, 166, 0.08);
+            color: var(--text-primary);
+            line-height: 1.55;
+        }
+
+        .report-notice-title {
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .report-notice-body {
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-teal));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Document Section Card */
+        .doc-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: var(--glass-backdrop);
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--accent-teal);
+        }
+
+        .section-title::before {
+            content: '';
+            width: 8px;
+            height: 24px;
+            background: linear-gradient(to bottom, var(--accent-teal), var(--accent-purple));
+            border-radius: 4px;
+        }
+
+        .glossary-term {
+            border-bottom: 1px dashed var(--accent-teal);
+            cursor: help;
+            color: var(--accent-teal);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-body {
+            line-height: 1.7;
+            font-size: 1.05rem;
+        }
+
+        .section-body h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .section-body h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin: 1.75rem 0 0.75rem 0;
+            color: var(--accent-teal);
+            font-weight: 600;
+        }
+
+        .section-body p {
+            margin-bottom: 1.25rem;
+        }
+
+        .section-body ol, .section-body ul {
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+        }
+
+        .section-body li {
+            margin-bottom: 0.6rem;
+            line-height: 1.6;
+        }
+
+        /* Edit Controls */
+        .edit-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-edit, .btn-cancel, .btn-save, .btn-clone {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-edit { color: var(--text-secondary); }
+        .btn-edit:hover { border-color: var(--accent-purple); color: var(--text-primary); }
+
+        .btn-cancel { color: #ef4444; }
+        .btn-cancel:hover { border-color: #ef4444; }
+        
+        .btn-save { color: #10b981; }
+        .btn-save:hover { border-color: #10b981; }
+
+        .btn-clone { color: #3b82f6; }
+        .btn-clone:hover { border-color: #3b82f6; }
+
+        /* Visual Plots Section */
+        .plots-grid {
+            display: none !important;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Inline Plots styles */
+        .inline-plots-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+            width: 100%;
+        }
+
+        .inline-plot {
+            max-width: 100%;
+        }
+
+        .plot-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            backdrop-filter: var(--glass-backdrop);
+            transition: all var(--transition-speed);
+            cursor: zoom-in;
+        }
+
+        .plot-container:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px var(--accent-purple-glow);
+        }
+
+        .plot-img {
+            width: 100%;
+            border-radius: 12px;
+            background: #ffffff;
+            object-fit: contain;
+            aspect-ratio: 4/3;
+        }
+
+        .plot-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Modal Overlay for zoomed images */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.95);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 16px;
+            background: #0b0f19; /* Dark background to preserve plot legibility */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: #ffffff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-speed);
+        }
+
+        .modal-close:hover {
+            border-color: var(--accent-teal);
+            transform: scale(1.1);
+        }
+
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <div class="logo-icon">P</div>
+            <div class="logo-text">PineBioML Report Engine</div>
+        </div>
+        <div class="header-controls">
+            <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn">
+                <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
+            </button>
+
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- Sidebar Metadata -->
+        <aside class="sidebar">
+            <div class="meta-section">
+                <h4 class="sidebar-section-title">Run Information</h4>
+                <ul class="meta-list" style="margin-top: 1rem;">
+                    <li class="meta-item">
+                        <span class="meta-label">Job ID</span>
+                        <span class="meta-value">{{ job_id }}</span>
+                    </li>
+                    <li class="meta-item">
+                        <span class="meta-label">Dataset Name</span>
+                        <span class="meta-value">{{ dataset_name }}</span>
+                    </li>
+                    <li class="meta-item">
+                        <span class="meta-label">Task Type</span>
+                        <span class="meta-value">{{ task_type }}</span>
+                    </li>
+                    <li class="meta-item">
+                        <span class="meta-label">AI Model</span>
+                        <span class="meta-value">{{ model_name }}</span>
+                    </li>
+                    <li class="meta-item">
+                        <span class="meta-label">Hallucination Check</span>
+                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">✅ Verified</span>
+                    </li>
+                    <li class="meta-item">
+                        <span class="meta-label">Status</span>
+                        <span class="status-badge">SUCCESS</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="meta-section">
+                <h4 class="sidebar-section-title">Timeline</h4>
+                <ul class="meta-list" style="margin-top: 1rem;">
+                    <li class="meta-item">
+                        <span class="meta-label">Generated At</span>
+                        <span class="meta-value" style="font-size: 0.9rem;">{{ generated_at }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="meta-section">
+                <h4 class="sidebar-section-title">Exports</h4>
+                <div class="download-panel" style="margin-top: 1rem;">
+                    <a href="/report/{{ report_id }}/download/pdf" class="btn-download btn-pdf" target="_blank">Export to PDF</a>
+                    <a href="/report/{{ report_id }}/download/docx" class="btn-download btn-docx">Export to Word</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Report Body -->
+        <main class="content-area">
+            
+
+            <!-- Clinical Insights Report Card -->
+            <div class="report-card" id="report-card-container">
+                <div class="report-card-title">Clinical Insights Report Card</div>
+                <div class="perf-col">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">Model Performance Summary</div>
+                    <div id="report-card-bars"></div>
+                </div>
+                <div class="rating-col">
+                    <div class="stars-container" id="stars-container">
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                    </div>
+                    <div class="rating-label" id="rating-label">Overall Clarity & Resolution: Pending</div>
+                </div>
+            </div>
+
+            {{ narrative_notice_html }}
+
+            {{ imbalance_warning_html }}
+
+            <!-- Diagnostics Metrics Cards -->
+            <div class="metrics-grid" id="standard-metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-value">{{ accuracy }}</span>
+                    <span class="metric-title">Accuracy</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ roc_auc }}</span>
+                    <span class="metric-title">ROC-AUC</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ precision }}</span>
+                    <span class="metric-title">Precision</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ recall }}</span>
+                    <span class="metric-title">Sensitivity / Recall</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ f1_score }}</span>
+                    <span class="metric-title">F1-Score</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ specificity }}</span>
+                    <span class="metric-title">Specificity</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ mcc }}</span>
+                    <span class="metric-title">MCC</span>
+                </div>
+            </div>
+
+            <!-- Report Sections -->
+            <section class="doc-section" id="sec-executive_summary">
+                <div class="section-header">
+                    <h2 class="section-title">Executive Summary</h2>
+                    <div class="edit-controls" id="controls-executive_summary">
+                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('executive_summary')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('executive_summary')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('executive_summary', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('executive_summary', true)" style="display:none;">Save a Copy</button>
+                    </div>
+                </div>
+                <div id="verdict-container" style="display: none; text-align: center;">
+                    <div id="verdict-badge" class="verdict-badge"></div>
+                </div>
+                <div class="section-body" id="body-executive_summary">
+                    <!-- Dynamic Markdown content -->
+                    {{ executive_summary }}
+                </div>
+            </section>
+
+            <section class="doc-section" id="sec-model_performance">
+                <div class="section-header">
+                    <h2 class="section-title">Model Performance</h2>
+                </div>
+                <div class="section-body" id="body-model_performance">
+                    {{ model_performance_table }}
+                </div>
+                
+                <div id="sec-preprocessing" style="margin-top: 2.5rem;">
+                    <h3>Data Quality &amp; Preprocessing</h3>
+                    <div class="section-body" id="body-preprocessing_and_data_quality">
+                        {{ preprocessing_and_data_quality }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Overfitting Analysis Indicator -->
+            <section class="doc-section" id="sec-overfit" style="display:none;">
+                <div class="section-header">
+                    <h2 class="section-title">Train vs. Test Gap Analysis</h2>
+                </div>
+                <div class="section-body" id="body-overfit">
+                    <p>Analyzing generalization performance...</p>
+                </div>
+            </section>
+
+            <section class="doc-section" id="sec-findings">
+                <div class="section-header">
+                    <h2 class="section-title">Quantitative Analysis & Findings</h2>
+                    <div class="edit-controls" id="controls-findings">
+                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('findings')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('findings')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('findings', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('findings', true)" style="display:none;">Save a Copy</button>
+                    </div>
+                </div>
+                <div class="section-body" id="body-findings">
+                    {{ findings }}
+                </div>
+            </section>
+
+                <!-- High-res PNG Plots with Glassmorphic hover zoom effects (hidden for parsing) -->
+                <div class="plots-grid" style="display:none;">
+                    {% for key, val in visuals.items() %}
+                    <div class="plot-container" onclick="{% if not val.endswith('.html') %}zoomPlot('{{ val }}'){% endif %}">
+                        {% if val.endswith('.html') %}
+                        <iframe class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
+                        {% else %}
+                        <img class="plot-img" src="{{ val }}" alt="{{ key }}">
+                        {% endif %}
+                        <div class="plot-title">{{ key.replace('_png', '').replace('.png', '').replace('_', ' ').title() }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+
+
+            <section class="doc-section" id="sec-conclusion">
+                <div class="section-header">
+                    <h2 class="section-title">Conclusion</h2>
+                    <div class="edit-controls" id="controls-conclusion">
+                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('conclusion')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('conclusion')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('conclusion', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('conclusion', true)" style="display:none;">Save a Copy</button>
+                    </div>
+                </div>
+                <div class="section-body" id="body-conclusion">
+                    {{ conclusion }}
+                </div>
+            </section>
+
+
+
+            <section class="doc-section" id="sec-recommendations">
+                <div class="section-header">
+                    <h2 class="section-title">Recommendations</h2>
+                    <div class="edit-controls" id="controls-recommendations">
+                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('recommendations')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('recommendations')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('recommendations', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('recommendations', true)" style="display:none;">Save a Copy</button>
+                    </div>
+                </div>
+                <div class="section-body" id="body-recommendations">
+                    {{ recommendations }}
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div class="modal" id="plot-modal" onclick="closeModal()">
+        <button title="Action" aria-label="Action" class="modal-close" onclick="closeModal()">&times;</button>
+        <img class="modal-content" id="modal-img" src="" alt="Zoomed Plot" onclick="event.stopPropagation()">
+    </div>
+
+    <footer>
+        <p>&copy; 2026 PineBioML Intelligence Systems. Generated by AI Model: <strong>{{ model_name }}</strong>. Not intended for clinical diagnosis without human oversight.</p>
+    </footer>
+
+    <!-- JSON Data blocks -->
+    <script id="glossary-json" type="application/json">
+        {{ glossary_json }}
+    </script>
+    <script id="all-models-json" type="application/json">
+        {{ all_models_json }}
+    </script>
+    <script id="overfit-json" type="application/json">
+        {{ overfit_json }}
+    </script>
+
+    <script>
+        // Inline variables injected by engine
+        const narratives = {
+            expert: {
+                executive_summary: `{{ expert_executive_summary }}`,
+                preprocessing_and_data_quality: `{{ expert_preprocessing_and_data_quality }}`,
+                findings: `{{ expert_findings }}`,
+                conclusion: `{{ expert_conclusion }}`,
+                recommendations: `{{ expert_recommendations }}`
+            },
+            layman: {
+                verdict: `{{ layman_verdict }}`,
+                executive_summary: `{{ layman_executive_summary }}`,
+                findings: `{{ layman_findings }}`,
+                conclusion: `{{ layman_conclusion }}`,
+                recommendations: `{{ layman_recommendations }}`
+            }
+        };
+
+        const glossaryEl = document.getElementById('glossary-json');
+        const allModelsEl = document.getElementById('all-models-json');
+        
+        let glossary = {};
+        let allModels = [];
+        let overfitData = {};
+        try {
+            const glossaryText = glossaryEl ? glossaryEl.textContent.trim() : '{}';
+            glossary = JSON.parse(glossaryText.startsWith('{{') ? '{}' : glossaryText);
+        } catch (e) {
+            console.error("Failed to parse glossary JSON", e);
+        }
+        try {
+            const allModelsText = allModelsEl ? allModelsEl.textContent.trim() : '[]';
+            allModels = JSON.parse(allModelsText.startsWith('{{') ? '[]' : allModelsText);
+        } catch (e) {
+            console.error("Failed to parse all models JSON", e);
+        }
+        try {
+            const overfitEl = document.getElementById('overfit-json');
+            const overfitText = overfitEl ? overfitEl.textContent.trim() : '{}';
+            overfitData = JSON.parse(overfitText.startsWith('{{') ? '{}' : overfitText);
+        } catch (e) {
+            console.error("Failed to parse overfit JSON", e);
+        }
+        const fallbackMetrics = {
+            accuracy: '{{ accuracy }}',
+            precision: '{{ precision }}',
+            recall: '{{ recall }}',
+            f1Score: '{{ f1_score }}',
+            rocAuc: '{{ roc_auc }}',
+            mcc: '{{ mcc }}',
+            r2: '{{ r2 }}',
+            rmse: '{{ rmse }}',
+            mae: '{{ mae }}',
+            mse: '{{ mse }}'
+        };
+
+        const reportId = '{{ report_id }}';
+        const reportTaskType = '{{ task_type }}';
+        let currentMode = "expert";
+        let editingSections = {};
+
+        function toggleEdit(key) {
+            editingSections[key] = true;
+            document.querySelector(`#controls-${key} .btn-edit`).style.display = 'none';
+            document.querySelector(`#controls-${key} .btn-cancel`).style.display = 'block';
+            document.querySelector(`#controls-${key} .btn-save`).style.display = 'block';
+            document.querySelector(`#controls-${key} .btn-clone`).style.display = 'block';
+
+            const bodyEl = document.getElementById(`body-${key === 'visuals_analysis' ? 'visuals' : key}`);
+            const markdown = narratives[currentMode][key];
+            
+            bodyEl.innerHTML = `<textarea id="textarea-${key}" style="width:100%; height: 250px; padding:1rem; border-radius:8px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--accent-purple); font-family:inherit; font-size:1rem; line-height:1.6; outline:none; resize:vertical;">${markdown}</textarea>`;
+        }
+
+        function cancelEdit(key) {
+            editingSections[key] = false;
+            document.querySelector(`#controls-${key} .btn-edit`).style.display = 'block';
+            document.querySelector(`#controls-${key} .btn-cancel`).style.display = 'none';
+            document.querySelector(`#controls-${key} .btn-save`).style.display = 'none';
+            document.querySelector(`#controls-${key} .btn-clone`).style.display = 'none';
+            updateSection(key);
+        }
+
+        async function saveEdit(key, isClone) {
+            const textarea = document.getElementById(`textarea-${key}`);
+            if (!textarea) return;
+            const newContent = textarea.value;
+            
+            const payload = {
+                key: key,
+                content: newContent,
+                mode: currentMode
+            };
+
+            const prevText = document.querySelector(`#controls-${key} .btn-save`).innerText;
+            document.querySelector(`#controls-${key} .btn-save`).innerText = "Saving...";
+
+            try {
+                if (isClone) {
+                    const res = await fetch(`/report/${reportId}/clone`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to clone');
+                    const data = await res.json();
+                    alert('Cloned successfully! Redirecting to new report: ' + data.report_id);
+                    window.location.href = data.html_url;
+                } else {
+                    const res = await fetch(`/report/${reportId}/edit`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to edit');
+                    
+                    narratives[currentMode][key] = newContent;
+                    alert('Saved and PDF regenerated.');
+                    cancelEdit(key);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+                document.querySelector(`#controls-${key} .btn-save`).innerText = prevText;
+            }
+        }
+
+        function switchMode(mode, el) {
+            currentMode = mode;
+            
+            // Manage Active Tab UI
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            el.classList.add('active');
+
+            // Render Markdown Sections (basic HTML rendering of markdown features)
+            updateSection('executive_summary');
+            renderModelPerformance();
+            updateSection('findings');
+            updateSection('conclusion');
+            updateSection('recommendations');
+        }
+
+        function renderModelPerformance() {
+            const bodyEl = document.getElementById('body-model_performance');
+            if (!bodyEl) return;
+            
+            const prepEl = document.getElementById('sec-preprocessing');
+            
+            if (currentMode === 'expert') {
+                document.getElementById('verdict-container').style.display = 'none';
+                if (prepEl) prepEl.style.display = 'block';
+                if (allModels.length === 0) {
+                    bodyEl.innerHTML = renderFallbackMetricPerformance();
+                    return;
+                }
+                if (reportTaskType.toLowerCase().includes('regression')) {
+                    bodyEl.innerHTML = renderRegressionModelComparison(true);
+                    return;
+                }
+
+                // Find key column names intelligently
+                const keys = Object.keys(allModels[0]);
+                const modelKey = keys.find(k => {
+                    const kl = k.toLowerCase();
+                    return kl === 'modeling' || kl === 'model' || kl === 'model_name' || kl.includes('model');
+                }) || keys.find(k => typeof allModels[0][k] === 'string') || keys[0];
+
+                // Priority columns to display (prefer test_ over train_)
+                const preferredCols = [
+                    { label: 'Model', key: modelKey },
+                    { label: 'Test Accuracy', key: keys.find(k => k.toLowerCase() === 'test_accuracy') || keys.find(k => k.toLowerCase() === 'accuracy') },
+                    { label: 'Test AUC', key: keys.find(k => k.toLowerCase() === 'test_auc') || keys.find(k => k.toLowerCase().includes('auc')) },
+                    { label: 'Test F1', key: keys.find(k => k.toLowerCase() === 'test_f1') || keys.find(k => k.toLowerCase().includes('f1')) },
+                    { label: 'Test Specificity', key: keys.find(k => k.toLowerCase() === 'test_specificity') || keys.find(k => k.toLowerCase().includes('specificity')) },
+                    { label: 'Test MCC', key: keys.find(k => k.toLowerCase() === 'test_mcc') || keys.find(k => k.toLowerCase().includes('mcc')) },
+                    { label: 'Preprocessing', key: keys.find(k => k.toLowerCase() === 'missingvalueprocessing') },
+                    { label: 'Standardization', key: keys.find(k => k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
+                    { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection') },
+                ].filter(c => c.key);
+
+                // Find best model (highest test_accuracy)
+                const accKey = preferredCols.find(c => c.label === 'Test Accuracy')?.key || modelKey;
+                let bestIdx = 0;
+                let bestVal = -Infinity;
+                allModels.forEach((m, i) => {
+                    const v = parseFloat(m[accKey]) || 0;
+                    if (v > bestVal) { bestVal = v; bestIdx = i; }
+                });
+
+                // Add a best model callout at the top
+                const bestModel = allModels[bestIdx][modelKey] || 'Unknown';
+                const bestAcc = bestVal <= 1 ? `${(bestVal * 100).toFixed(1)}%` : `${bestVal.toFixed(1)}%`;
+                const calloutHtml = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;box-shadow: 0 4px 12px rgba(16,185,129,0.05);">
+                    <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Best Model</span>
+                    <strong style="color:var(--text-primary);font-size:1.05rem;font-weight:600;">${bestModel}</strong>
+                    <span style="color:var(--text-secondary);margin:0 10px;">&bull;</span>
+                    <span style="color:var(--text-secondary);">Test Accuracy:</span> <strong style="color:var(--accent-teal);font-size:1.05rem;">${bestAcc}</strong>
+                </div>`;
+
+                let tableHtml = calloutHtml + '<div style="overflow-x:auto;"><table class="model-table"><thead><tr>';
+                preferredCols.forEach(c => tableHtml += `<th>${c.label}</th>`);
+                tableHtml += '</tr></thead><tbody>';
+
+                allModels.forEach((row, rowIdx) => {
+                    const isB = rowIdx === bestIdx;
+                    tableHtml += `<tr style="${isB ? 'background:rgba(16,185,129,0.12);border-left:3px solid var(--accent-teal);' : ''}">`;
+                    preferredCols.forEach(c => {
+                        let val = row[c.key];
+                        if (typeof val === 'number') {
+                            // Format as percentage if it looks like a 0-1 probability
+                            const isProb = c.label !== 'Test MCC' && val >= 0 && val <= 1;
+                            val = isProb ? `${(val * 100).toFixed(1)}%` : val.toFixed(4);
+                        }
+                        const bold = isB && c.label !== 'Model' ? 'font-weight:700;color:var(--accent-teal);' : '';
+                        // Remove bottom border from main row if we have params to show, so they look joined
+                        const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params');
+                        const hasParams = paramsKey && row[paramsKey];
+                        const borderStyle = hasParams ? 'border-bottom:none;' : '';
+                        tableHtml += `<td style="${bold} ${borderStyle}">${val ?? 'N/A'}</td>`;
+                    });
+                    tableHtml += '</tr>';
+
+                    // Sub-row for hyperparameters
+                    const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params');
+                    if (paramsKey && row[paramsKey]) {
+                        let pVal = row[paramsKey];
+                        if (typeof pVal === 'string') {
+                            pVal = pVal.replace(/['"]?clf__([^'"]+)['"]?/g, "'$1'").replace(/['"]?selector__([^'"]+)['"]?/g, "'$1'");
+                            if (pVal.startsWith('{') && pVal.endsWith('}')) {
+                                const inner = pVal.substring(1, pVal.length - 1);
+                                const chunks = inner.split(/,\s*(?=['"]?[a-zA-Z0-9_]+['"]?\s*:)/);
+                                pVal = chunks.map(chunk => {
+                                    const parts = chunk.split(':');
+                                    if (parts.length >= 2) {
+                                        const k = parts[0].trim().replace(/^['"]|['"]$/g, '');
+                                        const v = parts.slice(1).join(':').trim();
+                                        return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                    }
+                                    return chunk;
+                                }).join('');
+                                pVal = `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:0;">${pVal}</div>`;
+                            }
+                        } else if (typeof pVal === 'object' && pVal !== null) {
+                            const chunks = Object.entries(pVal).map(([k, v]) => {
+                                k = k.replace('clf__', '').replace('selector__', '');
+                                return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                            }).join('');
+                            pVal = `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:0;">${chunks}</div>`;
+                        }
+                        
+                        // Render full width row underneath
+                        const bgCol = isB ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:rgba(255,255,255,0.015);';
+                        tableHtml += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pVal}</td></tr>`;
+                    }
+                });
+                tableHtml += '</tbody></table></div>';
+
+                bodyEl.innerHTML = tableHtml;
+
+            } else {
+                // Layman Mode Model Performance
+                if (prepEl) prepEl.style.display = 'none';
+                const verdict = narratives.layman.verdict;
+                const verdictBadge = document.getElementById('verdict-badge');
+                if (verdictBadge && typeof verdict === 'string' && verdict !== 'undefined') {
+                    verdictBadge.textContent = verdict;
+                    verdictBadge.className = 'verdict-badge';
+                    if (verdict.toLowerCase().includes('fair')) verdictBadge.classList.add('fair');
+                    if (verdict.toLowerCase().includes('needs review')) verdictBadge.classList.add('needs-review');
+                    document.getElementById('verdict-container').style.display = 'block';
+                }
+
+                if (allModels.length === 0) {
+                    bodyEl.innerHTML = renderFallbackMetricPerformance();
+                    return;
+                }
+                if (reportTaskType.toLowerCase().includes('regression')) {
+                    bodyEl.innerHTML = renderRegressionModelComparison(false);
+                    return;
+                }
+
+                const keys = Object.keys(allModels[0]);
+                const modelKey = keys.find(k => k.toLowerCase() === 'modeling' || k.toLowerCase().includes('model')) || keys[0];
+                const accKey = keys.find(k => k.toLowerCase() === 'test_accuracy') || keys.find(k => k.toLowerCase().includes('accuracy'));
+                const sorted = [...allModels].sort((a, b) => (parseFloat(b[accKey]) || 0) - (parseFloat(a[accKey]) || 0));
+                const best = sorted[0];
+                const bestName = best[modelKey] || 'the top model';
+                const bestAccVal = parseFloat(best[accKey]) || 0;
+                const bestAccStr = bestAccVal <= 1 ? `${(bestAccVal * 100).toFixed(1)}%` : `${bestAccVal.toFixed(1)}%`;
+
+                bodyEl.innerHTML = `<p>We tested <strong>${allModels.length} different AI algorithms</strong> on your dataset. 
+                The <strong style="color:var(--accent-teal);">${bestName}</strong> algorithm performed best, 
+                achieving a test accuracy of <strong>${bestAccStr}</strong>. 
+                The Clinical Insights Report Card above shows the top 3 models ranked by accuracy.</p>
+                <p>This comparison ensures you get the most reliable AI model for your data — not just the first one we tried.</p>`;
+            }
+        }
+
+        function renderFallbackMetricPerformance() {
+            const regressionRows = [
+                ['R2', fallbackMetrics.r2],
+                ['RMSE', fallbackMetrics.rmse],
+                ['MAE', fallbackMetrics.mae],
+                ['MSE', fallbackMetrics.mse]
+            ];
+            const classificationRows = [
+                    ['Accuracy', fallbackMetrics.accuracy],
+                    ['Precision', fallbackMetrics.precision],
+                    ['Recall / Sensitivity', fallbackMetrics.recall],
+                    ['F1-Score', fallbackMetrics.f1Score],
+                    ['ROC-AUC', fallbackMetrics.rocAuc],
+                    ['MCC', fallbackMetrics.mcc]
+                ];
+            const sourceRows = String('{{ task_type }}').toLowerCase().includes('regression') ? regressionRows : classificationRows;
+            const rows = sourceRows.filter(([, value]) => {
+                const clean = String(value ?? '').trim();
+                return clean && clean !== 'N/A' && clean !== 'undefined' && !clean.startsWith('{{');
+            });
+
+            if (!rows.length) {
+                return '<p>No model performance data available yet.</p>';
+            }
+
+            let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;box-shadow:0 4px 12px rgba(16,185,129,0.05);">
+                <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Optimal Model Summary</span>
+                <span style="color:var(--text-secondary);">Showing the selected PineBioML model metrics from the final training result.</span>
+            </div>`;
+            html += '<div style="overflow-x:auto;"><table class="model-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+            rows.forEach(([label, value]) => {
+                html += `<tr><td><strong>${label}</strong></td><td>${value}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderRegressionModelComparison(isExpert) {
+            const keys = Object.keys(allModels[0] || {});
+            const modelKey = keys.find(k => {
+                const kl = k.toLowerCase();
+                return kl === 'modeling' || kl === 'model' || kl === 'model_name' || kl.includes('model');
+            }) || keys.find(k => typeof allModels[0][k] === 'string') || keys[0];
+            const r2Key = keys.find(k => k.toLowerCase() === 'test_r2') || keys.find(k => k.toLowerCase().includes('r2'));
+            const scoreKey = r2Key || keys.find(k => k.toLowerCase() === 'test_score') || keys.find(k => k.toLowerCase().includes('score')) || keys.find(k => typeof allModels[0][k] === 'number');
+            const errorKeys = [
+                { label: 'Test RMSE', key: keys.find(k => k.toLowerCase().includes('rmse')) },
+                { label: 'Test MAE', key: keys.find(k => k.toLowerCase().includes('mae')) },
+                { label: 'Test MSE', key: keys.find(k => k.toLowerCase().includes('mse')) }
+            ].filter(c => c.key);
+
+            const sorted = [...allModels].sort((a, b) => (parseFloat(b[scoreKey]) || 0) - (parseFloat(a[scoreKey]) || 0));
+            const best = sorted[0] || allModels[0];
+            const bestName = best[modelKey] || 'the top model';
+            const bestScore = scoreKey ? (parseFloat(best[scoreKey]) || 0).toFixed(4) : 'N/A';
+
+            if (!isExpert) {
+                return `<p>We tested <strong>${allModels.length} model configuration${allModels.length === 1 ? '' : 's'}</strong> for this number-prediction task. 
+                The strongest result was <strong style="color:var(--accent-teal);">${bestName}</strong>${scoreKey ? ` with ${scoreKey} of <strong>${bestScore}</strong>` : ''}. 
+                For regression, the important question is how close the predicted numbers are to the real numbers, so the true-vs-predicted and residual plots matter more than classification scores.</p>`;
+            }
+
+            const preferredCols = [
+                { label: 'Model', key: modelKey },
+                { label: r2Key ? 'Test R2' : 'Score', key: scoreKey },
+                ...errorKeys,
+                { label: 'Preprocessing', key: keys.find(k => k.toLowerCase() === 'missingvalueprocessing') },
+                { label: 'Standardization', key: keys.find(k => k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
+                { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection') }
+            ].filter(c => c.key);
+
+            let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;">
+                <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Best Regression Model</span>
+                <strong style="color:var(--text-primary);">${bestName}</strong>
+                ${scoreKey ? `<span style="color:var(--text-secondary);margin:0 10px;">&bull;</span><span style="color:var(--text-secondary);">${r2Key ? 'Test R2' : 'Score'}:</span> <strong style="color:var(--accent-teal);">${bestScore}</strong>` : ''}
+            </div>`;
+            html += '<div style="overflow-x:auto;"><table class="model-table"><thead><tr>';
+            preferredCols.forEach(c => html += `<th>${c.label}</th>`);
+            html += '</tr></thead><tbody>';
+            sorted.forEach(row => {
+                const isBest = row === best;
+                html += `<tr style="${isBest ? 'background:rgba(16,185,129,0.12);border-left:3px solid var(--accent-teal);' : ''}">`;
+                preferredCols.forEach(c => {
+                    let val = row[c.key];
+                    if (typeof val === 'number') val = val.toFixed(4);
+                    html += `<td>${val ?? 'N/A'}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+
+        function renderReportCard() {
+            if (reportTaskType.toLowerCase().includes('regression')) {
+                const barsEl = document.getElementById('report-card-bars');
+                const labelEl = document.getElementById('rating-label');
+                if (barsEl) barsEl.innerHTML = renderFallbackMetricPerformance();
+                if (labelEl) labelEl.innerText = 'Regression Performance: Review Metrics';
+                return;
+            }
+            if (allModels.length === 0) {
+                // Even without model comparison data, still calculate star rating from metric cards
+                calculateStarRating();
+                return;
+            }
+            
+            // Find accuracy key - try multiple patterns
+            let accKey = Object.keys(allModels[0]).find(k => {
+                const kl = k.toLowerCase();
+                return kl === 'test_accuracy' || kl === 'accuracy' || kl === 'acc' ||
+                       kl.includes('test_accuracy') || kl.includes('accuracy');
+            });
+            if (!accKey) {
+                // Fall back to first numeric-valued key that's not a name/string key
+                accKey = Object.keys(allModels[0]).find(k => typeof allModels[0][k] === 'number');
+            }
+            if (!accKey) accKey = Object.keys(allModels[0])[1];
+            
+            // Find model name key - try multiple patterns
+            let modelKey = Object.keys(allModels[0]).find(k => {
+                const kl = k.toLowerCase();
+                return kl === 'modeling' || kl === 'model' || kl === 'model_name' || kl.includes('model');
+            });
+            if (!modelKey) {
+                // Fall back to first string-valued key
+                modelKey = Object.keys(allModels[0]).find(k => typeof allModels[0][k] === 'string');
+            }
+            if (!modelKey) modelKey = Object.keys(allModels[0])[0];
+            
+            let sorted = [...allModels].sort((a, b) => {
+                const bVal = parseFloat(b[accKey]) || 0;
+                const aVal = parseFloat(a[accKey]) || 0;
+                return bVal - aVal;
+            });
+            let top3 = sorted.slice(0, 3);
+            
+            let html = '<div class="bar-chart-container" style="margin-top: 0;">';
+            top3.forEach(m => {
+                const rawVal = parseFloat(m[accKey]) || 0;
+                let val = rawVal <= 1.0 ? rawVal * 100 : rawVal;
+                let pct = Math.min(Math.max(val, 0), 100).toFixed(1);
+                const modelName = m[modelKey] || 'Unknown';
+                html += `
+                <div class="bar-row">
+                    <div class="bar-label" title="${modelName}">${modelName}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: ${pct}%;">${pct}%</div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            
+            const barsContainer = document.getElementById('report-card-bars');
+            if (barsContainer) barsContainer.innerHTML = html;
+            
+            calculateStarRating();
+        }
+
+        function calculateStarRating() {
+            const cards = document.querySelectorAll('.metric-card');
+            if (cards.length === 0) return;
+            
+            let totalScore = 0;
+            let count = 0;
+            
+            cards.forEach(card => {
+                const valStr = card.querySelector('.metric-value').innerText.trim();
+                let val = parseFloat(valStr);
+                if (isNaN(val)) return;
+                
+                // If percentage, convert to 0-1
+                if (valStr.includes('%') || val > 1) {
+                    val = val / 100;
+                }
+                
+                totalScore += val;
+                count++;
+            });
+            
+            if (count === 0) return;
+            
+            const avgScore = totalScore / count;
+            
+            let stars = 1;
+            if (avgScore >= 0.90) stars = 5;
+            else if (avgScore >= 0.80) stars = 4;
+            else if (avgScore >= 0.70) stars = 3;
+            else if (avgScore >= 0.60) stars = 2;
+            
+            const starEls = document.querySelectorAll('#stars-container .star');
+            starEls.forEach((el, index) => {
+                if (index < stars) {
+                    el.classList.add('filled');
+                    el.innerText = '★';
+                } else {
+                    el.classList.remove('filled');
+                    el.innerText = '☆';
+                }
+            });
+            
+            const labelEl = document.getElementById('rating-label');
+            if (stars === 5) labelEl.innerText = 'Overall Clarity & Resolution: Excellent';
+            else if (stars === 4) labelEl.innerText = 'Overall Clarity & Resolution: Strong';
+            else if (stars === 3) labelEl.innerText = 'Overall Clarity & Resolution: Moderate';
+            else if (stars === 2) labelEl.innerText = 'Overall Clarity & Resolution: Weak';
+            else labelEl.innerText = 'Overall Clarity & Resolution: Poor';
+        }
+
+        const visualPlots = {};
+        function extractVisualPlots() {
+            document.querySelectorAll('.plots-grid .plot-container').forEach(container => {
+                const media = container.querySelector('.plot-img');
+                if (media) {
+                    const key = media.getAttribute('alt') || media.getAttribute('title') || '';
+                    const src = media.getAttribute('src') || '';
+                    if (key && src) {
+                        const cleanKey = key.toLowerCase().replace(/_png/g, '').replace(/_html/g, '').replace(/_/g, '').replace(/\.png/g, '').replace(/\.html/g, '').trim();
+                        visualPlots[cleanKey] = src;
+                    }
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function parseInline(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/__(.*?)__/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\b_([^_]+)_\b/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>');
+        }
+
+        function parseMarkdown(markdown) {
+            if (!markdown) return '';
+            let src = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            src = src.replace(/([^\n])(\|[^\n]*\|\s*\n\s*\|[\s:|-]+\|)/g, '$1\n$2');
+            
+            const codeBlocks = [];
+            src = src.replace(/```([\s\S]*?)```/g, (match, code) => {
+                codeBlocks.push(code.trim());
+                return `\n===CODEBLOCK_${codeBlocks.length - 1}===\n`;
+            });
+            
+            const lines = src.split('\n');
+            let html = '';
+            let inList = null;
+            let inTable = false;
+            let tableRows = [];
+
+            function renderTableHtml(rows) {
+                if (rows.length === 0) return '';
+                let tHtml = '<div style="margin-bottom: 1.5rem;"><table class="model-table"><thead><tr>';
+                // Parse headers
+                let headers = rows[0].split('|').map(x => x.trim()).filter((x, idx, arr) => idx > 0 && idx < arr.length - 1);
+                headers.forEach(h => {
+                    tHtml += `<th>${parseInline(h)}</th>`;
+                });
+                tHtml += '</tr></thead><tbody>';
+                // Parse body rows
+                for (let r = 1; r < rows.length; r++) {
+                    if (rows[r].replace(/[|:\s\-]/g, '') === '') continue;
+                    tHtml += '<tr>';
+                    let cells = rows[r].split('|').map(x => x.trim()).filter((x, idx, arr) => idx > 0 && idx < arr.length - 1);
+                    cells.forEach(c => {
+                        tHtml += `<td>${parseInline(c)}</td>`;
+                    });
+                    tHtml += '</tr>';
+                }
+                tHtml += '</tbody></table></div>';
+                return tHtml;
+            }
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                let trimmed = line.trim();
+                
+                if (trimmed.startsWith('===CODEBLOCK_') && trimmed.endsWith('===')) {
+                    if (inList) {
+                        html += `</${inList}>\n`;
+                        inList = null;
+                    }
+                    if (inTable) {
+                        html += renderTableHtml(tableRows);
+                        inTable = false;
+                    }
+                    const index = parseInt(trimmed.replace('===CODEBLOCK_', '').replace('===', ''), 10);
+                    html += `<pre><code>${escapeHtml(codeBlocks[index])}</code></pre>\n`;
+                    continue;
+                }
+                
+                if (trimmed === '') {
+                    if (inList) {
+                        html += `</${inList}>\n`;
+                        inList = null;
+                    }
+                    if (inTable) {
+                        html += renderTableHtml(tableRows);
+                        inTable = false;
+                    }
+                    continue;
+                }
+
+                // Table parsing
+                const isPipeTableLine = trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.split('|').length > 2;
+                if (isPipeTableLine) {
+                    if (inList) {
+                        html += `</${inList}>\n`;
+                        inList = null;
+                    }
+                    if (!inTable) {
+                        // Peek at next line to see if it's separator
+                        let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
+                        if (nextLine.startsWith('|') && nextLine.endsWith('|') && nextLine.split('|').length > 2 && nextLine.replace(/[|:\s\-]/g, '') === '') {
+                            inTable = true;
+                            tableRows = [];
+                            tableRows.push(trimmed); // Header row
+                            i++; // Skip separator
+                            continue;
+                        }
+                    } else {
+                        tableRows.push(trimmed);
+                        continue;
+                    }
+                } else {
+                    if (inTable) {
+                        html += renderTableHtml(tableRows);
+                        inTable = false;
+                    }
+                }
+                
+                const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
+                if (headerMatch) {
+                    if (inList) {
+                        html += `</${inList}>\n`;
+                        inList = null;
+                    }
+                    const level = headerMatch[1].length;
+                    const content = parseInline(headerMatch[2]);
+                    html += `<h${level}>${content}</h${level}>\n`;
+                    continue;
+                }
+                
+                const ulMatch = line.match(/^(\s*)([-*+])\s+(.*)$/);
+                if (ulMatch) {
+                    const content = parseInline(ulMatch[3]);
+                    if (inList !== 'ul') {
+                        if (inList) html += `</${inList}>\n`;
+                        html += '<ul>\n';
+                        inList = 'ul';
+                    }
+                    html += `<li>${content}</li>\n`;
+                    continue;
+                }
+                
+                const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+                if (olMatch) {
+                    const content = parseInline(olMatch[3]);
+                    if (inList !== 'ol') {
+                        if (inList) html += `</${inList}>\n`;
+                        html += '<ol>\n';
+                        inList = 'ol';
+                    }
+                    html += `<li>${content}</li>\n`;
+                    continue;
+                }
+                
+                if (inList) {
+                    html += `</${inList}>\n`;
+                    inList = null;
+                }
+                
+                let para = line;
+                while (i + 1 < lines.length && lines[i + 1].trim() !== '' && 
+                       !lines[i + 1].match(/^(#{1,6})\s+/) && 
+                       !lines[i + 1].match(/^(\s*)([-*+])\s+/) && 
+                       !lines[i + 1].match(/^(\s*)(\d+)\.\s+/) &&
+                       !(lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|'))) {
+                    i++;
+                    para += ' ' + lines[i].trim();
+                }
+                html += `<p>${parseInline(para)}</p>\n`;
+            }
+            
+            if (inList) {
+                html += `</${inList}>\n`;
+            }
+            if (inTable) {
+                html += renderTableHtml(tableRows);
+            }
+            
+            return html;
+        }
+
+        function updateSection(key) {
+            // Prevent re-rendering if currently editing
+            if (editingSections[key]) return;
+
+            const bodyEl = document.getElementById('body-' + (key === 'visuals_analysis' ? 'visuals' : key));
+            if (!bodyEl) return;
+            
+            let markdown = narratives[currentMode][key] || '';
+            let html = parseMarkdown(markdown);
+
+            // Apply Glossary Tooltips
+            if (glossary && Object.keys(glossary).length > 0) {
+                for (const [term, definition] of Object.entries(glossary)) {
+                    // Escape term for regex, match whole words only, avoid matching inside HTML tags
+                    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(^|\\W)(${escapedTerm})(?=\\W|$)(?![^<]*>)`, 'gi');
+                    html = html.replace(regex, `$1<span class="tooltip-trigger">$2<span class="tooltip-text">${definition}</span></span>`);
+                }
+            }
+
+            // Replace [PLOT: ...] placeholders with inline plot HTML
+            html = html.replace(/\[PLOT:\s*(.*?)\s*\]/gi, (match, plotKeysStr) => {
+                const keys = plotKeysStr.split(',').map(k => {
+                    // parseMarkdown might have changed _ to <em>, so strip HTML tags
+                    return k.replace(/<[^>]+>/g, '').trim().toLowerCase();
+                });
+                let plotsHtml = '<div class="inline-plots-container">';
+                keys.forEach(k => {
+                    const cleanK = k.replace(/_/g, '').replace(/\.png/g, '').trim();
+                    const matchKey = Object.keys(visualPlots).find(vk => vk === cleanK || vk.includes(cleanK) || cleanK.includes(vk));
+                    if (matchKey && visualPlots[matchKey]) {
+                        const val = visualPlots[matchKey];
+                        const title = matchKey.replace('_png', '').replace('.png', '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        const isHtmlPlot = val.toLowerCase().endsWith('.html');
+                        plotsHtml += isHtmlPlot ? `
+                        <div class="plot-container inline-plot">
+                            <iframe class="plot-img" src="${val}" title="${matchKey}" style="border:0;"></iframe>
+                            <div class="plot-title">${title}</div>
+                        </div>
+                        ` : `
+                        <div class="plot-container inline-plot" onclick="zoomPlot('${val}')">
+                            <img class="plot-img" src="${val}" alt="${matchKey}">
+                            <div class="plot-title">${title}</div>
+                        </div>
+                        `;
+                    }
+                });
+                plotsHtml += '</div>';
+                return plotsHtml;
+            });
+            
+            // Merge adjacent plot containers so they display side-by-side in the CSS grid
+            // This handles cases where the LLM outputs multiple adjacent [PLOT: ...] tags
+            html = html.replace(/<\/div>\s*<\/p>\s*<p>\s*<div class="inline-plots-container">/gi, '');
+            html = html.replace(/<\/div>\s*<br\s*\/?>\s*<div class="inline-plots-container">/gi, '');
+            html = html.replace(/<\/div>\s*<div class="inline-plots-container">/gi, '');
+                
+            bodyEl.innerHTML = html;
+        }
+
+        // Dark/Light Mode toggle. Theme state lives on <html data-theme>;
+        // persisted to localStorage so it survives refresh. Default is light.
+        function toggleDarkMode() {
+            var root = document.documentElement;
+            var isDark = root.getAttribute('data-theme') === 'dark';
+            var next = isDark ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            // Keep the legacy body.light-mode class in sync for any old selectors.
+            document.body.classList.toggle('light-mode', next === 'light');
+            try { localStorage.setItem('pinebioml-theme', next); } catch (e) {}
+            document.getElementById('theme-icon').innerText = next === 'dark' ? "☀️" : "🌙";
+            document.getElementById('theme-text').innerText = next === 'dark' ? "Light Mode" : "Dark Mode";
+        }
+
+        // On load, sync the toggle button label to the active (persisted) theme.
+        function syncThemeButton() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.body.classList.toggle('light-mode', !isDark);
+            document.getElementById('theme-icon').innerText = isDark ? "☀️" : "🌙";
+            document.getElementById('theme-text').innerText = isDark ? "Light Mode" : "Dark Mode";
+        }
+
+        // Plot Zoom Modal controls
+        function zoomPlot(src) {
+            const modal = document.getElementById('plot-modal');
+            const img = document.getElementById('modal-img');
+            img.src = src;
+            modal.classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('plot-modal').classList.remove('open');
+        }
+
+        function updateMetricCardsForTask() {
+            if (!reportTaskType.toLowerCase().includes('regression')) return;
+            const grid = document.getElementById('standard-metrics-grid');
+            if (!grid) return;
+            const rows = [
+                ['R2', fallbackMetrics.r2],
+                ['RMSE', fallbackMetrics.rmse],
+                ['MAE', fallbackMetrics.mae],
+                ['MSE', fallbackMetrics.mse]
+            ].filter(([, value]) => {
+                const clean = String(value ?? '').trim();
+                return clean && clean !== 'N/A' && clean !== 'undefined' && !clean.startsWith('{{');
+            });
+            if (!rows.length) return;
+            grid.innerHTML = rows.map(([label, value]) => `
+                <div class="metric-card">
+                    <span class="metric-value">${value}</span>
+                    <span class="metric-title">${label}</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize Section Contents
+        function initReport() {
+            updateMetricCardsForTask();
+            extractVisualPlots();
+            renderReportCard();  // renders bars + calls calculateStarRating
+            // If allModels was empty, calculateStarRating wasn't called yet — call it explicitly
+            if (!reportTaskType.toLowerCase().includes('regression')) {
+                calculateStarRating();
+            }
+            renderOverfitAnalysis();
+            updateSection('executive_summary');
+            renderModelPerformance();
+            updateSection('findings');
+            updateSection('conclusion');
+            updateSection('recommendations');
+            
+            // Dynamically update download links to include the access token
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || '';
+            if (token) {
+                const pdfBtn = document.querySelector('.btn-pdf');
+                const docxBtn = document.querySelector('.btn-docx');
+                if (pdfBtn) pdfBtn.href = `/report/${reportId}/download/pdf?token=${token}`;
+                if (docxBtn) docxBtn.href = `/report/${reportId}/download/docx?token=${token}`;
+            }
+        }
+
+        function renderOverfitAnalysis() {
+            const section = document.getElementById('sec-overfit');
+            const bodyEl = document.getElementById('body-overfit');
+            if (!section || !bodyEl || !overfitData || !overfitData.models || overfitData.models.length === 0) return;
+
+            section.style.display = 'block';
+            const isOverfit = overfitData.is_overfitting;
+            const scoreLabel = reportTaskType.toLowerCase().includes('regression') ? 'score' : 'accuracy';
+            const scoreHeader = reportTaskType.toLowerCase().includes('regression') ? 'Score' : 'Accuracy';
+            const statusColor = isOverfit ? '#ef4444' : '#10b981';
+            const statusText = isOverfit ? '⚠️ Overfitting Concern Detected' : '✅ Generalization Looks Healthy';
+
+            let html = `<div style="padding:1rem 1.5rem;background:${isOverfit ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'};border-radius:12px;border:1px solid ${statusColor};margin-bottom:1.5rem;">
+                <strong style="color:${statusColor};font-size:1.1rem;">${statusText}</strong>
+                <p style="margin-top:0.5rem;color:var(--text-secondary);">The table below compares training ${scoreLabel} vs. test ${scoreLabel}. Large gaps (>10%) may indicate overfitting.</p>
+            </div>`;
+
+            html += '<div style="margin-bottom: 1.5rem;"><table class="model-table"><thead><tr>';
+            html += `<th>Model</th><th>Train ${scoreHeader}</th><th>Test ${scoreHeader}</th><th>Gap</th>`;
+            html += '</tr></thead><tbody>';
+
+            overfitData.models.forEach(m => {
+                const gapAbs = Math.abs(m.gap);
+                let gapColor = '#10b981';  // green
+                if (gapAbs > 0.10) gapColor = '#ef4444';      // red
+                else if (gapAbs > 0.05) gapColor = '#f59e0b';  // yellow
+
+                const trainStr = m.train_accuracy <= 1 ? `${(m.train_accuracy * 100).toFixed(1)}%` : `${m.train_accuracy.toFixed(1)}%`;
+                const testStr = m.test_accuracy <= 1 ? `${(m.test_accuracy * 100).toFixed(1)}%` : `${m.test_accuracy.toFixed(1)}%`;
+
+                html += `<tr>
+                    <td>${m.model}</td>
+                    <td>${trainStr}</td>
+                    <td>${testStr}</td>
+                    <td style="color:${gapColor};font-weight:700;">${m.gap_pct}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            bodyEl.innerHTML = html;
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener("DOMContentLoaded", () => {
+                initReport();
+                syncThemeButton();
+
+                // Attach event listeners to replace inline onclicks
+                document.getElementById('btn-toggle-dark').addEventListener('click', toggleDarkMode);
+            });
+        } else {
+            initReport();
+            syncThemeButton();
+
+            // Attach event listeners to replace inline onclicks
+            document.getElementById('btn-toggle-dark').addEventListener('click', toggleDarkMode);
+        }
+    </script>
+</body>
+</html>

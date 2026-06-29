@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pinebioml
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: pinebioml_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # CPU-only deployment (NCU server, 300GB RAM, no GPU).
+    # Ollama auto-uses CPU when no GPU is present; no extra config needed.
+    # Uncomment the following to enable GPU support on the server
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # One-shot init container that pre-pulls the required models into the shared
+  # ollama_data volume on first boot. Runs once, then exits 0; on subsequent
+  # boots it's a no-op (models already present). Re-run with:
+  #   docker compose up ollama-init
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for ollama to be ready..." &&
+        until ollama list >/dev/null 2>&1; do sleep 2; done &&
+        echo "Pulling CPU writer model (deepseek-r1:14b)..." &&
+        ollama pull deepseek-r1:14b &&
+        echo "Pulling verifier model (qwen2.5-coder:14b)..." &&
+        ollama pull qwen2.5-coder:14b &&
+        echo "All models pulled." && ollama list
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: pinebioml-report-service/Dockerfile
+    restart: unless-stopped
+    command: uvicorn core.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./:/app
+      - storage_data:/app/storage
+    networks:
+      - default
+      - shared_network
+    environment:
+      - DATABASE_URL=postgresql://pinebioml:securepassword@db:5432/pinebioml_db
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LLM_API_BASE_URL=http://ollama:11434/v1
+      - LLM_MODEL=deepseek-r1:14b
+      - WRITER_DEPLOYMENT=cpu
+      - CPU_DEPLOYMENT_WRITER_MODEL=deepseek-r1:14b
+      - VERIFIER_MODEL=qwen2.5-coder:14b
+      - LLM_REQUEST_TIMEOUT_SECONDS=900
+    depends_on:
+      - db
+      - ollama
+      - ollama-init
+
+
+
+volumes:
+  postgres_data:
+  ollama_data:
+  storage_data:  # durable storage for reports, datasets, media, exports, PDFs
+
+networks:
+  shared_network:
+    external: true
+    name: pinebioml-shared-network

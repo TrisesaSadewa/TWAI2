@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+
+<!-- saved from url=(0102)/Statistical_Analysis/download/{{ uuid }}/ -->
+<html class="no-js" lang="zxx"><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="Site keywords here" name="keywords"/>
+<meta content="" name="description"/>
+<meta content="" name="copyright"/>
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<title>PinBioML - Download</title>
+<link href="/static/PBML/Pinbioicon.png" rel="icon"/>
+<link href="/static/download_assets/css" rel="stylesheet"/>
+<link href="/static/download_assets/all.min.css" rel="stylesheet"/>
+<link href="/static/download_assets/bootstrap.min.css" rel="stylesheet"/>
+<link href="/static/download_assets/nice-select.css" rel="stylesheet"/>
+<link href="/static/download_assets/font-awesome.min.css" rel="stylesheet"/>
+<link href="/static/download_assets/icofont.css" rel="stylesheet"/>
+<link href="/static/download_assets/icofont(1).css" rel="stylesheet"/>
+<link href="/static/download_assets/slicknav.min.css" rel="stylesheet"/>
+<link href="/static/download_assets/owl-carousel.css" rel="stylesheet"/>
+<link href="/static/download_assets/datepicker.css" rel="stylesheet"/>
+<link href="/static/download_assets/animate.min.css" rel="stylesheet"/>
+<link href="/static/download_assets/magnific-popup.css" rel="stylesheet"/>
+<link href="/static/download_assets/normalize.css" rel="stylesheet"/>
+<link href="/static/download_assets/style.css" rel="stylesheet"/>
+<link href="/static/download_assets/responsive.css" rel="stylesheet"/>
+<style>
+        header{
+            z-index: 999;
+        }
+
+        .sidebar {
+            top: 0;
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+            z-index: 900;
+        }
+
+
+        .sidebar-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid rgb(59, 59, 59);
+            color: rgb(0, 0, 0);
+            margin: 10px 0;
+        }
+
+        .sidebar-item.active {
+            background-color: #cce5ff;
+        }
+
+        .sidebar-item.disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar-item:hover {
+            background-color: #d6d6d6;
+        }
+
+        .parameter-form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            /* max-width: 1000px; */
+        }
+
+        #sidebar-container {
+            display: block; /* 電腦版預設顯示 */
+        }
+        #sidebar-container-media {
+            display: none; /* 手機版預設隱藏 */
+        }
+        button {
+            outline: none; /* 移除黑色框框 */
+        }
+
+        button:focus {
+            outline: none; /* 當按鈕獲得焦點時也移除框框 */
+        }
+        .image-text-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .responsive-image {
+            height: 200px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .image-description {
+            flex: 1;
+        }
+
+
+        @media (max-width: 1200px) {
+            #sidebar-container {
+                display: none; /* 隱藏電腦版的 sidebar */
+            }
+
+            #sidebar-container-media {
+                display: block; /* 顯示手機版的 sidebar */
+            }
+
+            .sidebar {
+                width: 100%;  /* 全螢幕寬度 */
+                height: auto; /* 根據內容自適應高度 */
+                flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
+                overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
+                padding: 10px;
+                background-color: #333; /* 更深的顏色以便區分 */
+                color:rgb(95, 95, 95);
+                height: 100vh;
+                position: fixed;
+            }
+
+            .sidebar-item {
+                font-size: 0.9rem; /* 調整字體大小 */
+                margin: 0 20px; /* 添加些許間距讓元素不緊貼 */
+            }
+            .mobile-topbar {
+                display: flex;                    /* 使用 Flexbox 進行佈局 */
+                justify-content: space-around;    /* 子元素在水平方向均等分佈 */
+                align-items: center;              /* 子元素垂直居中 */
+                background-color: #fafafa;           /* 設置背景色（可根據需要調整） */
+                padding: 10px;                    /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
+                width: 100%;                      /* 設置寬度為全屏 */
+            }
+
+            .btn-mobile {
+                background: none;                 /* 去掉按鈕背景（可根據需要自定義） */
+                border: none;                     /* 去掉按鈕邊框 */
+                color: rgb(0, 0, 0);                     /* 設置按鈕文字或圖標顏色 */
+                font-size: 1.5rem;                /* 調整圖標大小 */
+                cursor: pointer;                  /* 設置鼠標樣式為指針 */
+            }
+
+            .btn-mobile.disabled {
+                color: grey;                      /* 設置不可用按鈕的顏色 */
+                cursor: not-allowed;              /* 鼠標樣式設為不可用 */
+            }
+
+            .main-content {
+            margin-left: 0px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+            }   
+
+            .image-text-container {
+                display: block; /* 圖片和文字分行顯示 */
+                text-align: center; /* 可選：讓文字和圖片居中 */
+            }
+
+            .responsive-image {
+                width: 100%; /* 圖片自適應寬度 */
+                max-width: 300px; /* 限制最大寬度 */
+                height: auto; /* 高度自動 */
+                margin: 0 auto; /* 水平居中 */
+            }
+
+            .image-description {
+                margin-top: 10px; /* 圖片和文字的垂直間距 */
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="preloader preloader-deactivate" id="loading">
+<div class="loader">
+<div class="loader-outter"></div>
+<div class="loader-inner"></div>
+<div class="indicator">
+<svg height="12px" width="16px">
+<polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+<polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+</svg>
+</div>
+</div>
+</div>
+<header class="header sticky">
+<div class="header-inner">
+<div class="container">
+<div class="inner">
+<div class="row align-items-center justify-content-between"> <div class="col-lg-3 col-md-3 col-12">
+<div class="logo">
+<a href="/"><img alt="#" src="/static/download_assets/PinBio.png" style="height: 60px;"/></a>
+</div>
+<div class="mobile-nav"><div class="slicknav_menu"><a aria-haspopup="true" class="slicknav_btn slicknav_collapsed" href="/Statistical_Analysis/download/{{ uuid }}/#" role="button" style="outline: none;" tabindex="0"><span class="slicknav_menutxt"></span><span class="slicknav_icon slicknav_no-text"><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span></span></a><ul aria-hidden="true" class="slicknav_nav slicknav_hidden" role="menu" style="display: none;">
+<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown"> -->
+<!-- <li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>-->
+<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" role="menuitem" tabindex="-1" target="_blank">Contact Us</a></li>
+</ul></div></div>
+</div>
+<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+<div class="main-menu">
+<nav class="navigation">
+<ul class="nav menu">
+<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown"> -->
+<!-- <li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>-->
+<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" target="_blank">Contact Us</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div style="height:1px; background-color:#ccc;"></div>
+<div id="sidebar-container">
+<div class="sidebar">
+<br/><br/><br/>
+<label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+<a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;">Setting</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<a href="/Statistical_Analysis/result/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;">Result</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<div class="sidebar-item active">Download</div><br/>
+<a class="home-icon" href="/" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-home" style=" font-size: 2rem;"></i>
+</a>
+</div>
+</div>
+<div id="sidebar-container-media">
+<div class="mobile-topbar">
+<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/result/{{ uuid }}/"><i class="icofont-chart-bar-graph"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile"><i class="icofont-download"></i></button>
+</div>
+</div>
+<div class="main-content">
+<div style="padding: 10px;">
+<h3>Download <br/></h3>
+<label>Please select the appropriate choices for the settings.</label>
+</div>
+<div class="parameter-form">
+<section class="appointment" style="padding: 0;">
+<div class="container">
+<div class="row">
+<div class="col-lg-12 col-md-12 col-12">
+<form action="/Statistical_Analysis/download/download_selected_files/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
+<input name="csrfmiddlewaretoken" type="hidden" value="bbX3k9ipNbKGLUdMx2AeJqwQk39Oy9km5cV55tbbEpXmRyNC3MCQQi4PzUy4vtFC"/>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" id="select-all" onclick="toggleAll(this)" style="margin-right: 10px; width: 15px;" type="checkbox" title="input" aria-label="input"/>
+<h6 for="select-all" style="cursor: pointer; margin: 0; margin-right: 10px;">Select All</h6>
+<button title="Action" aria-label="Action" onclick="toggleAllContents()" style="background: none; border: none; cursor: pointer; " type="button">
+<i class="fas fa-chevron-down" id="arrow-select-all"></i>
+</button>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" optimal-model-scores.csv" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> optimal-model-scores.csv</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('csv-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-csv-1"></i>
+</button>
+</div>
+<div id="csv-1" style="display: none; overflow-y: auto; max-height: 400px; border-top: 1px solid #ddd; margin-top: 10px;">
+<table style="border: 1px solid #ddd; width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr style="border-bottom: 1px solid #ddd;">
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Class</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Precision</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Recall</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">F1-Score</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Support</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if classification_report %}
+            {% for label, metrics in classification_report.items() %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ label }}</td>
+                {% if label == "accuracy" %}
+                <td style="padding: 10px; border: 1px solid #ddd;" colspan="3">Accuracy: {{ metrics | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"></td>
+                {% else %}
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.precision | round(4) if metrics.precision is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.recall | round(4) if metrics.recall is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics['f1-score'] | round(4) if metrics['f1-score'] is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.support }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td colspan="5" style="padding: 10px;">Classification report not available.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="All-model-result.csv" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">All-model-result.csv</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('csv-2')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-csv-2"></i>
+</button>
+</div>
+<div id="csv-2" style="display: none; overflow-y: auto; max-height: 400px; border-top: 1px solid #ddd; margin-top: 10px;">
+<div style="overflow-x: auto; max-width: 100%;">
+<table style="border: 1px solid #ddd; width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr style="border-bottom: 1px solid #ddd;">
+            {% for col in all_results_columns %}
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; white-space: nowrap;">{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% if all_results %}
+            {% for row in all_results %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                {% for col in all_results_columns %}
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td style="padding: 10px;">No model results available.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+
+{% if task_type == 'classification' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" Confusion Matrix.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> Confusion Matrix.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-1"></i>
+</button>
+</div>
+<div id="png-1" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_Confusion Matrix.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% elif task_type == 'regression' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" True vs Predicted.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> True vs Predicted.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-1"></i>
+</button>
+</div>
+<div id="png-1" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_True vs Predicted.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% endif %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" Correlation Heatmap.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> Correlation Heatmap.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-2')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-2"></i>
+</button>
+</div>
+<div id="png-2" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_Correlation Heatmap.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" PCA.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> PCA.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-3')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-3"></i>
+</button>
+</div>
+<div id="png-3" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_PCA.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" PLS.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> PLS.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-4')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-4"></i>
+</button>
+</div>
+<div id="png-4" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_PLS.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% if task_type == 'classification' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" ROC Curve.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> ROC Curve.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-5')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-5"></i>
+</button>
+</div>
+<div id="png-5" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_ROC Curve.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% elif task_type == 'regression' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" Residuals.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> Residuals.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-5')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-5"></i>
+</button>
+</div>
+<div id="png-5" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_Residuals.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% endif %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value=" UMAP.png" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;"> UMAP.png</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('png-6')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-png-6"></i>
+</button>
+</div>
+<div id="png-6" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" loading="lazy" src="/static/download_assets/_UMAP.png"/>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="feature_importance.html" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">feature_importance.html</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('html-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-html-1"></i>
+</button>
+</div>
+<div id="html-1" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<iframe frameborder="0" height="300" loading="lazy" src="/static/download_assets/feature_importance.html" style="border:1px solid #ccc; border-radius: 8px; width: 100%;" width="100%">
+</iframe>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="pca_plot.html" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">pca_plot.html</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('html-2')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-html-2"></i>
+</button>
+</div>
+<div id="html-2" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<iframe frameborder="0" height="300" loading="lazy" src="/static/download_assets/pca_plot.html" style="border:1px solid #ccc; border-radius: 8px; width: 100%;" width="100%">
+</iframe>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="pls_plot.html" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">pls_plot.html</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('html-3')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-html-3"></i>
+</button>
+</div>
+<div id="html-3" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<iframe frameborder="0" height="300" loading="lazy" src="/static/download_assets/pls_plot.html" style="border:1px solid #ccc; border-radius: 8px; width: 100%;" width="100%">
+</iframe>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="shap_plot.html" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">shap_plot.html</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('html-4')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-html-4"></i>
+</button>
+</div>
+<div id="html-4" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<iframe frameborder="0" height="300" loading="lazy" src="/static/download_assets/shap_plot.html" style="border:1px solid #ccc; border-radius: 8px; width: 100%;" width="100%">
+</iframe>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="umap_plot.html" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">umap_plot.html</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('html-5')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-html-5"></i>
+</button>
+</div>
+<div id="html-5" style="display: none; margin-top: 10px;">
+<div class="image-text-container">
+<iframe frameborder="0" height="300" loading="lazy" src="/static/download_assets/umap_plot.html" style="border:1px solid #ccc; border-radius: 8px; width: 100%;" width="100%">
+</iframe>
+</div>
+<div style="height: 1px; background-color: #ccc; margin-top: 5px; margin-bottom: 5px ;"></div>
+</div>
+{% if task_type == 'classification' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="optimal-model" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">optimal-model</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('model-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-model-1"></i>
+</button>
+</div>
+<div id="model-1" style="display: none;">
+<p>Model weight</p>
+</div>
+{% elif task_type == 'regression' %}
+<div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+<input checked="" class="file-checkbox" name="selected_files" style="margin-right: 10px; width: 15px;" type="checkbox" value="regression_report.json" title="selected_files" aria-label="selected_files"/>
+<h6 style="margin: 0; text-align: left; margin-right: 10px;">regression_report.json</h6>
+<button title="Action" aria-label="Action" onclick="toggleContent('model-1')" style="background: none; border: none; cursor: pointer; margin-right: 10px;" type="button">
+<i class="fas fa-chevron-down" id="arrow-model-1"></i>
+</button>
+</div>
+<div id="model-1" style="display: none;">
+<p>Regression metrics (MSE, MAE, R2)</p>
+</div>
+{% endif %}
+<div id="error-message" style="color: red; text-align: center; display: none;">Please select at least one file to download.</div>
+<div class="button" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+<button title="Action" aria-label="Action" class="btn" onclick="history.back();" style="text-align: center;" type="button">Back</button>
+<button title="Action" aria-label="Action" class="btn" id="download-btn" onclick="handleDownload()" style="text-align: center; cursor: pointer;" type="button">Download</button>
+<a class="btn" href="/" style="text-align: center; color:white;">Home</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<script src="/static/download_assets/jquery.min.js.download"></script>
+<script src="/static/download_assets/jquery-migrate-3.0.0.js.download"></script>
+<script src="/static/download_assets/jquery-ui.min.js.download"></script>
+<script src="/static/download_assets/easing.js.download"></script>
+<script src="/static/download_assets/colors.js.download"></script>
+<script src="/static/download_assets/popper.min.js.download"></script>
+<script src="/static/download_assets/bootstrap-datepicker.js.download"></script>
+<script src="/static/download_assets/jquery.nav.js.download"></script>
+<script src="/static/download_assets/slicknav.min.js.download"></script>
+<script src="/static/download_assets/jquery.scrollUp.min.js.download"></script>
+<script src="/static/download_assets/niceselect.js.download"></script>
+<script src="/static/download_assets/tilt.jquery.min.js.download"></script>
+<script src="/static/download_assets/owl-carousel.js.download"></script>
+<script src="/static/download_assets/jquery.counterup.min.js.download"></script>
+<script src="/static/download_assets/steller.js.download"></script>
+<script src="/static/download_assets/wow.min.js.download"></script>
+<script src="/static/download_assets/jquery.magnific-popup.min.js.download"></script>
+<script src="/static/download_assets/waypoints.min.js.download"></script>
+<script src="/static/download_assets/bootstrap.min.js.download"></script>
+<script src="/static/download_assets/main.js.download"></script>
+<script>
+        function toggleContent(id) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(`arrow-${id}`);
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block";
+                arrow.classList.remove("fa-chevron-down");
+                arrow.classList.add("fa-chevron-up");
+            } else {
+                content.style.display = "none";
+                arrow.classList.remove("fa-chevron-up");
+                arrow.classList.add("fa-chevron-down");
+            }
+        }
+        function toggleAllContents() {
+            // 查找所有內容區域（csv, png, model）
+            const contents = document.querySelectorAll('div[id^="csv-"], div[id^="png-"], div[id^="html-"], div[id^="model-"]');
+            const arrow = document.getElementById('arrow-select-all');
+            const isAnyHidden = Array.from(contents).some(content => content.style.display === "none" || content.style.display === "");
+
+            // 切換內容的顯示或隱藏狀態
+            contents.forEach(content => {
+                content.style.display = isAnyHidden ? "block" : "none";
+            });
+
+            // 查找所有箭頭圖示（csv, png, model）
+            const arrows = document.querySelectorAll('i[id^="arrow-csv-"], i[id^="arrow-png-"], i[id^="arrow-html-"], i[id^="arrow-model-"]');
+            arrows.forEach(individualArrow => {
+                if (isAnyHidden) {
+                    individualArrow.classList.remove('fa-chevron-down');
+                    individualArrow.classList.add('fa-chevron-up');
+                } else {
+                    individualArrow.classList.remove('fa-chevron-up');
+                    individualArrow.classList.add('fa-chevron-down');
+                }
+            });
+
+            // 切換 "Select All" 的箭頭
+            if (isAnyHidden) {
+                arrow.classList.remove('fa-chevron-down');
+                arrow.classList.add('fa-chevron-up');
+            } else {
+                arrow.classList.remove('fa-chevron-up');
+                arrow.classList.add('fa-chevron-down');
+            }
+        }
+
+
+        function toggleAll(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        }
+        
+        // 更新版的 handleDownload
+        async function handleDownload() {
+            const selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(checkbox => checkbox.value);
+            const errorMessage = document.getElementById('error-message');
+            const downloadBtn = document.getElementById('download-btn');
+
+            if (selectedFiles.length === 0) {
+                errorMessage.style.display = 'block';
+                return; // 提早結束，不往下執行
+            }
+
+            errorMessage.style.display = 'none';
+            
+            // 1. 鎖定按鈕並顯示 Loading 狀態
+            downloadBtn.disabled = true;
+            downloadBtn.style.backgroundColor = "#cccccc";
+            downloadBtn.style.cursor = "not-allowed";
+            downloadBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Zipping...'; 
+
+            // 2. 抓取表單資料
+            const form = document.querySelector('.form');
+            const formData = new FormData(form);
+
+            try {
+                // 3. 改用 Fetch API 在背景送出請求，並「等待」後端處理完畢
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                    // CSRF Token 已經包含在原本的 form 裡面，FormData 會自動帶上
+                });
+
+                if (!response.ok) {
+                    // 讓瀏覽器印出 Django 後端的真實報錯內容
+                    const errorText = await response.text();
+                    console.error("Django Backend Error:", errorText);
+                    throw new Error(`server wrong code: ${response.status}`);
+                }
+
+                // 4. 後端打包完畢！將回傳的 ZIP 轉為二進位物件 (Blob)
+                const blob = await response.blob();
+
+                // 嘗試從後端 Header 讀取原本設定的檔名，若無則提供預設檔名
+                let filename = "PinBioML_Results.zip";
+                const disposition = response.headers.get('Content-Disposition');
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) { 
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+
+                // 5. 虛擬創造一個 <a> 標籤來觸發瀏覽器的下載行為
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 釋放記憶體
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert("Package error, please try it later!");
+            } finally {
+                // 6. 核心關鍵：無論下載成功或報錯，立刻復原按鈕狀態！
+                downloadBtn.disabled = false;
+                downloadBtn.style.backgroundColor = ""; 
+                downloadBtn.style.cursor = "pointer";
+                downloadBtn.innerHTML = 'Download';
+            }
+        }
+    </script>
+<a href="/Statistical_Analysis/download/{{ uuid }}/#top" id="scrollUp" style="position: fixed; z-index: 2147483647;"><span><i class="fa fa-angle-up"></i></span></a></body></html>

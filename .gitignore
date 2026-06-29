@@ -1,0 +1,46 @@
+# Python bytecode — all nested locations
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+.vscode/
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+!.env.production.example
+pinebioml-report-service/.env
+pinebioml-report-service/.env.*
+!pinebioml-report-service/.env.example
+!pinebioml-report-service/.env.production.example
+
+# Generated runtime data — reports, datasets, media, exports
+pinebioml-report-service/storage/
+pinebioml-report-service/output/
+pinebioml-report-service/scratch/
+pinebioml-report-service/bench/
+
+# Local SQLite databases (production uses Postgres)
+**/*.db
+pinebioml-report-service/storage/databases/
+
+# Large PineBioML example data and generated model outputs
+PineBioML/examples/input/
+PineBioML/examples/output/
+PineBioML/output/
+output/
+
+# Local reference captures and generated docs not needed on GitHub
+ORGINAL HTML/
+PineBioML/documents/
+
+# Local package/build artifacts
+PineBioML/build/
+PineBioML/*.egg-info/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp

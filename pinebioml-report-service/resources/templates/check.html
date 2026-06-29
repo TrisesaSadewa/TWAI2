@@ -1,0 +1,655 @@
+
+<!doctype html>
+<html class="no-js" lang="zxx">
+
+<head>
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="keywords" content="Site keywords here">
+    <meta name="description" content="">
+    <meta name="copyright" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Title -->
+    <title>PinBioML - Check</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/PBML/Pinbioicon.png">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Poppins:200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <!-- Nice Select CSS -->
+    <link rel="stylesheet" href="/static/css/nice-select.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <!-- icofont CSS -->
+    <link rel="stylesheet" href="/static/css/icofont.css">
+    <link rel="stylesheet" href="/static/css/icofont/icofont.css">
+    <!-- Slicknav -->
+    <link rel="stylesheet" href="/static/css/slicknav.min.css">
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="/static/css/owl-carousel.css">
+    <!-- Datepicker CSS -->
+    <link rel="stylesheet" href="/static/css/datepicker.css">
+    <!-- Animate CSS -->
+    <link rel="stylesheet" href="/static/css/animate.min.css">
+    <!-- Magnific Popup CSS -->
+    <link rel="stylesheet" href="/static/css/magnific-popup.css">
+
+    <!-- Medipro CSS -->
+    <link rel="stylesheet" href="/static/css/normalize.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    
+    
+    <style>
+        header{
+            z-index: 999;
+        }
+
+        .container {
+            height: 100%;
+        }
+
+        .sidebar {
+            top: 0;
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+            z-index: 900;
+        }
+
+        .sidebar-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid rgb(59, 59, 59);
+            color: rgb(0, 0, 0);
+            margin: 10px 0;
+        }
+
+        .sidebar-item.active {
+            background-color: #cce5ff;
+        }
+
+        .sidebar-item.disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar-item:hover {
+            background-color: #d6d6d6;
+        }
+
+        .parameter-form {
+            border: 1px solid #ccc;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-bottom: 10px;
+            border-radius: 10px;
+            /* max-width: 1000px; */
+        }
+
+        .pagination-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-number {
+            background-color: #e6f0ff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            margin: 0 5px;
+            border: 1px solid #000;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #000;
+            text-decoration: none;
+        }
+        .page-arrow{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            margin: 0 5px;
+            text-align: center;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .page-arrow.disabled {
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        .custom-dropdown-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .dropdown-label {
+            margin-right: 10px;
+            white-space: nowrap; /* 防止換行 */
+        }
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        .custom-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            border: 1px solid #ccc;
+            z-index: 1;
+        }
+        .custom-dropdown.show .custom-dropdown-content {
+            display: block;
+        }
+        .custom-option {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .custom-option:hover {
+            background-color: #f1f1f1;
+        }
+        .custom-dropdown-input {
+            width: calc(100% - 16px);
+            margin: 8px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .form-control {
+            flex: 1;
+        }
+        .error-border {
+            box-sizing: border-box; /* 計算元素總大小時包含邊框 */
+            border: 3px solid red !important; /* 增加紅框厚度 */
+            padding: 10px; /* 增加內距 */
+            margin: 10px; /* 增加外距，讓紅框與其他元素保持距離 */
+            border-radius: 5px; /* 添加圓角以增加視覺效果 */
+        }
+        #sidebar-container {
+            display: block; /* 電腦版預設顯示 */
+        }
+        #sidebar-container-media {
+            display: none; /* 手機版預設隱藏 */
+        }
+
+
+
+
+
+        @media (max-width: 1200px) {
+            #sidebar-container {
+                display: none; /* 隱藏電腦版的 sidebar */
+            }
+
+            #sidebar-container-media {
+                display: block; /* 顯示手機版的 sidebar */
+            }
+
+            .sidebar {
+                width: 100%;  /* 全螢幕寬度 */
+                height: auto; /* 根據內容自適應高度 */
+                /* position: relative;  */
+                flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
+                overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
+                padding: 10px;
+                background-color: #333; /* 更深的顏色以便區分 */
+
+                /* width: 200px; */
+                /* background-color: #f0f0f0; */
+                /* padding: 15px; */
+                height: 100vh;
+                position: fixed;
+            }
+
+            .sidebar-item {
+                font-size: 0.9rem; /* 調整字體大小 */
+                margin: 0 20px; /* 添加些許間距讓元素不緊貼 */
+            }
+            .mobile-topbar {
+                display: flex;                    /* 使用 Flexbox 進行佈局 */
+                justify-content: space-around;    /* 子元素在水平方向均等分佈 */
+                align-items: center;              /* 子元素垂直居中 */
+                background-color: #fafafa;           /* 設置背景色（可根據需要調整） */
+                padding: 10px;                    /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
+                width: 100%;                      /* 設置寬度為全屏 */
+            }
+
+            .btn-mobile {
+                background: none;                 /* 去掉按鈕背景（可根據需要自定義） */
+                border: none;                     /* 去掉按鈕邊框 */
+                color: rgb(0, 0, 0);                     /* 設置按鈕文字或圖標顏色 */
+                font-size: 1.5rem;                /* 調整圖標大小 */
+                cursor: pointer;                  /* 設置鼠標樣式為指針 */
+            }
+
+            .btn-mobile.disabled {
+                color: grey;                      /* 設置不可用按鈕的顏色 */
+                cursor: not-allowed;              /* 鼠標樣式設為不可用 */
+            }
+
+            .main-content {
+                margin-left: 0px;
+                padding: 20px;
+                min-height: calc(100vh - 100px);
+            }
+            .file-name-container {
+                display: none; 
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="preloader" id="loading">
+		<div class="loader">
+			<div class="loader-outter"></div>
+			<div class="loader-inner"></div>
+
+			<div class="indicator"> 
+				<svg width="16px" height="12px">
+					<polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+					<polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+				</svg>
+			</div>
+		</div>
+	</div>
+
+    <!-- Header Area -->
+    <header class="header">
+		<div class="header-inner">
+			<div class="container">
+				<div class="inner">
+					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
+						<div class="col-lg-3 col-md-3 col-12 ">
+							<!-- Start Logo -->
+							<div class="logo">
+								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
+							</div>
+							<!-- End Logo -->
+
+							<!-- Mobile Nav -->
+							<div class="mobile-nav"></div>
+							<!-- End Mobile Nav -->
+
+						</div>
+						<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+							<!-- Main Menu -->
+							<div class="main-menu">
+								<nav class="navigation">
+									<ul class="nav menu">
+										<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown">
+												<li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>
+										<li><a href="#">Contact Us</a></li> -->
+									</ul>
+								</nav>
+							</div>
+							<!--/ End Main Menu -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--/ End Header Inner -->
+	</header>
+    <!-- End Header Area -->
+
+    <!-- Sidebar -->
+    <div style="height:1px; background-color:#ccc;"></div>
+    <div id="sidebar-container">
+        <div class="sidebar">
+            <br><br><br>
+            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+            <a href="/Statistical_Analysis/upload"><div class="sidebar-item active">Upload</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Setting</div>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Result</div>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Download</div><br>
+            <a href="/" class="home-icon" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-home" style=" font-size: 2rem;"></i>
+            </a>
+        </div>
+    </div>
+    <div id="sidebar-container-media">
+        <div class="mobile-topbar">
+            <button title="Action" aria-label="Action" class="btn-mobile"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+        </div>
+    </div>
+
+    
+
+    <div class="main-content">
+        <div style="padding: 10px;">
+            <h3>Check your data. <br></h3>
+            <label>Please verify the accuracy of your data and select your target.</label>
+        </div>
+        <div class="parameter-form">
+            <section class="appointment" style="padding: 0;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-12">
+                            <form class="form no-preloader" action="/Statistical_Analysis/setting/{{ uuid }}/" method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="WVhzherblSiukHzvZPxLuEboFRA52nj7QWfB2ykXc6vaql9lvzznBwJnUIZlZHEn">
+                                <div class="file-name-container" style="margin-bottom: 10px;">
+                                    <p id="file-name-display" style="font-weight: bold;">
+                                        
+                                            {{ filename }}
+                                        
+                                    </p>
+                                </div>
+    
+                                <div class="custom-dropdown-container" id = custom-dropdown-container>
+                                    <h6 for="dropdown-button" class="dropdown-label">Target Column：</h6>
+                                    <div class="custom-dropdown" id="dropdown-container">
+                                        <button title="Action" aria-label="Action" type="button" class="form-control no-preloader" id="dropdown-button">Select Target</button>
+                                        <div class="custom-dropdown-content" id="dropdown-content">
+                                            <input type="text" id="dropdown-search" class="custom-dropdown-input" placeholder="Search..." title="input" aria-label="input">
+{% for col in columns %}
+<div class="custom-option" data-value="{{ col }}" name="target_column">{{ col }}</div>
+{% endfor %}
+</div>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+    
+                                <input type="hidden" name="target_column" id="target-column-hidden">
+    
+                                <div style="overflow-x: auto; max-width: 100%;">
+                                    <table style="vertical-align: middle; width: 100%; border-collapse: collapse; margin-top: 20px;">
+                                        
+    
+                                        
+                                            <thead>
+                                                <tr style="border-bottom: 1px solid #ddd;">
+{% for col in columns %}
+<th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">{{ col }}</th>
+{% endfor %}
+</tr>
+                                            </thead>
+                                            <tbody>
+{% for row in rows %}
+<tr style="border-bottom: 1px solid #ddd;">
+{% for val in row %}
+<td style="border: 1px solid #ddd; padding: 8px;">{{ val }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+                                        
+                                    </table>
+                                </div>
+    
+                                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; clear: both; width: 100%;">
+                                    <button title="Action" aria-label="Action" type="button" class="btn" onclick="history.back();">Back</button>
+                                    
+                                    <nav aria-label="Page navigation" style="margin: 0;">
+                                        
+                                            <div class="pagination-container">
+                                                <!-- 上一頁箭頭 -->
+                                                
+                                                    <span class="page-arrow disabled">&lsaquo;</span>
+                                                
+                                
+                                                <!-- 當前頁碼 -->
+                                                <span class="page-number">1</span>
+                                
+                                                <!-- 下一頁箭頭 -->
+                                                
+                                                    <a class="page-arrow" href="?page=2&uuid={{ uuid }}" aria-label="Next">
+                                                        &rsaquo;
+                                                    </a>
+                                                
+                                            </div>
+                                        
+                                    </nav>
+
+                                    <button title="Action" aria-label="Action" type="submit" class="btn no-preloader" id="next-step">Next</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div><br><br><br>
+    
+
+    <!-- Footer Area -->
+    <!-- <footer id="footer" class="footer ">
+		<div class="copyright">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12 col-md-12 col-12">
+						<div class="copyright-content">
+							<p>© Copyright 2018 | All Rights Reserved by <a href="https://www.wpthemesgrid.com"
+									target="_blank">wpthemesgrid.com</a> </p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer> -->
+    <!-- Footer -->
+
+    <!--/ End Footer Area -->
+
+    <!-- jquery Min JS -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- jquery Migrate JS -->
+    <script src="/static/js/jquery-migrate-3.0.0.js"></script>
+    <!-- jquery Ui JS -->
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <!-- Easing JS -->
+    <script src="/static/js/easing.js"></script>
+    <!-- Color JS -->
+    <script src="/static/js/colors.js"></script>
+    <!-- Popper JS -->
+    <script src="/static/js/popper.min.js"></script>
+    <!-- Bootstrap Datepicker JS -->
+    <script src="/static/js/bootstrap-datepicker.js"></script>
+    <!-- Jquery Nav JS -->
+    <script src="/static/js/jquery.nav.js"></script>
+    <!-- Slicknav JS -->
+    <script src="/static/js/slicknav.min.js"></script>
+    <!-- ScrollUp JS -->
+    <script src="/static/js/jquery.scrollUp.min.js"></script>
+    <!-- Niceselect JS -->
+    <script src="/static/js/niceselect.js"></script>
+    <!-- Tilt Jquery JS -->
+    <script src="/static/js/tilt.jquery.min.js"></script>
+    <!-- Owl Carousel JS -->
+    <script src="/static/js/owl-carousel.js"></script>
+    <!-- counterup JS -->
+    <script src="/static/js/jquery.counterup.min.js"></script>
+    <!-- Steller JS -->
+    <script src="/static/js/steller.js"></script>
+    <!-- Wow JS -->
+    <script src="/static/js/wow.min.js"></script>
+    <!-- Magnific Popup JS -->
+    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <!-- Counter Up CDN JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Main JS -->
+    <script src="/static/js/main.js"></script>
+    <script>
+        // 切換下拉選單的顯示與隱藏
+        document.getElementById('dropdown-button').addEventListener('click', function(event) {
+            event.preventDefault();
+            document.querySelector('.custom-dropdown').classList.toggle('show');
+        });
+
+        // 遍歷每個選項，點擊後更新按鈕的文字，並隱藏下拉選單
+        document.querySelectorAll('.custom-option').forEach(item => {
+            item.addEventListener('click', function(event) {
+                document.getElementById('dropdown-button').innerText = item.innerText;
+                document.getElementById('target-column-hidden').value = item.getAttribute('data-value');
+                document.querySelector('.custom-dropdown').classList.remove('show');
+                document.getElementById('dropdown-container').classList.remove('error-border'); // 移除紅框
+            });
+        });
+
+        // 點擊其他區域時隱藏下拉選單
+        document.addEventListener('click', function(event) {
+            var isClickInside = document.querySelector('.custom-dropdown').contains(event.target);
+            if (!isClickInside) {
+                document.querySelector('.custom-dropdown').classList.remove('show');
+            }
+        });
+
+        // 搜索框過濾選項
+        document.getElementById('dropdown-search').addEventListener('input', function() {
+            let filter = this.value.toLowerCase();
+            let options = document.querySelectorAll('.custom-option');
+            options.forEach(function(option) {
+                let text = option.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    option.style.display = "";
+                } else {
+                    option.style.display = "none";
+                }
+            });
+        });
+
+        // 表單驗證
+        function validateForm() {
+            const targetColumn = document.getElementById('target-column-hidden').value;
+            if (!targetColumn) {
+                // 沒有選擇 Target Column，顯示紅框並滾動到選擇目標的地方
+                document.getElementById('dropdown-container').classList.add('error-border');
+                document.getElementById('dropdown-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false; // 阻止表單提交
+            }
+            else{
+                showLoadingForForm(event);
+            }
+
+            return true;
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarContainer = document.getElementById('sidebar-container');
+            const fileNameElement = document.getElementById('file-name-display');
+            let fileName = fileNameElement.textContent.trim(); // 取得文件名稱
+            
+
+            if (fileName !== 'No file selected.') {
+                const maxLength = 70; // 設置最大長度
+                if (fileName.length > maxLength) {
+                    const dotIndex = fileName.lastIndexOf('.');
+                    if (dotIndex !== -1) {
+                        const name = fileName.slice(0, dotIndex); // 檔案名（不包括副檔名）
+                        const extension = fileName.slice(dotIndex); // 副檔名
+
+                        // 截斷檔名，確保總長度不超過 maxLength
+                        const truncatedName = name.slice(0, maxLength - extension.length - 3) + '...' + extension;
+                        fileNameElement.textContent = "Selected file: " + truncatedName;
+                    } else {
+                        // 沒有副檔名的情況，簡單截斷
+                        fileNameElement.textContent = "Selected file: " + fileName.slice(0, maxLength) + '...';
+                    }
+                } else {
+                    // 文件名不超過最大長度
+                    fileNameElement.textContent = "Selected file: " + fileName;
+                }
+            }
+        });
+        function showLoadingForForm(event) {
+			const loading = document.getElementById('loading');
+			loading.style.display = 'flex';
+			const preloader = document.querySelector('.preloader');
+			preloader.classList.remove('preloader-deactivate');
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            // 綁定所有按鈕和超連結
+            const elements = document.querySelectorAll('button, a'); // 選取按鈕和超連結
+            elements.forEach(element => {
+                element.addEventListener('click', function (event) {
+                    // 如果元素具有 'no-preloader' class，則跳過
+                    if (event.currentTarget.classList.contains('no-preloader')) {
+                        return; // 不顯示 preloader，直接返回
+                    }
+
+                    // 顯示 preloader
+                    showLoadingForForm(event);
+
+                    // 如果是超連結，防止預設行為並延遲跳轉
+                    if (element.tagName === 'A' && element.href) {
+                        event.preventDefault(); // 阻止默認跳轉
+                        setTimeout(() => {
+                            window.location.href = element.href; // 延遲後跳轉
+                        }, 300); // 根據需要調整延遲時間
+                    }
+                });
+            });
+
+            // 綁定所有表單提交事件
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (event) {
+                    // 如果表單具有 'no-preloader' class，則跳過
+                    if (form.classList.contains('no-preloader')) {
+                        return; // 不顯示 preloader，直接返回
+                    }
+
+                    // 顯示 preloader
+                    showLoadingForForm(event);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

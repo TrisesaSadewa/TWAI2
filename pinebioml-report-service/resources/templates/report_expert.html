@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PineBioML Scientific Report - {{ dataset_name | default('Dataset') }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Premium Modern Dark Theme - Vanilla CSS */
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --accent-primary: #38BDF8;
+            --accent-secondary: #818CF8;
+            --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(12px);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Elements */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 50vw; height: 50vw; top: -10vw; left: -10vw; background: var(--accent-primary); }
+        .orb-2 { width: 40vw; height: 40vw; bottom: -5vw; right: -5vw; background: var(--accent-secondary); animation-delay: -10s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 5%) scale(1.1); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding-top: 2rem;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: var(--transition-smooth);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Table Styling */
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-weight: 600;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        /* Visualization Grid */
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+        .viz-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+        .viz-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .viz-content { padding: 1.5rem; }
+        .viz-content h3 { color: var(--accent-secondary); margin-bottom: 0.5rem; }
+        .viz-content p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Glossary Term Styling */
+        .term {
+            color: var(--accent-primary);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-decoration-color: var(--accent-secondary);
+            cursor: help;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+        }
+        .term:hover { color: var(--accent-secondary); }
+
+        /* Tooltip */
+        #tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--accent-primary);
+            color: #fff;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        #tooltip.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Toggle Button */
+        .toggle-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+        .toggle-btn {
+            background: var(--gradient-primary);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toggle-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.6);
+        }
+
+        /* Mode Visibility */
+        .layperson-mode { display: none; }
+        body.is-layperson .layperson-mode { display: block; animation: fadeIn 0.5s ease; }
+        body.is-layperson .expert-mode { display: none; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Lists */
+        ul { padding-left: 1.5rem; color: var(--text-muted); }
+        li { margin-bottom: 0.5rem; }
+
+        /* Editable Content */
+        .editable-content {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: var(--transition-smooth);
+            border: 1px dashed transparent;
+            min-height: 3rem;
+        }
+        .editable-content:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .editable-content:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(15, 23, 42, 0.5);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .header-meta { flex-direction: column; gap: 0.5rem; }
+            .card { padding: 1.5rem; }
+            .viz-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <!-- Action Buttons -->
+    <div class="toggle-container" style="display: flex; gap: 1rem;">
+        <button title="Action" aria-label="Action" class="toggle-btn" id="previewPdfBtn" style="background: rgba(17, 24, 39, 0.8); border: 1px solid var(--border-subtle);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Preview PDF
+        </button>
+        <button title="Action" aria-label="Action" class="toggle-btn" id="modeToggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Switch to Layperson Mode
+        </button>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>PineBioML Analysis Report</h1>
+            <div class="header-meta">
+                <span><strong>Dataset:</strong> {{ dataset_name | default('Unknown') }}</span>
+                <span><strong>Task:</strong> {{ task_type | default('Classification') }}</span>
+                <span><strong>Date:</strong> {{ date | default('Today') }}</span>
+            </div>
+        </header>
+
+        <!-- Layperson Content (Hidden by default) -->
+        <div class="layperson-mode">
+            <div class="card">
+                <h2>✨ 執行摘要 (Executive Summary)</h2>
+                <p>{{ layperson_summary_zh_tw | default('目前沒有提供通俗摘要。') }}</p>
+            </div>
+        </div>
+
+        <!-- Expert Content (Visible by default) -->
+        <div class="expert-mode">
+            <!-- Executive Summary -->
+            <div class="card">
+                <h2>Executive Summary <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted); margin-left: 1rem;">(Click to edit)</span></h2>
+                <div contenteditable="true" class="editable-content">
+                    <p>{{ executive_summary | default('No executive summary provided.') | safe }}</p>
+                </div>
+                
+                {% if key_findings %}
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--accent-primary);">Key Findings</h3>
+                <ul>
+                    {% for finding in key_findings %}
+                    <li>{{ finding }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card">
+                <h2>Recommendations <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted); margin-left: 1rem;">(Click to edit)</span></h2>
+                <div contenteditable="true" class="editable-content">
+                    <p>{{ recommendations | default('Click here to enter your clinical or technical recommendations based on this report...') | safe }}</p>
+                </div>
+            </div>
+
+            <!-- Model Performance -->
+            <div class="card">
+                <h2>Model Performance Comparison</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Comparison of tested architectures ranked by optimal performance metrics.</p>
+                <div class="table-container">
+                    {{ model_table_html | default('<p>No model table data available.</p>') | safe }}
+                </div>
+            </div>
+
+            <!-- Best Model Analysis -->
+            <div class="card">
+                <h2>Best Model Analysis</h2>
+                <p>{{ best_model_analysis | default('No analysis provided.') | safe }}</p>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--accent-primary);">Statistical Significance</h3>
+                <p>{{ significance_verdict | default('Significance analysis not performed.') | safe }}</p>
+                {% if reasoning_summary %}
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-secondary); border-radius: 0 0.5rem 0.5rem 0;">
+                    <strong style="color: var(--accent-secondary);">Reasoning Engine:</strong> {{ reasoning_summary }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Feature Importance (SHAP) -->
+            <div class="card">
+                <h2>Feature Importance & Directionality</h2>
+                <p>{{ feature_analysis | default('No feature analysis provided.') | safe }}</p>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--accent-primary);">SHAP Mathematical Logic</h3>
+                <p>{{ expert_analysis | default('Detailed SHAP analysis not provided.') | safe }}</p>
+            </div>
+
+            <!-- Visualization Gallery -->
+            <div class="card">
+                <h2>Visualization Gallery</h2>
+                <div class="viz-grid">
+                    {% if visualizations %}
+                        {% for viz in visualizations %}
+                        <div class="viz-card">
+                            <img src="data:image/png;base64,{{ viz.base64_data }}" alt="{{ viz.title }}">
+                            <div class="viz-content">
+                                <h3>{{ viz.title }}</h3>
+                                <p>{{ viz.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No visualizations available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Limitations & Methodology -->
+            <div class="card">
+                <h2>Methodology & Limitations</h2>
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--accent-primary); margin-bottom: 0.5rem;">Statistical Interpretation</h3>
+                    <p>{{ statistical_interpretation | default('No statistical interpretation provided.') | safe }}</p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--accent-primary); margin-bottom: 0.5rem;">Overfitting Risks</h3>
+                    <p>{{ overfitting_warning | default('None detected.') | safe }}</p>
+                </div>
+
+                <div>
+                    <h3 style="color: var(--accent-primary); margin-bottom: 0.5rem;">General Limitations</h3>
+                    <p>{{ limitations | default('No limitations provided.') | safe }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- PDF Preview Modal -->
+    <div id="pdfModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="width: 90%; max-width: 1000px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; height: 90vh;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8);">
+                <h3 style="margin: 0; color: #fff;">PDF Preview</h3>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div>
+                        <button title="Action" aria-label="Action" id="prevPage" class="toggle-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Prev</button>
+                        <span id="pageNum" style="color: #fff; margin: 0 0.5rem;">1</span> / <span id="pageCount" style="color: var(--text-muted);">1</span>
+                        <button title="Action" aria-label="Action" id="nextPage" class="toggle-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Next</button>
+                    </div>
+                    <button title="Action" aria-label="Action" id="closePdfModal" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">&times;</button>
+                </div>
+            </div>
+            <div style="flex: 1; overflow: auto; padding: 1.5rem; display: flex; justify-content: center; background: #222;">
+                <canvas id="pdfCanvas" style="box-shadow: 0 0 20px rgba(0,0,0,0.5);"></canvas>
+            </div>
+            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; background: rgba(15, 23, 42, 0.8);">
+                <a href="/report/{{ report_id }}/download/pdf" class="toggle-btn" style="text-decoration: none;">Download PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <script id="glossary-data" type="application/json">
+        {{ glossary_json | default('{"AUC": "Area Under the Curve: measures the ability of a classifier to distinguish between classes.", "SHAP": "SHapley Additive exPlanations: a method to explain individual predictions.", "MCC": "Matthews Correlation Coefficient: a balanced measure of binary classification quality."}') | safe }}
+    </script>
+    <script>
+        // Inline Glossary JSON Data
+        const glossaryText = document.getElementById('glossary-data').textContent;
+        const glossary = glossaryText ? JSON.parse(glossaryText) : {};
+
+        // Privacy-First Local History Tracking
+        const currentReportId = "{{ report_id }}";
+        const datasetName = "{{ dataset_name | default('Unknown Dataset') }}";
+        if (currentReportId && !currentReportId.includes("{{")) {
+            let historyList = JSON.parse(localStorage.getItem('pinebioml_history') || '[]');
+            // Remove existing entry if it exists (so we can move it to top)
+            historyList = historyList.filter(r => r.id !== currentReportId);
+            // Add to top
+            historyList.unshift({
+                id: currentReportId,
+                dataset: datasetName,
+                date: new Date().toISOString()
+            });
+            // Cap at 100 recent reports to prevent quota issues
+            if (historyList.length > 100) historyList.length = 100;
+            localStorage.setItem('pinebioml_history', JSON.stringify(historyList));
+        }
+
+        // Tooltip Logic
+        const tooltip = document.getElementById('tooltip');
+        
+        // Dynamically find terms in text nodes (for simplicity, we assume they are wrapped in <span class="term" data-term="TERM">)
+        // In actual implementation, the backend should wrap known terms with these tags before sending to Jinja.
+        document.querySelectorAll('.term').forEach(el => {
+            el.addEventListener('mouseenter', (e) => {
+                const term = el.getAttribute('data-term');
+                if (glossary[term]) {
+                    tooltip.innerHTML = `<strong>${term}</strong><br/>${glossary[term]}`;
+                    
+                    // Position Tooltip
+                    const rect = el.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    
+                    let top = rect.top + window.scrollY - tooltipRect.height - 10;
+                    let left = rect.left + window.scrollX - (tooltipRect.width / 2) + (rect.width / 2);
+                    
+                    // Boundary checks
+                    if (top < 0) top = rect.bottom + window.scrollY + 10;
+                    if (left < 0) left = 10;
+                    if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
+
+                    tooltip.style.top = `${top}px`;
+                    tooltip.style.left = `${left}px`;
+                    tooltip.classList.add('visible');
+                }
+            });
+
+            el.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        });
+
+        // Toggle Logic
+        const toggleBtn = document.getElementById('modeToggle');
+        let isLayperson = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isLayperson = !isLayperson;
+            if (isLayperson) {
+                document.body.classList.add('is-layperson');
+                toggleBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Switch to Expert Mode';
+            } else {
+                document.body.classList.remove('is-layperson');
+                toggleBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Switch to Layperson Mode';
+            }
+        });
+
+        // PDF Preview Logic
+        const previewBtn = document.getElementById('previewPdfBtn');
+        const pdfModal = document.getElementById('pdfModal');
+        const closePdfModal = document.getElementById('closePdfModal');
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({scale: 1.5});
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+            document.getElementById('pageNum').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+        previewBtn.addEventListener('click', async () => {
+            // Show modal and loading state
+            pdfModal.style.display = 'flex';
+            
+            try {
+                // Fetch PDF from backend
+                const url = '/report/{{ report_id }}/download/pdf';
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                
+                document.getElementById('pageCount').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (err) {
+                console.error('Error loading PDF:', err);
+                alert('Failed to load PDF preview.');
+                pdfModal.style.display = 'none';
+            }
+        });
+
+        closePdfModal.addEventListener('click', () => {
+            pdfModal.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

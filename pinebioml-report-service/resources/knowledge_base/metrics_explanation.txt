@@ -1,0 +1,9 @@
+PineBioML Output Metrics Explanation:
+- MCC (Matthews Correlation Coefficient): A highly reliable metric for binary classification, especially on imbalanced datasets. It ranges from -1 to +1, where +1 is perfect prediction, 0 is no better than random prediction, and -1 indicates total disagreement between prediction and observation.
+- AUC (Area Under the ROC Curve): Measures the model's ability to distinguish between classes. Values range from 0 to 1, where 1 means a perfect model, 0.5 is a random guess, and below 0.5 suggests a worse than random model.
+- Sensitivity (Recall or True Positive Rate): The proportion of actual positives that are correctly identified. Crucial in biomedical settings where missing a disease is dangerous.
+- Specificity (True Negative Rate): The proportion of actual negatives that are correctly identified. Important when false positives lead to unnecessary treatments or stress.
+- CV Score (Cross-Validation Score): The average performance metric across k-folds during cross-validation. It estimates how the model is expected to perform on unseen data, helping to prevent overfitting.
+- Test Score: The performance metric calculated on an unseen holdout test set to provide a final, unbiased evaluation of the model.
+- Accuracy: The proportion of total predictions that are correct. In biomedical ML, accuracy can be misleading if the classes are highly imbalanced, making MCC or AUC preferred metrics.
+- F1 Score: The harmonic mean of Precision and Recall. Useful when seeking a balance between precision and sensitivity, particularly for imbalanced datasets.

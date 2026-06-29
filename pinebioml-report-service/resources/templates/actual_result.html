@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+
+<!-- saved from url=(0100)/Statistical_Analysis/result/{{ uuid }}/ -->
+<html class="no-js" lang="zxx"><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<!-- Meta Tags -->
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="Site keywords here" name="keywords"/>
+<meta content="" name="description"/>
+<meta content="" name="copyright"/>
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<!-- Title -->
+<title>PinBioML - Result</title>
+<!-- Favicon -->
+<link href="/static/PBML/Pinbioicon.png" rel="icon"/>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <!-- Nice Select CSS -->
+    <link rel="stylesheet" href="/static/css/nice-select.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <!-- icofont CSS -->
+    <link rel="stylesheet" href="/static/css/icofont.css">
+    <link rel="stylesheet" href="/static/css/icofont/icofont.css">
+    <!-- Slicknav -->
+    <link rel="stylesheet" href="/static/css/slicknav.min.css">
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="/static/css/owl-carousel.css">
+    <!-- Datepicker CSS -->
+    <link rel="stylesheet" href="/static/css/datepicker.css">
+    <!-- Animate CSS -->
+    <link rel="stylesheet" href="/static/css/animate.min.css">
+    <!-- Magnific Popup CSS -->
+    <link rel="stylesheet" href="/static/css/magnific-popup.css">
+
+    <!-- Medipro CSS -->
+    <link rel="stylesheet" href="/static/css/normalize.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+<style>
+        html {
+			scroll-behavior: smooth;
+		}
+
+        header{
+            z-index: 999;
+        }
+
+        .sidebar {
+            top: 0;
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+            z-index: 900;
+        }
+
+        .sidebar-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid rgb(59, 59, 59);
+            color: rgb(0, 0, 0);
+            margin: 10px 0;
+        }
+
+        .sidebar-item.active {
+            background-color: #cce5ff;
+        }
+
+        .sidebar-item.disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar-item:hover {
+            background-color: #d6d6d6;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .parameter-form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            /* max-width: 1000px; */
+        }
+
+        .image-text-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .responsive-image {
+            height: auto;
+            width: 50%;
+            object-fit: contain;
+        }
+
+        .responsive-frame {
+            width: 60%;
+            min-height: 520px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .image-description {
+            flex: 1;
+        }
+
+        .plot-carousel {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            padding: 12px 0 18px;
+            scroll-snap-type: x proximity;
+        }
+
+        .plot-carousel-card {
+            flex: 0 0 min(380px, 82vw);
+            scroll-snap-align: start;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .plot-carousel-card h5 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+            color: #2b2d42;
+        }
+
+        .plot-carousel-card img,
+        .plot-carousel-card iframe {
+            width: 100%;
+            height: 280px;
+            object-fit: contain;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .results-layout {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .optimal-section {
+            order: 1;
+        }
+
+        .plot-detail-section {
+            order: 2;
+        }
+
+        .ai-report-status {
+            max-width: 360px;
+            margin: 12px auto 0;
+            display: none;
+        }
+
+        .ai-report-status-text {
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        .ai-report-progress-track {
+            height: 12px;
+            width: 100%;
+            background: #e9ecef;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid #d7dde3;
+        }
+
+        .ai-report-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #20c997 0%, #4CAF50 100%);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        #sidebar-container {
+            display: block; /* 電腦版預設顯示 */
+        }
+        #sidebar-container-media {
+            display: none; /* 手機版預設隱藏 */
+        }
+
+        @media (max-width: 1200px) {
+            #sidebar-container {
+                display: none; /* 隱藏電腦版的 sidebar */
+            }
+
+            #sidebar-container-media {
+                display: block; /* 顯示手機版的 sidebar */
+            }
+
+            .sidebar {
+                width: 100%;  /* 全螢幕寬度 */
+                height: auto; /* 根據內容自適應高度 */
+                flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
+                overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
+                padding: 10px;
+                background-color: #333; /* 更深的顏色以便區分 */
+                color:rgb(95, 95, 95);
+                height: 100vh;
+                position: fixed;
+            }
+
+            .sidebar-item {
+                font-size: 0.9rem; /* 調整字體大小 */
+                margin: 0 20px; /* 添加些許間距讓元素不緊貼 */
+            }
+            .mobile-topbar {
+                display: flex;                    /* 使用 Flexbox 進行佈局 */
+                justify-content: space-around;    /* 子元素在水平方向均等分佈 */
+                align-items: center;              /* 子元素垂直居中 */
+                background-color: #fafafa;           /* 設置背景色（可根據需要調整） */
+                padding: 10px;                    /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
+                width: 100%;                      /* 設置寬度為全屏 */
+            }
+
+            .btn-mobile {
+                background: none;                 /* 去掉按鈕背景（可根據需要自定義） */
+                border: none;                     /* 去掉按鈕邊框 */
+                color: rgb(0, 0, 0);                     /* 設置按鈕文字或圖標顏色 */
+                font-size: 1.5rem;                /* 調整圖標大小 */
+                cursor: pointer;                  /* 設置鼠標樣式為指針 */
+            }
+
+            .btn-mobile.disabled {
+                color: grey;                      /* 設置不可用按鈕的顏色 */
+                cursor: not-allowed;              /* 鼠標樣式設為不可用 */
+            }
+
+            .main-content {
+            margin-left: 0px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+            }   
+            .image-text-container {
+                display: block; /* 讓圖片和文字分行顯示 */
+                text-align: center; /* 可選：文字和圖片居中對齊 */
+            }
+
+            .responsive-image {
+                width: 100%; /* 自適應寬度 */
+                max-width: 300px; /* 限制最大寬度 */
+                margin: 0 auto; /* 水平居中 */
+            }
+
+            .image-description {
+                margin-top: 10px; /* 圖片和文字的垂直間距 */
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="preloader preloader-deactivate" id="loading">
+<div class="loader">
+<div class="loader-outter"></div>
+<div class="loader-inner"></div>
+<div class="indicator">
+<svg height="12px" width="16px">
+<polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+<polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+</svg>
+</div>
+</div>
+</div>
+<!-- Header Area -->
+<header class="header sticky">
+<div class="header-inner">
+<div class="container">
+<div class="inner">
+<div class="row align-items-center justify-content-between"> <!--style="margin: 2%;"-->
+<div class="col-lg-3 col-md-3 col-12">
+<!-- Start Logo -->
+<div class="logo">
+<a href="/"><img alt="#" src="/static/result_assets/PinBio.png" style="height: 60px;"/></a>
+</div>
+<!-- End Logo -->
+<!-- Mobile Nav -->
+<div class="mobile-nav"><div class="slicknav_menu"><a aria-haspopup="true" class="slicknav_btn slicknav_collapsed" href="/Statistical_Analysis/result/{{ uuid }}/#" role="button" style="outline: none;" tabindex="0"><span class="slicknav_menutxt"></span><span class="slicknav_icon slicknav_no-text"><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span></span></a><ul aria-hidden="true" class="slicknav_nav slicknav_hidden" role="menu" style="display: none;">
+<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown">
+												<li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>-->
+<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" role="menuitem" tabindex="-1" target="_blank">Contact Us</a></li>
+</ul></div></div>
+<!-- End Mobile Nav -->
+</div>
+<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+<!-- Main Menu -->
+<div class="main-menu">
+<nav class="navigation">
+<ul class="nav menu">
+<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown">
+												<li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>-->
+<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" rel="noopener noreferrer" target="_blank">Contact Us</a></li>
+</ul>
+</nav>
+</div>
+<!--/ End Main Menu -->
+</div>
+</div>
+</div>
+</div>
+</div>
+<!--/ End Header Inner -->
+</header>
+<!-- End Header Area -->
+<!-- Sidebar -->
+<div style="height:1px; background-color:#ccc;"></div>
+<div id="sidebar-container">
+<div class="sidebar">
+<br/><br/><br/>
+<label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+<a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;">Setting</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<a href="/Statistical_Analysis/result/{{ uuid }}/"><div class="sidebar-item active">Result</div></a>
+<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+</div>
+<div class="sidebar-item disabled">Download</div><br/>
+<a class="home-icon" href="/" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+<i class="fa fa-home" style=" font-size: 2rem;"></i>
+</a>
+</div>
+</div>
+<div id="sidebar-container-media">
+<div class="mobile-topbar">
+<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile"><a href="/Statistical_Analysis/result/{{ uuid }}/"><i class="icofont-chart-bar-graph"></i></a></button>
+<button title="Action" aria-label="Action" class="btn-mobile disabled" disabled=""><i class="icofont-download"></i></button>
+</div>
+</div>
+<!-- Main Content -->
+<div class="main-content">
+<div style="padding: 10px;">
+<h3>Result <br/></h3>
+<label>This section presents the outcomes of the models.</label>
+</div>
+<section class="portfolio section" style="padding: 20px;">
+<div class="container-fluid">
+<div class="plot-carousel" aria-label="Generated plot carousel">
+{% if task_type == 'classification' %}
+<div class="plot-carousel-card">
+<h5>Confusion Matrix</h5>
+<img alt="Confusion Matrix" src="{{ media_base }}/_Confusion Matrix.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_Confusion Matrix.png" target="_blank">View Details</a>
+</div>
+{% elif task_type == 'regression' %}
+<div class="plot-carousel-card">
+<h5>True vs Predicted</h5>
+<img alt="True vs Predicted" src="{{ media_base }}/_True vs Predicted.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_True vs Predicted.png" target="_blank">View Details</a>
+</div>
+<div class="plot-carousel-card">
+<h5>Residuals</h5>
+<img alt="Residuals" src="{{ media_base }}/_Residuals.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_Residuals.png" target="_blank">View Details</a>
+</div>
+{% endif %}
+<div class="plot-carousel-card">
+<h5>Correlation Heatmap</h5>
+<img alt="Correlation Heatmap" src="{{ media_base }}/_Correlation Heatmap.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_Correlation Heatmap.png" target="_blank">View Details</a>
+</div>
+<div class="plot-carousel-card">
+<h5>PCA</h5>
+<img alt="PCA" src="{{ media_base }}/_PCA.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_PCA.png" target="_blank">View Details</a>
+</div>
+<div class="plot-carousel-card">
+<h5>PLS</h5>
+<img alt="PLS" src="{{ media_base }}/_PLS.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_PLS.png" target="_blank">View Details</a>
+</div>
+{% if task_type == 'classification' %}
+<div class="plot-carousel-card">
+<h5>ROC Curve</h5>
+<img alt="ROC Curve" src="{{ media_base }}/_ROC Curve.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_ROC Curve.png" target="_blank">View Details</a>
+</div>
+{% endif %}
+<div class="plot-carousel-card">
+<h5>UMAP</h5>
+<img alt="UMAP" src="{{ media_base }}/_UMAP.png"/>
+<a class="btn no-preloader" href="{{ media_base }}/_UMAP.png" target="_blank">View Details</a>
+</div>
+<div class="plot-carousel-card">
+<h5>Feature Importance</h5>
+<iframe frameborder="0" src="{{ media_base }}/feature_importance.html"></iframe>
+<a class="btn no-preloader" href="{{ media_base }}/feature_importance.html" target="_blank">View Details</a>
+</div>
+<div class="plot-carousel-card">
+<h5>SHAP Plot</h5>
+<iframe frameborder="0" src="{{ media_base }}/shap_plot.html"></iframe>
+<a class="btn no-preloader" href="{{ media_base }}/shap_plot.html" target="_blank">View Details</a>
+</div>
+</div>
+</section>
+<div class="parameter-form">
+<section class="appointment" style="padding: 0;">
+<div class="container">
+<div class="row">
+<div class="col-lg-12 col-md-12 col-12">
+<form action="/Statistical_Analysis/download/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
+<!-- <form class="form" action="/Statistical_Analysis/result/{{ uuid }}/" method="POST" enctype="multipart/form-data"></form> -->
+<input name="csrfmiddlewaretoken" type="hidden" value="cr4HyGgAdpa9w5Ez2VEYDeuKhCJM5LrU6s2Jj09m4DnPCJepyFGAK62Jwt8225Ma"/>
+<div class="results-layout">
+<div class="plot-detail-section">
+<h3>Model Interpretability</h3><br/>
+<div style="display: block; gap: 10px;">
+<div id="/media/{{ uuid }}/output/feature_importance.html" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<br/><h5 style="margin-bottom: 10px;">Feature Importance</h5>
+<div class="image-text-container">
+<iframe class="responsive-frame" frameborder="0" src="{{ media_base }}/feature_importance.html">
+</iframe>
+<div class="image-description" style="white-space: pre-wrap;">
+Feature importance ranks the variables that contributed most strongly to the model predictions.
+Higher-ranked features usually had a larger impact on the selected model, so this plot helps identify which biological or clinical measurements were most influential.
+</div>
+</div><br/>
+<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/feature_importance.html', '_blank'); return false;" style="margin-top: auto; color:white;">
+                                                                            View in full screen
+                                                                        </a><br/>
+</div>
+<div id="/media/{{ uuid }}/output/shap_plot.html" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<br/><h5 style="margin-bottom: 10px;">SHAP Plot</h5>
+<div class="image-text-container">
+<iframe class="responsive-frame" frameborder="0" src="{{ media_base }}/shap_plot.html">
+</iframe>
+<div class="image-description" style="white-space: pre-wrap;">
+The SHAP plot explains how individual features push predictions higher or lower for each sample.
+Features near the top are typically the most influential, while the spread of points shows how consistently each feature affects the model output across the dataset.
+</div>
+</div><br/>
+<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/shap_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
+                                                                            View in full screen
+                                                                        </a><br/>
+</div>
+</div>
+<div style="height: 1px; background-color: #ccc;"></div>
+<div style="display: block; gap: 10px;">
+{% if task_type == 'classification' %}
+<div id="/media/{{ uuid }}/output/ Confusion Matrix.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">Confusion Matrix</h5>
+<div class="image-text-container">
+<!-- 圖片部分 -->
+<img alt="Image" class="responsive-image" src="{{ media_base }}/_Confusion Matrix.png"/>
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+                                                                
+● A higher number of true positive and true negative results is better.
+● <strong>True positive result:</strong> the actual classification is positive and the predicted classification is positive.<br/>
+● <strong>False negative result:</strong> the actual classification is positive and the predicted classification is negative.<br/>
+● <strong>False positive result:</strong> the actual classification is negative and the predicted classification is positive.<br/>
+● <strong>True negative result:</strong> the actual classification is negative and the predicted classification is negative.
+
+                                                            </div>
+</div>
+</div>
+<div id="/media/{{ uuid }}/output/ ROC Curve.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">ROC Curve</h5>
+<div class="image-text-container">
+<!-- 圖片部分 -->
+<img alt="Image" class="responsive-image" src="{{ media_base }}/_ROC Curve.png"/>
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+                                                                
+A ROC curve that is closer to the upper-left corner and has a larger area under the curve (AUC) indicates better model performance.
+
+                                                            </div>
+</div>
+</div>
+{% elif task_type == 'regression' %}
+<div id="/media/{{ uuid }}/output/ True vs Predicted.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">True vs Predicted</h5>
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" src="{{ media_base }}/_True vs Predicted.png"/>
+<div class="image-description" style="white-space: pre-wrap;">
+A scatter plot showing actual values vs predicted values. Points closer to the diagonal line indicate better model predictions.
+</div>
+</div>
+</div>
+<div id="/media/{{ uuid }}/output/ Residuals.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">Residuals</h5>
+<div class="image-text-container">
+<img alt="Image" class="responsive-image" src="{{ media_base }}/_Residuals.png"/>
+<div class="image-description" style="white-space: pre-wrap;">
+A plot of residuals (errors) vs predicted values. Ideally, residuals should be randomly scattered around zero.
+</div>
+</div>
+</div>
+{% endif %}
+</div>
+<br/><div style="height: 2px; background-color: #ccc;"></div><br/>
+ </div>
+<div class="optimal-section">
+<h3>1. The optimal model</h3><br/>
+<label style="font-size: medium;">To determine the optimal model, the scores for CV (cross-validation) and test sets are ranked in ascending order, with the best score ranked as 1. After ranking, the sum of these ranked values is calculated. The model with the smallest total ranking value is selected as the optimal model.</label>
+<br/><br/>
+
+{# Methodology / class-imbalance handling note. Shown only when the pipeline
+   applied class weighting or threshold tuning, so the metrics below are
+   interpretable (which class sensitivity tracks, that a tuned threshold was
+   used, etc.). imbalance_metadata comes from load_ml_metrics. #}
+{% if imbalance_metadata and imbalance_metadata.get('class_weight_applied') %}
+<div style="background-color: #fff8e1; border: 1px solid #ffe082; border-left: 4px solid #ffb300; border-radius: 6px; padding: 14px 18px; margin: 16px 0;">
+    <h5 style="margin-top: 0; color: #e65100;">⚖️ Class Imbalance Handling</h5>
+    <div style="font-size: 0.92rem; color: #5d4037; line-height: 1.5;">
+        {% set dist = imbalance_metadata.get('class_distribution', {}) %}
+        {% if dist %}
+            <div><b>Class distribution:</b>
+                {% for cls, pct in dist.items() %}<span style="margin-right: 14px;">class <b>{{ cls }}</b> = {{ pct }}</span>{% endfor %}
+            </div>
+        {% endif %}
+        <div style="margin-top: 6px;"><b>Imbalance strategy:</b> {{ imbalance_metadata.get('imbalance_strategy', 'N/A') }} (minority class = {{ imbalance_metadata.get('minority_class_percentage', 'N/A') | round(2) if imbalance_metadata.get('minority_class_percentage') is number else imbalance_metadata.get('minority_class_percentage', 'N/A') }}%).</div>
+        <div style="margin-top: 6px;"><b>Handling applied:</b> {{ imbalance_metadata.get('tool_used', 'class_weight=balanced') }}.</div>
+        <div style="margin-top: 8px; color: #b71c1c;"><b>Note on metrics:</b> sensitivity, specificity, and ROC-AUC are computed with the <b>minority class</b> as the positive class, so they reflect detection of the rare/clinically-important cases — not the majority class. Accuracy alone can be misleading under class imbalance.</div>
+        {% if imbalance_metadata.get('tuned_threshold') is not none %}
+            <div style="margin-top: 6px;"><b>Decision threshold:</b> tuned to <b>{{ imbalance_metadata.get('tuned_threshold') }}</b> (maximizing <b>{{ imbalance_metadata.get('threshold_metric', 'f1') }}</b> for the minority class on out-of-fold predictions) instead of the default 0.5. Reported sensitivity/specificity reflect this tuned threshold.</div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if task_type == 'classification' %}
+<div style="height: 1px; background-color: #ccc;"></div>
+<h5 style="margin-top: 20px;"> optimal-model-scores.csv</h5>
+<div style="margin: 20px;">
+                                                
+● support: The number of samples<br/>
+● macro avg: The average of metrics across all classes, calculated as (class1 + class2)/2<br/>
+● weighteed avg: The weighted average of metrics across all classes, calculated as(class1 + class2) / (support(class1) + support(class2))<br/>
+</div>
+<!-- 包裹表格內容的滾動容器 -->
+<div style="overflow-y: auto; max-height: 400px; border: 1px solid #ddd; margin-bottom: 20px;">
+<table style="border: 1px solid #ddd; width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr style="border-bottom: 1px solid #ddd;">
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Class</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Precision</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Recall</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">F1-Score</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Support</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if classification_report %}
+            {% for label, metrics in classification_report.items() %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ label }}</td>
+                {% if label == "accuracy" %}
+                <td style="padding: 10px; border: 1px solid #ddd;" colspan="3">Accuracy: {{ metrics | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"></td>
+                {% else %}
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.precision | round(4) if metrics.precision is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.recall | round(4) if metrics.recall is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics['f1-score'] | round(4) if metrics['f1-score'] is defined else '' }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ metrics.support }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td colspan="5" style="padding: 10px;">Classification report not available.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% elif task_type == 'regression' %}
+<div style="height: 1px; background-color: #ccc;"></div>
+<h5 style="margin-top: 20px;"> regression_report.json</h5>
+<div style="margin: 20px;">
+                                                
+● MSE: Mean Squared Error<br/>
+● MAE: Mean Absolute Error<br/>
+● R2: R-Squared (Coefficient of Determination)<br/>
+● Max Error: Maximum residual error<br/>
+</div>
+<div style="overflow-y: auto; max-height: 400px; border: 1px solid #ddd; margin-bottom: 20px;">
+<table style="border: 1px solid #ddd; width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr style="border-bottom: 1px solid #ddd;">
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Metric</th>
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2;">Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if regression_report %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Best Model</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_model }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Mean Squared Error (MSE)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_mse | round(4) }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Mean Absolute Error (MAE)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_mae | round(4) }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">R-Squared (R2)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_r2 | round(4) }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Max Error</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_max_err | round(4) }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="2" style="padding: 10px;">Regression report not available.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+<div style="height: 1px; background-color: #ccc;"></div>
+<h5 style="margin-top: 20px;">All-model-result.csv</h5>
+<div style="margin: 20px;">
+                                                
+This file contains detailed performance metrics for all models.<br/>
+● train, cv, test: Training set, cross-validation set, and test set, respectively.<br/>
+● mcc: Matthews Correlation Coefficient.<br/>
+● support: The number of samples.<br/>
+</div>
+<!-- 包裹表格內容的滾動容器 -->
+<div style="overflow-y: auto; max-height: 400px; border: 1px solid #ddd; margin-bottom: 20px;">
+<div style="overflow-x: auto; max-width: 100%;">
+<table style="border: 1px solid #ddd; width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr style="border-bottom: 1px solid #ddd;">
+            {% for col in all_results_columns %}
+            <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; white-space: nowrap;">{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% if all_results %}
+            {% for row in all_results %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                {% for col in all_results_columns %}
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td style="padding: 10px;">No model results available.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+</div>
+<div style="height: 1px; background-color: #ccc;"></div>
+<div style="height:2px; background-color:#000000; margin-bottom: 30px;"></div>
+</div>
+<div class="plot-detail-section">
+<h3>2. Data Overview</h3><br/><br/>
+<div style="display: block; gap: 10px;">
+<div id="/media/{{ uuid }}/output/ Correlation Heatmap.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">Correlation Heatmap</h5>
+<div class="image-text-container">
+<!-- 圖片部分 -->
+<img alt="Image" class="responsive-image" src="{{ media_base }}/_Correlation Heatmap.png"/>
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+<p>
+The correlation heatmap visualizes correlation coefficients, which measure the linear relationship between two variables. The range of correlation coefficients is from -1 to 1:<br/>
+● <strong>Closer to 1:</strong> Indicates a strong positive correlation.
+● <strong>Closer to 0:</strong> Indicates no linear relationship.
+● <strong>Closer to -1:</strong> Indicates a strong negative correlation.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div style="height:2px; background-color:#000000; margin-bottom: 30px;"></div>
+<h3>3. Dimensionality Reduction</h3><br/>
+<div style="display: block; gap: 10px;">
+<br/>
+<div id="/media/{{ uuid }}/output/ PCA.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">PCA</h5>
+<div class="image-text-container">
+<!-- 圖片部分已移除以使用下方互動圖表 -->
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+<p>
+● pc_1, pc_2, pc_3, pc_4 represent different principal components.
+● The diagonal plots show the distribution of data for individual components.
+● Scatter plots display the relationships between two components (e.g., the top-left plot shows the relationship between pc_1 and pc_2).<br/>
+● More concentrated distributions indicate components with lower variance.
+● More dispersed distributions indicate components capturing higher variance.
+</p>
+</div>
+</div>
+</div>
+<iframe height="600" src="{{ media_base }}/pca_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pca_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
+                                                                    View in full screen
+                                                                </a><br/>
+<br/>
+<div id="/media/{{ uuid }}/output/ PLS.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">PLS</h5>
+<div class="image-text-container">
+<!-- 圖片部分已移除以使用下方互動圖表 -->
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+<p>
+● PLS component 1 and PLS component 2 are the primary components derived from PLS (Partial Least Squares) analysis.<br/>
+● PLS component 1 captures the most critical variance for classification, while PLS component 2 provides supplementary information to enhance classification.
+</p>
+</div>
+</div>
+</div>
+<iframe height="600" src="{{ media_base }}/pls_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pls_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
+                                                                    View in full screen
+                                                                </a><br/>
+<br/>
+<div id="/media/{{ uuid }}/output/ UMAP.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
+<div style="margin-bottom: 20px; margin-top: 20px;">
+<h5 style="margin-bottom: 10px;">UMAP</h5>
+<div class="image-text-container">
+<!-- 圖片部分已移除以使用下方互動圖表 -->
+<!-- 描述文字部分 -->
+<div class="image-description" style="white-space: pre-wrap;">
+<p>
+● If the colored clusters are distinct and well-separated (e.g., forming clearly defined blocks), it indicates that UMAP has successfully preserved the high-dimensional clustering structure in the lower-dimensional space.<br/>
+● UMAP prioritizes preserving local proximity in the data. Points that are close in the plot are likely to share similar features in the high-dimensional space.<br/>
+● Points that are far apart generally represent significant differences in features.
+</p>
+</div>
+</div>
+</div>
+<iframe height="600" src="{{ media_base }}/umap_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/umap_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
+                                                                    View in full screen
+                                                                </a><br/>
+</div>
+<br/><div id="" style="height:1px; background-color:#ccc;"></div>
+</div>
+</div>
+<div class="col-lg-12 col-md-12 col-12 text-center" style="margin-bottom: 20px;">
+<button title="Action" aria-label="Action" class="btn" style="display: block; margin: 0 auto; margin-top: 20px;" type="submit">Download Page</button>
+<a id="view-ai-report-btn" href="/report/{{ uuid }}/html?token=ui_token" title="View AI Report" class="btn" style="display: block; margin: 0 auto; margin-top: 10px; background-color: #4CAF50; border-color: #4CAF50; width: fit-content; color: white;">View AI Report</a>
+<div id="ai-report-status" class="ai-report-status">
+<div id="ai-report-status-text" class="ai-report-status-text">AI report is still generating...</div>
+<div class="ai-report-progress-track">
+<div id="ai-report-progress-fill" class="ai-report-progress-fill"></div>
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Area -->
+<!-- <footer id="footer" class="footer ">
+		<div class="copyright">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12 col-md-12 col-12">
+						<div class="copyright-content">
+							<p>© Copyright 2018 | All Rights Reserved by <a href="https://www.wpthemesgrid.com"
+									target="_blank">wpthemesgrid.com</a> </p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer> -->
+<!-- Footer -->
+<!--/ End Footer Area -->
+    <!-- jquery Min JS -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- jquery Migrate JS -->
+    <script src="/static/js/jquery-migrate-3.0.0.js"></script>
+    <!-- jquery Ui JS -->
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <!-- Easing JS -->
+    <script src="/static/js/easing.js"></script>
+    <!-- Color JS -->
+    <script src="/static/js/colors.js"></script>
+    <!-- Popper JS -->
+    <script src="/static/js/popper.min.js"></script>
+    <!-- Bootstrap Datepicker JS -->
+    <script src="/static/js/bootstrap-datepicker.js"></script>
+    <!-- Jquery Nav JS -->
+    <script src="/static/js/jquery.nav.js"></script>
+    <!-- Slicknav JS -->
+    <script src="/static/js/slicknav.min.js"></script>
+    <!-- ScrollUp JS -->
+    <script src="/static/js/jquery.scrollUp.min.js"></script>
+    <!-- Niceselect JS -->
+    <script src="/static/js/niceselect.js"></script>
+    <!-- Tilt Jquery JS -->
+    <script src="/static/js/tilt.jquery.min.js"></script>
+    <!-- Owl Carousel JS -->
+    <script src="/static/js/owl-carousel.js"></script>
+    <!-- counterup JS -->
+    <script src="/static/js/jquery.counterup.min.js"></script>
+    <!-- Steller JS -->
+    <script src="/static/js/steller.js"></script>
+    <!-- Wow JS -->
+    <script src="/static/js/wow.min.js"></script>
+    <!-- Magnific Popup JS -->
+    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <!-- Counter Up CDN JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Main JS -->
+    <script src="/static/js/main.js"></script>
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const reportId = "{{ uuid }}";
+            const aiStatus = document.getElementById('ai-report-status');
+            const aiStatusText = document.getElementById('ai-report-status-text');
+            const aiProgressFill = document.getElementById('ai-report-progress-fill');
+            const aiReportBtn = document.getElementById('view-ai-report-btn');
+
+            function setAIReportProgress(pct, message, isDone) {
+                if (!aiStatus || !aiStatusText || !aiProgressFill) return;
+                const safePct = Math.max(0, Math.min(100, Math.round(pct || 0)));
+                aiStatus.style.display = 'block';
+                aiProgressFill.style.width = safePct + '%';
+                aiStatusText.innerText = message || `AI report generation: ${safePct}%`;
+
+                if (isDone) {
+                    aiProgressFill.style.width = '100%';
+                    aiStatusText.innerText = 'AI report is ready.';
+                    if (aiReportBtn) {
+                        aiReportBtn.innerText = 'View AI Report';
+                        aiReportBtn.style.backgroundColor = '#4CAF50';
+                        aiReportBtn.style.borderColor = '#4CAF50';
+                    }
+                }
+            }
+
+            function pollAIReportStatus() {
+                fetch(`/report/status/${reportId}?token=ui_token`)
+                    .then(async res => {
+                        const contentType = res.headers.get('content-type') || '';
+                        if (!res.ok) {
+                            let message = `AI report status unavailable (${res.status}).`;
+                            if (contentType.includes('application/json')) {
+                                const errorData = await res.json();
+                                message = errorData.detail || message;
+                            }
+                            throw new Error(message);
+                        }
+                        if (!contentType.includes('application/json')) {
+                            throw new Error('AI report status returned an unexpected response.');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        const status = data.status || '';
+                        const pct = data.progress_pct || 0;
+
+                        if (status === 'SUCCESS') {
+                            setAIReportProgress(100, 'AI report is ready.', true);
+                            return;
+                        }
+
+                        if (status === 'FAILED') {
+                            setAIReportProgress(100, data.message || 'AI report generation failed.', false);
+                            if (aiProgressFill) aiProgressFill.style.background = '#dc3545';
+                            if (aiReportBtn) {
+                                aiReportBtn.innerText = 'AI Report Failed';
+                                aiReportBtn.style.backgroundColor = '#6c757d';
+                                aiReportBtn.style.borderColor = '#6c757d';
+                            }
+                            return;
+                        }
+
+                        if (status === 'GENERATING') {
+                            setAIReportProgress(pct, `AI report is still generating... ${Math.round(pct)}%`, false);
+                            if (aiReportBtn) {
+                                aiReportBtn.innerText = 'View AI Report (Generating)';
+                                aiReportBtn.style.backgroundColor = '#2f80ed';
+                                aiReportBtn.style.borderColor = '#2f80ed';
+                            }
+                        } else {
+                            setAIReportProgress(pct, 'AI report is queued...', false);
+                        }
+
+                        setTimeout(pollAIReportStatus, 2500);
+                    })
+                    .catch(error => {
+                        setAIReportProgress(0, error.message || 'Checking AI report status...', false);
+                        setTimeout(pollAIReportStatus, 5000);
+                    });
+            }
+
+            pollAIReportStatus();
+        });
+</script>
+<script>
+        function showLoadingForForm(event) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'flex';
+            const preloader = document.querySelector('.preloader');
+            preloader.classList.remove('preloader-deactivate');
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            // 綁定所有按鈕和超連結
+            const elements = document.querySelectorAll('button, a'); // 選取按鈕和超連結
+            elements.forEach(element => {
+                element.addEventListener('click', function (event) {
+                    // 如果元素具有 'no-preloader' class，則跳過
+                    if (event.currentTarget.classList.contains('no-preloader')) {
+                        return; // 不顯示 preloader，直接返回
+                    }
+
+                    // 顯示 preloader
+                    showLoadingForForm(event);
+
+                    // 如果是超連結，防止預設行為並延遲跳轉
+                    if (element.tagName === 'A' && element.href) {
+                        event.preventDefault(); // 阻止默認跳轉
+                        setTimeout(() => {
+                            window.location.href = element.href; // 延遲後跳轉
+                        }, 300); // 根據需要調整延遲時間
+                    }
+                });
+            });
+
+            // 綁定所有表單提交事件
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (event) {
+                    // 如果表單具有 'no-preloader' class，則跳過
+                    if (form.classList.contains('no-preloader')) {
+                        return; // 不顯示 preloader，直接返回
+                    }
+
+                    // 顯示 preloader
+                    showLoadingForForm(event);
+                });
+            });
+        });
+
+
+    </script>
+<a href="/Statistical_Analysis/result/{{ uuid }}/#top" id="scrollUp" style="position: fixed; z-index: 2147483647;"><span><i class="fa fa-angle-up"></i></span></a></body></html>

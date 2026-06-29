@@ -1,0 +1,8 @@
+Optimal Model Selection in PineBioML (Rank Sum Method):
+PineBioML selects the optimal model by evaluating both Cross-Validation (CV) performance and independent Test performance to ensure generalizability.
+- Each trained model is ranked based on its CV performance (e.g., CV Rank = 1 for the highest CV score).
+- Each trained model is independently ranked based on its Test performance (e.g., Test Rank = 1 for the highest Test score).
+- The Rank Sum for a model is calculated as: Rank Sum = CV Rank + Test Rank.
+- The Optimal Model is defined as the model with the lowest Rank Sum.
+This dual-ranking methodology ensures that PineBioML prioritizes models that perform consistently well on both the validation sets and the unseen test set, avoiding models that might perform excellently in cross-validation but overfit and fail on the test set.
+If there is a tie in the Rank Sum, the model with the higher CV score is typically preferred, or a simpler model architecture is chosen.

@@ -1,0 +1,703 @@
+
+<!doctype html>
+<html class="no-js" lang="zxx">
+
+<head>
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="keywords" content="Site keywords here">
+    <meta name="description" content="">
+    <meta name="copyright" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Title -->
+    <title>PinBioML - Upload</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/PBML/Pinbioicon.png">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Poppins:200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <!-- Nice Select CSS -->
+    <link rel="stylesheet" href="/static/css/nice-select.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <!-- icofont CSS -->
+    <link rel="stylesheet" href="/static/css/icofont.css">
+    <link rel="stylesheet" href="/static/css/icofont/icofont.css">
+    <!-- Slicknav -->
+    <link rel="stylesheet" href="/static/css/slicknav.min.css">
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="/static/css/owl-carousel.css">
+    <!-- Datepicker CSS -->
+    <link rel="stylesheet" href="/static/css/datepicker.css">
+    <!-- Animate CSS -->
+    <link rel="stylesheet" href="/static/css/animate.min.css">
+    <!-- Magnific Popup CSS -->
+    <link rel="stylesheet" href="/static/css/magnific-popup.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Medipro CSS -->
+    <link rel="stylesheet" href="/static/css/normalize.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100vh;
+            overscroll-behavior-y: none;
+        }
+
+        header{
+            z-index: 999;
+        }
+
+        .sidebar {
+            top: 0;
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+            z-index: 900;
+        }
+
+        .sidebar-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid rgb(59, 59, 59);
+            color: rgb(0, 0, 0);
+            margin: 10px 0;
+        }
+
+        .sidebar-item.active {
+            background-color: #cce5ff;
+        }
+
+        .sidebar-item.disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            padding-bottom: 80px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar-item:hover {
+            background-color: #d6d6d6;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .parameter-form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            /* max-width: 1000px; */
+        }
+
+        .column-small {
+            width: 2%;  /* 設置第一欄寬度為 5% */
+        }
+        .column-medium {
+            width: 23%; /* 設置第二欄寬度為 20% */
+        }
+        .column-big {
+            width: 75%; /* 設置第二欄寬度為 20% */
+        }
+
+        .column-small-val {
+            width: 25%;  /* 設置第一欄寬度為 5% */
+        }
+        .column-medium-val {
+            width: 20%; /* 設置第二欄寬度為 20% */
+        }
+        .column-big-val {
+            width: 55%; /* 設置第二欄寬度為 20% */
+        }
+
+        #sidebar-container {
+            display: block; /* 電腦版預設顯示 */
+        }
+        #sidebar-container-media {
+            display: none; /* 手機版預設隱藏 */
+        }
+        
+
+        @media (max-width: 1200px) {
+            #sidebar-container {
+                display: none; /* 隱藏電腦版的 sidebar */
+            }
+
+            #sidebar-container-media {
+                display: block; /* 顯示手機版的 sidebar */
+            }
+
+            .sidebar {
+                width: 100%;  /* 全螢幕寬度 */
+                height: auto; /* 根據內容自適應高度 */
+                flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
+                overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
+                padding: 10px;
+                background-color: #333; /* 更深的顏色以便區分 */
+                color:rgb(95, 95, 95);
+                position: fixed;
+            }
+
+            .sidebar-item {
+                font-size: 0.9rem; /* 調整字體大小 */
+                margin: 0 20px; /* 添加些許間距讓元素不緊貼 */
+            }
+            .mobile-topbar {
+                display: flex;                    /* 使用 Flexbox 進行佈局 */
+                justify-content: space-around;    /* 子元素在水平方向均等分佈 */
+                align-items: center;              /* 子元素垂直居中 */
+                background-color: #fafafa;           /* 設置背景色（可根據需要調整） */
+                padding: 10px;                    /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
+                width: 100%;                      /* 設置寬度為全屏 */
+            }
+
+            .btn-mobile {
+                background: none;                 /* 去掉按鈕背景（可根據需要自定義） */
+                border: none;                     /* 去掉按鈕邊框 */
+                color: rgb(0, 0, 0);                     /* 設置按鈕文字或圖標顏色 */
+                font-size: 1.5rem;                /* 調整圖標大小 */
+                cursor: pointer;                  /* 設置鼠標樣式為指針 */
+            }
+
+            .btn-mobile.disabled {
+                color: grey;                      /* 設置不可用按鈕的顏色 */
+                cursor: not-allowed;              /* 鼠標樣式設為不可用 */
+            }
+
+            .main-content {
+            margin-left: 0px;
+            padding: 20px;
+            padding-bottom: 80px;
+            min-height: calc(100vh - 100px);
+            }
+
+            .column-small-val {
+                width: 70%;  /* 設置第一欄寬度為 5% */
+            }
+            .column-medium-val {
+                width: 30%; /* 設置第二欄寬度為 20% */
+            }
+            .column-big-val {
+                width: 0%; /* 設置第二欄寬度為 20% */
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="preloader" id="loading">
+		<div class="loader">
+			<div class="loader-outter"></div>
+			<div class="loader-inner"></div>
+
+			<div class="indicator"> 
+				<svg width="16px" height="12px">
+					<polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+					<polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+				</svg>
+			</div>
+		</div>
+	</div>
+
+
+    <!-- Header Area -->
+    <header class="header">
+		<div class="header-inner">
+			<div class="container">
+				<div class="inner">
+					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
+						<div class="col-lg-3 col-md-3 col-12 ">
+							<!-- Start Logo -->
+							<div class="logo">
+								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
+							</div>
+							<!-- End Logo -->
+
+							<!-- Mobile Nav -->
+							<div class="mobile-nav"></div>
+							<!-- End Mobile Nav -->
+
+						</div>
+						<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+							<!-- Main Menu -->
+							<div class="main-menu">
+								<nav class="navigation">
+									<ul class="nav menu">
+										<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
+											<ul class="dropdown">
+												<li><a href="#">Upload</a></li>
+												<li><a href="#">Setting</a></li>
+												<li><a href="#">Result</a></li>
+												<li><a href="#">Download</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Quick start </a></li>-->
+										<li><a class="no-preloader" href="https://github.com/ICMOL/PineBioML" target="_blank" rel="noopener noreferrer">Contact Us</a></li>
+									</ul>
+								</nav>
+							</div>
+							<!--/ End Main Menu -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--/ End Header Inner -->
+	</header>
+    <!-- End Header Area -->
+
+    <!-- Sidebar -->
+    <div style="height:1px; background-color:#ccc;"></div>
+    <div id="sidebar-container">
+        <div class="sidebar">
+            <br><br><br>
+            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+            <a href="/Statistical_Analysis/upload"><div class="sidebar-item active">Upload</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Setting</div>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Result</div>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Download</div><br>
+            <a href="/" class="home-icon" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-home" style=" font-size: 2rem;"></i>
+            </a>
+        </div>
+    </div>
+    <div id="sidebar-container-media">
+        <div class="mobile-topbar">
+            <button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
+            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div style="padding: 10px;">
+            <h3>Upload <br></h3>
+            <label>Please select your data type and upload the corresponding file.</label>
+        </div>
+        <div class="parameter-form">
+            <section class="appointment" style="padding: 0;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-12">
+                            <form class="form no-preloader" action="/Statistical_Analysis/upload/check/{{ uuid }}/" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="3VF7qkt6Uw5tJIle20o7tFQxLzbW2WgAXWD9bEmSLKi9PmV4yKqJAxow0qAcZgBQ">
+                                <table style="vertical-align: middle">
+                                    <tr>
+                                        <th class="column-small-upload" style="margin: 0px;">
+                                            <label>Data type</label>
+                                        </th>
+                                        <th class="column-medium-upload" >
+                                            <div class="nice-select form-control wide" tabindex="0" id="file-type-select"><span
+                                                    class="current">type</span>
+                                                <ul class="list">
+                                                    <li data-value="tsv" class="option selected ">.tsv</li>
+                                                    <li data-value="csv" class="option">.csv</li>
+                                                    <li data-value="xlsx" class="option">.xlsx</li>
+                                                </ul>
+                                            </div>
+                                            <input type="hidden" id="file-type" name="file_type" value="tsv">
+                                        </th>
+                                        <th class="column-large-upload"></th>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <b><label style="margin: 0px;">Data File</label></b>
+                                        </td>
+                                        <td>
+                                            <input type="file" id="file-upload" style="display: none;" name="data_file" title="data_file" aria-label="data_file">
+                                            <button title="Action" aria-label="Action" type="button" class="btn btn-light no-preloader" style="width: 100%;" id="data-file">Upload</button>
+                                        </td>
+                                        <td>
+                                            <span id="file-name-display" style="margin-left: 10px; color: #555;"></span>
+                                            <span id="wrong-display" style="margin-left: 10px; color: #555;"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td>
+                                            <div class="button" style="float: right;">
+                                                <button title="Action" aria-label="Action" type="submit" class="btn no-preloader" id="sumbit-self">Submit</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table> 
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div><br>
+
+
+        <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px; padding: 10px;">
+            <h6 style="margin: 0; text-align: left; margin-right: 10px; font-size:1.5rem;">Input Example Table</h6>
+            <button title="Action" aria-label="Action" class="no-preloader" type="button" onclick="toggleContent('input-example-table')" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
+                <i class="fas fa-chevron-down" id="arrow-input_example_table"></i>
+            </button>
+        </div>
+        <div id="input-example-table" style="display: none; margin-top: 10px;">
+            <div class="image-text-container">
+                <img src="/static/img/input_example.png" alt="Image" class="responsive-image">
+            </div>
+        </div>  
+
+
+
+        <!-- Test data -->
+        <br><div style="padding: 10px;">
+            <h3>Test data <br></h3>
+        </div>
+        <div class="parameter-form" >
+            <section class="appointment" style="padding: 0;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-12">
+                            <form class="form" action="/Statistical_Analysis/upload/check_test/{{ uuid }}/" method="POST" enctype="multipart/form-data" onsubmit="showLoadingForForm(event)">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="3VF7qkt6Uw5tJIle20o7tFQxLzbW2WgAXWD9bEmSLKi9PmV4yKqJAxow0qAcZgBQ">
+                                <table>
+                                    <tr>
+                                        <th class="column-small"></th>
+                                        <th class="column-medium">Dataset</th>
+                                        <th class="column-large">Description</th>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="margin-right: 20px; margin-top: 8px;">
+                                                <input type="radio" id="pd" name="dataset" value="pd" checked title="dataset" aria-label="dataset"/>
+                                            </div>
+                                        </td>
+                                        <td>Breast Cancer Wisconsin(diagnostic)</td>
+                                        <td>This is an example dataset from <a class="no-preloader" target="_blank" rel="noopener noreferrer" href="https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic"> Breast Cancer Wisconsin </a> dataset.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="margin-right: 20px; margin-top: 8px;">
+                                                <input type="radio" id="heart" name="dataset" value="heart" title="dataset" aria-label="dataset"/>
+                                            </div>
+                                        </td>
+                                        <td>Heart Disease Dataset</td>
+                                        <td>This is a real-world medical dataset for heart disease classification. <a class="no-preloader" href="/static/examples/heart_disease_cleveland.csv" download>Download CSV</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="margin-right: 20px; margin-top: 8px;">
+                                                <input type="radio" id="parkinsons" name="dataset" value="parkinsons" title="dataset" aria-label="dataset"/>
+                                            </div>
+                                        </td>
+                                        <td>Parkinson's Disease Dataset</td>
+                                        <td>This is a real-world medical dataset for Parkinson's disease classification. <a class="no-preloader" href="/static/examples/parkinsons_disease.tsv" download>Download TSV</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="margin-right: 20px; margin-top: 8px;">
+                                                <input type="radio" id="diabetes" name="dataset" value="diabetes" title="dataset" aria-label="dataset"/>
+                                            </div>
+                                        </td>
+                                        <td>Diabetes Progression Dataset</td>
+                                        <td>This is a real-world medical dataset for diabetes disease progression regression. <a class="no-preloader" href="/static/examples/diabetes_disease_progression.xlsx" download>Download Excel</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>
+                                            <div class="button" style="float: right;">
+                                                <button title="Action" aria-label="Action" type="submit" class="btn">Submit</button>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </table>                                
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Footer Area -->
+    <!-- <footer id="footer" class="footer ">
+		<div class="copyright">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12 col-md-12 col-12">
+						<div class="copyright-content">
+							<p>© Copyright 2018 | All Rights Reserved by <a href="https://www.wpthemesgrid.com"
+									target="_blank">wpthemesgrid.com</a> </p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer> -->
+    <!-- Footer -->
+
+    <!--/ End Footer Area -->
+
+    <!-- jquery Min JS -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- jquery Migrate JS -->
+    <script src="/static/js/jquery-migrate-3.0.0.js"></script>
+    <!-- jquery Ui JS -->
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <!-- Easing JS -->
+    <script src="/static/js/easing.js"></script>
+    <!-- Color JS -->
+    <script src="/static/js/colors.js"></script>
+    <!-- Popper JS -->
+    <script src="/static/js/popper.min.js"></script>
+    <!-- Bootstrap Datepicker JS -->
+    <script src="/static/js/bootstrap-datepicker.js"></script>
+    <!-- Jquery Nav JS -->
+    <script src="/static/js/jquery.nav.js"></script>
+    <!-- Slicknav JS -->
+    <script src="/static/js/slicknav.min.js"></script>
+    <!-- ScrollUp JS -->
+    <script src="/static/js/jquery.scrollUp.min.js"></script>
+    <!-- Niceselect JS -->
+    <script src="/static/js/niceselect.js"></script>
+    <!-- Tilt Jquery JS -->
+    <script src="/static/js/tilt.jquery.min.js"></script>
+    <!-- Owl Carousel JS -->
+    <script src="/static/js/owl-carousel.js"></script>
+    <!-- counterup JS -->
+    <script src="/static/js/jquery.counterup.min.js"></script>
+    <!-- Steller JS -->
+    <script src="/static/js/steller.js"></script>
+    <!-- Wow JS -->
+    <script src="/static/js/wow.min.js"></script>
+    <!-- Magnific Popup JS -->
+    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <!-- Counter Up CDN JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Main JS -->
+    <script src="/static/js/main.js"></script>
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+        const fileTypeSelect = document.getElementById('file-type-select');
+        const fileUploadInput = document.getElementById('file-upload');
+        const uploadButton = document.getElementById('data-file');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const wrongDisplay = document.getElementById('wrong-display');
+        const submitButton = document.getElementById('sumbit-self');
+        const fileTypeInput = document.getElementById('file-type');
+        let selectedFileType = '.tsv'; // 默認選擇的文件類型
+
+        fileUploadInput.addEventListener('change', function () {
+            if (fileUploadInput.files.length > 0) {
+                fileNameDisplay.textContent = fileUploadInput.files[0].name;
+                fileNameDisplay.style.color = '#555'; // 恢復正常顏色
+                wrongDisplay.textContent = '';
+            }
+        });
+        // 監聽使用者選擇檔案類型
+        fileTypeSelect.addEventListener('click', function (event) {
+            // 當螢幕大小調整時重新設定
+            // window.addEventListener('resize', setMaxLength);   
+            if (event.target.classList.contains('option')) {
+                // 更新當前選擇的檔案類型
+                selectedFileType = event.target.textContent.trim();
+
+                // 更新下拉框顯示的當前選擇
+                document.querySelector('.nice-select .current').textContent = selectedFileType;
+                fileTypeInput.value = event.target.getAttribute('data-value');
+                const selectedValue = event.target.getAttribute('data-value');
+                fileTypeInput.value = selectedValue;  // 確保隱藏的 file_type input 更新為選擇的值
+
+                // 更新選擇的類型
+                document.querySelectorAll('.nice-select .option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                event.target.classList.add('selected');
+            }
+        });
+
+        // 監聽上傳按鈕
+        uploadButton.addEventListener('click', function () {
+            // 根據選擇的類型來設置 accept 屬性
+            switch (selectedFileType) {
+                case '.tsv':
+                    fileUploadInput.accept = '.tsv';
+                    break;
+                case '.csv':
+                    fileUploadInput.accept = '.csv';
+                    break;
+                case '.xlsx':
+                    fileUploadInput.accept = '.xlsx';
+                    break;
+                default:
+                    fileUploadInput.accept = '';
+            }
+            // 觸發檔案選擇器
+            fileUploadInput.click();
+        });
+
+        // 監聽檔案選擇後的變化（可選的，根據需求）
+        fileUploadInput.addEventListener('change', function () {
+            if (fileUploadInput.files.length > 0) {
+                let fileName = fileUploadInput.files[0].name;
+
+                // 根據螢幕寬度決定應該截取的字元數
+                let maxLength = window.innerWidth <= 768 ? 10 : 10;
+
+                // 如果檔名超過 maxLength，進行截斷
+                if (fileName.length > maxLength) {
+                    fileNameDisplay.style.color = 'black';
+                    fileName = fileName.substring(0, maxLength) + '...';
+                    
+                }
+
+                // 更新顯示選擇的檔案名稱
+                fileNameDisplay.textContent = fileName;
+                fileNameDisplay.style.color = 'black';
+            } else {
+                wrongDisplay.textContent = 'Please choose the data';
+            }
+        });
+
+        submitButton.addEventListener('click', function (event) {
+
+            // 檢查 file-name-display 是否有內容
+            if (!fileNameDisplay.textContent.trim()) {
+                // 阻止表單提交
+                event.preventDefault();
+
+                // 設置警告信息
+                if (window.innerWidth <= 768) {
+                    // 手機版
+                    wrongDisplay.textContent = 'no data';
+                } else {
+                    // 桌面版
+                    wrongDisplay.textContent = 'Please choose the data';
+                }
+                wrongDisplay.style.color = 'red';
+            }
+            const uploadedFileName = fileUploadInput.files[0].name;
+            const uploadedFileType = uploadedFileName.slice(uploadedFileName.lastIndexOf('.'));
+            if (uploadedFileType !== selectedFileType) {
+                event.preventDefault();
+                // fileNameDisplay.textContent = `File type mismatch: Expected ${selectedFileType}, but got ${uploadedFileType}`;
+                if (window.innerWidth <= 768) {
+                    // 手機版
+                    wrongDisplay.textContent = 'Wrong type.';
+                } else {
+                    // 桌面版
+                    wrongDisplay.textContent = 'File type mismatch.';
+                }
+                wrongDisplay.style.color = 'red';
+            }
+            else{
+                const btn = document.getElementById('sumbit-self');
+                btn.classList.remove('no-preloader');
+            }
+        });
+    });
+    function showLoadingForForm(event) {
+        const loading = document.getElementById('loading');
+        loading.style.display = 'flex';
+        const preloader = document.querySelector('.preloader');
+
+        // 移除 `preloader-deactivate` class
+        preloader.classList.remove('preloader-deactivate');
+        }
+    document.addEventListener('DOMContentLoaded', function () {
+        // 綁定所有按鈕和超連結
+        const elements = document.querySelectorAll('button, a'); // 選取按鈕和超連結
+        elements.forEach(element => {
+            element.addEventListener('click', function (event) {
+                // 如果元素具有 'no-preloader' class，則跳過
+                if (event.currentTarget.classList.contains('no-preloader')) {
+                    return; // 不顯示 preloader，直接返回
+                }
+
+                // 顯示 preloader
+                showLoadingForForm(event);
+
+                // 如果是超連結，防止預設行為並延遲跳轉
+                if (element.tagName === 'A' && element.href) {
+                    event.preventDefault(); // 阻止默認跳轉
+                    setTimeout(() => {
+                        window.location.href = element.href; // 延遲後跳轉
+                    }, 300); // 根據需要調整延遲時間
+                }
+            });
+        });
+
+        // 綁定所有表單提交事件
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function (event) {
+                // 如果表單具有 'no-preloader' class，則跳過
+                if (form.classList.contains('no-preloader')) {
+                    return; // 不顯示 preloader，直接返回
+                }
+
+                // 顯示 preloader
+                showLoadingForForm(event);
+            });
+        });
+    });
+
+    function toggleContent(id) {
+        const content = document.getElementById(id);
+        const arrow = document.getElementById(`arrow-${id}`);
+
+        const isHidden = window.getComputedStyle(content).display === "none";
+
+        if (isHidden) {
+            content.style.display = "block";
+            arrow.classList.remove("fa-chevron-down");
+            arrow.classList.add("fa-chevron-up");
+        } else {
+            content.style.display = "none";
+            arrow.classList.remove("fa-chevron-up");
+            arrow.classList.add("fa-chevron-down");
+        }
+    }
+
+
+    </script>
+</body>
+
+</html>

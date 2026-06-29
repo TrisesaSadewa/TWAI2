@@ -1,0 +1,16 @@
+Interpretation Guidelines for PineBioML Plots:
+- ROC Curve (Receiver Operating Characteristic): Plots True Positive Rate (Sensitivity) against False Positive Rate (1 - Specificity). 
+  - Good ROC Curve: Arches tightly into the top-left corner.
+  - Bad ROC Curve: Follows the diagonal line (y=x), indicating random guessing.
+- Confusion Matrix: A grid showing True Positives, True Negatives, False Positives, and False Negatives.
+  - Good: High numbers on the main diagonal (top-left to bottom-right), low numbers off-diagonal.
+  - Bad: High numbers in the off-diagonal cells.
+- PCA (Principal Component Analysis): A dimensionality reduction plot showing sample variance.
+  - Good: Distinct clustering or separation of different classes/groups.
+  - Bad: Total overlap or random scattering of points, meaning variance is not well explained by the selected features.
+- PLS-DA (Partial Least Squares Discriminant Analysis): Similar to PCA but supervised (aware of class labels).
+  - Good: Clear separation between groups. Should be cross-validated to ensure the separation isn't spurious.
+- UMAP (Uniform Manifold Approximation and Projection): Non-linear dimensionality reduction, excellent for visualizing local and global data structure.
+  - Good: Tight, distinct islands or clusters of identical classes.
+- Heatmap: Visualizes the expression or abundance of selected features across samples.
+  - Good: Clear, distinct blocks of color (e.g., red/blue) aligning with specific clinical groups or sample types.

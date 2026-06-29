@@ -1,0 +1,22 @@
+# Service-level gitignore — inherits root .gitignore patterns.
+
+# Runtime storage (datasets, reports, media, exports, databases)
+storage/
+output/
+scratch/
+bench/
+
+# Local SQLite databases
+*.db
+
+# Failed LLM debug dumps written by narrative_generator on validation failure
+failed_llm_*.json
+
+# Pandoc/weasyprint installer binaries that sometimes land here
+*.deb
+
+# Test/dev report outputs that should never be committed
+rep_*_test.pdf
+rep_*_test.docx
+test_*.html
+fix_layout.py

@@ -1,0 +1,21 @@
+{
+    "Accuracy": "The proportion of correct predictions | 準確率：正確預測的比例",
+    "AUC-ROC": "A measure of the model's ability to distinguish between classes | AUC-ROC：衡量模型區分不同類別的能力",
+    "ROC-AUC": "A measure of the model's ability to distinguish between classes | ROC-AUC：衡量模型區分不同類別的能力",
+    "Precision": "The proportion of positive predictions that were actually correct | 精確率：陽性預測中實際正確的比例",
+    "Recall": "The proportion of actual positives that were correctly identified | 召回率：實際陽性中被正確識別的比例",
+    "Sensitivity": "The proportion of actual positives that were correctly identified | 靈敏度：實際陽性中被正確識別的比例",
+    "Specificity": "The proportion of actual negatives that were correctly identified | 特異度：實際陰性中被正確識別的比例",
+    "F1-Score": "The harmonic mean of precision and recall | F1 分數：精確率和召回率的調和平均數",
+    "MCC": "Matthews Correlation Coefficient, a balanced measure of quality | MCC：馬修斯相關係數，平衡的分類質量指標",
+    "SHAP": "A method to explain individual predictions based on feature importance | SHAP：一種基於特徵重要性來解釋個別預測的方法",
+    "false alarms": "Healthy cases that were incorrectly flagged as abnormal (False Positives) | 誤報：被錯誤標記為異常的健康案例（偽陽性）",
+    "missed cases": "Abnormal cases that the model failed to detect (False Negatives) | 漏報：模型未能檢測到的異常案例（偽陰性）",
+    "texture": "The smoothness or roughness of the cell surface | 紋理：細胞表面的光滑或粗糙程度",
+    "radius": "The distance from the center of the cell to its outer edge | 半徑：從細胞中心到其外邊緣的距離",
+    "perimeter": "The distance all the way around the outside of the cell | 周長：圍繞細胞外部的總距離",
+    "symmetry": "How balanced and matching the two halves of the cell are | 對稱性：細胞兩半的平衡和匹配程度",
+    "compactness": "A measure of the object's shape, defined as perimeter^2 / area - 1.0 | 緊密度：物體形狀的量度",
+    "concavity": "Severity of concave portions of the contour | 凹度：輪廓的凹陷部分的嚴重程度",
+    "smoothness": "Local variation in radius lengths | 平滑度：半徑長度的局部變化"
+}

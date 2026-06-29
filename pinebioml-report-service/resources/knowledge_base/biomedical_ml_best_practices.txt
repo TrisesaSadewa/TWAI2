@@ -1,0 +1,6 @@
+General Biomedical Machine Learning Best Practices:
+- Overfitting Warning: In biomedical datasets, the number of features (e.g., genes, proteins) often far exceeds the number of samples (patients). This "p >> n" problem makes models highly susceptible to overfitting. Always rely on Cross-Validation and an independent Test set.
+- Class Imbalance: Medical datasets often have far more healthy controls than diseased patients. Use metrics like MCC, AUC, or F1 Score instead of raw Accuracy to avoid misleading evaluations.
+- Feature Selection Rationale: Machine learning models in biology are used not just for prediction, but for discovery (e.g., identifying biomarkers). It is crucial to use feature selection methods (LASSO, Random Forest importance, SHAP) to reduce dimensionality and isolate biologically relevant signals.
+- Data Leakage: Ensure that normalization, imputation, and feature selection are performed within the cross-validation loops, never on the entire dataset beforehand, to prevent information from the test set leaking into the training process.
+- Interpretability: Clinicians cannot act on "black box" predictions. Use SHAP (SHapley Additive exPlanations) values to explain exactly which features pushed a specific prediction higher or lower, and how they interact.
