@@ -635,23 +635,23 @@ A plot of residuals (errors) vs predicted values. Ideally, residuals should be r
         {% if regression_report %}
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 10px; border: 1px solid #ddd;">Best Model</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_model }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_model | default('N/A') }}</td>
             </tr>
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 10px; border: 1px solid #ddd;">Mean Squared Error (MSE)</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_mse | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ (regression_report.best_mse | default(None)) | round(4) if regression_report.best_mse is defined and regression_report.best_mse is not none else 'N/A' }}</td>
             </tr>
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 10px; border: 1px solid #ddd;">Mean Absolute Error (MAE)</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_mae | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ (regression_report.best_mae | default(None)) | round(4) if regression_report.best_mae is defined and regression_report.best_mae is not none else 'N/A' }}</td>
             </tr>
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 10px; border: 1px solid #ddd;">R-Squared (R2)</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_r2 | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ (regression_report.best_r2 | default(None)) | round(4) if regression_report.best_r2 is defined and regression_report.best_r2 is not none else 'N/A' }}</td>
             </tr>
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 10px; border: 1px solid #ddd;">Max Error</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ regression_report.best_max_err | round(4) }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ (regression_report.best_max_err | default(None)) | round(4) if regression_report.best_max_err is defined and regression_report.best_max_err is not none else 'N/A' }}</td>
             </tr>
         {% else %}
             <tr><td colspan="2" style="padding: 10px;">Regression report not available.</td></tr>
