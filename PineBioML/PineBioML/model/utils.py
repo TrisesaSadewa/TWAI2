@@ -106,9 +106,6 @@ class sklearn_esitimator_wrapper(BaseEstimator):
     def is_regression(self) -> bool:
         return is_regressor(self.kernel)
 
-    def pine_ordering(self):
-        return 0
-
     def detail(self):
         return None
 
@@ -327,7 +324,6 @@ class Pine():
             # the last layer, it should be models
             else:
                 model = opt
-                record_path["model_ordering"] = model.pine_ordering()
 
                 if not model.is_regression():
                     # is not regression
@@ -474,7 +470,7 @@ class Pine():
                     "test_auc": test_auc,
                     "test_f1": test_f1,
                     "best_params": str({k: r[k] for k in r if k not in [
-                        "model_ordering", "train_mcc", "train_accuracy", "test_mcc",
+                        "train_mcc", "train_accuracy", "test_mcc",
                         "test_accuracy", "test_auc", "test_f1", "cv_mcc", "cv_accuracy"
                     ] and not k.endswith("_time")})
                 }

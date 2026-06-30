@@ -892,7 +892,13 @@ def run_dynamic_pipeline(
                 scores = scores.sort_values('ensemble', ascending=True).tail(24)
                 
                 # Standardize scores like in Plotting()
-                z_scores = (scores.drop(['ensemble', 'Feature'], axis=1) - scores.drop(['ensemble', 'Feature'], axis=1).mean()) / (scores.drop(['ensemble', 'Feature'], axis=1).std() + 1e-4)
+                numeric_scores = scores.drop(['ensemble', 'Feature'], axis=1)
+                if len(numeric_scores) <= 1:
+                    z_scores = numeric_scores.copy()
+                else:
+                    z_scores = (numeric_scores - numeric_scores.mean()) / (numeric_scores.std() + 1e-4)
+                    z_scores = z_scores.fillna(0)
+                
                 esemble_score = scores['ensemble']
                 z_scores.columns = ['DT_score_c45', 'RandomForest_gini', 'LassoLars', 'multi_Lasso', 'SVM']
                 
