@@ -5,6 +5,7 @@
 **/.mypy_cache/
 **/.ruff_cache/
 .vscode/
+ORGINAL HTML/
 
 # Local secrets and machine-specific config
 .env

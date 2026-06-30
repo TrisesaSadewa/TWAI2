@@ -329,14 +329,14 @@ def get_status(
     if status_dict:
         # We also need to map this to schemas.ReportStatus format
         return {
-            "report_id": status_dict["report_id"],
-            "job_id": status_dict["job_id"],
-            "status": status_dict["status"],
-            "progress_pct": status_dict["progress_pct"],
-            "message": status_dict["message"],
-            "created_at": status_dict["created_at"],
-            "updated_at": status_dict["updated_at"],
-            "model_name": status_dict["model_name"] or "PineBioML Default"
+            "report_id": status_dict.get("report_id") or report_id,
+            "job_id": status_dict.get("job_id") or "unknown",
+            "status": status_dict.get("status") or "FAILED",
+            "progress_pct": status_dict.get("progress_pct") or 0,
+            "message": status_dict.get("message") or "",
+            "created_at": status_dict.get("created_at") or "",
+            "updated_at": status_dict.get("updated_at") or "",
+            "model_name": status_dict.get("model_name") or "PineBioML Default"
         }
         
     # If not in SQLite (e.g. server restarted and it was cleaned up, or it's very old)
@@ -346,25 +346,34 @@ def get_status(
         if report_data:
             return {
                 "report_id": report_id,
-                "job_id": report_data["job_id"],
+                "job_id": report_data.get("job_id", "unknown"),
                 "status": "SUCCESS",
                 "progress_pct": 100,
                 "message": "Report found in storage.",
-                "created_at": report_data["created_at"],
-                "updated_at": report_data["updated_at"],
+                "created_at": report_data.get("created_at", ""),
+                "updated_at": report_data.get("updated_at", ""),
                 "model_name": report_data.get("model_name", "PineBioML Default")
             }
         raise HTTPException(status_code=404, detail="Report ID not found")
         
     # Fallback if somehow it's in JobRecord but not in SQLite queue or JSON storage
+    created_val = ""
+    if job_record.created_at:
+        try: created_val = job_record.created_at.isoformat() + "Z"
+        except Exception: pass
+    updated_val = ""
+    if job_record.updated_at:
+        try: updated_val = job_record.updated_at.isoformat() + "Z"
+        except Exception: pass
+
     return {
         "report_id": report_id,
-        "job_id": job_record.job_id,
+        "job_id": job_record.job_id or "unknown",
         "status": "FAILED",
         "progress_pct": 100,
         "message": "Job disappeared from queue manager.",
-        "created_at": job_record.created_at.isoformat() + "Z",
-        "updated_at": job_record.updated_at.isoformat() + "Z",
+        "created_at": created_val,
+        "updated_at": updated_val,
         "model_name": "PineBioML Default"
     }
 
@@ -902,6 +911,8 @@ async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_
     modeling_methods = form_data.getlist("modeling_methods")
     validation_method = form_data.get("validation_method", "k-fold cross validation")
     k_fold = form_data.get("k_fold", "5")
+    tuning_strategy = form_data.get("tuning_strategy", "RandomizedSearchCV")
+    tuning_n_iter = form_data.get("tuning_n_iter", "10")
     
     missing_count = len([m for m in missing_methods if m not in ("missing_all", "None")])
     norm_count = len([m for m in norm_methods if m not in ("norm_all", "None")])
@@ -915,7 +926,9 @@ async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_
         "feature_selection_methods": feature_methods,
         "modeling_methods": modeling_methods,
         "validation_method": validation_method,
-        "k_fold": k_fold
+        "k_fold": k_fold,
+        "tuning_strategy": tuning_strategy,
+        "tuning_n_iter": int(tuning_n_iter)
     }
     
     payload = {

@@ -65,6 +65,8 @@
             will-change: transform;
             position: fixed;
             z-index: 900;
+        
+            height: 100vh;
         }
 
         .sidebar-item {
@@ -92,7 +94,8 @@
             padding: 20px;
             padding-bottom: 80px;
             min-height: 100vh;
-        }
+        
+            padding-top: 100px;}
         .sidebar-item:hover {
             background-color: #d6d6d6;
         }
@@ -163,6 +166,8 @@
             display: none;
             position: absolute;
             background-color: white;
+            animation: none !important;
+            transition: none !important;
             max-height: 200px;
             overflow-y: auto;
             width: 100%;
@@ -262,10 +267,24 @@
                 margin-left: 0px;
                 padding: 20px;
                 min-height: calc(100vh - 100px);
-            }
+            
+            padding-top: 100px;}
             .file-name-container {
                 display: none; 
             }
+        }
+    
+        /* Force header to stay fixed even if JS removes .sticky class */
+        .header .header-inner {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100%;
+            z-index: 999 !important;
+            box-shadow: 0px 0px 13px #00000054 !important;
+            background-color: white;
+            animation: none !important;
+            transition: none !important;
         }
     </style>
 
@@ -288,21 +307,38 @@
 		</div>
 	</div>
 
-    <!-- Header Area -->
+        <!-- Header Area -->
     <header class="header sticky">
 		<div class="header-inner">
-			<div class="container">
+			<div class="container-fluid" style="padding-left: 15px;">
 				<div class="inner">
-					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
+					<div class="row align-items-center justify-content-between">
 						<div class="col-lg-3 col-md-3 col-12 ">
 							<!-- Start Logo -->
 							<div class="logo">
-								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
+								<a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
+									<img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
+									<span style="font-size: 0.9rem; font-weight: bold; color: #555; margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+								</a>
 							</div>
 							<!-- End Logo -->
 
 							<!-- Mobile Nav -->
-							<div class="mobile-nav"></div>
+							<div class="mobile-nav">
+                                <div class="slicknav_menu">
+                                    <a href="#" aria-haspopup="true" role="button" tabindex="0" class="slicknav_btn slicknav_collapsed" style="outline: none;">
+                                        <span class="slicknav_menutxt"></span>
+                                        <span class="slicknav_icon slicknav_no-text">
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                        </span>
+                                    </a>
+                                    <ul class="slicknav_nav slicknav_hidden" aria-hidden="true" role="menu" style="display: none;">
+										
+									</ul>
+                                </div>
+                            </div>
 							<!-- End Mobile Nav -->
 
 						</div>
@@ -311,16 +347,7 @@
 							<div class="main-menu">
 								<nav class="navigation">
 									<ul class="nav menu">
-										<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
-											<ul class="dropdown">
-												<li><a href="#">Upload</a></li>
-												<li><a href="#">Setting</a></li>
-												<li><a href="#">Result</a></li>
-												<li><a href="#">Download</a></li>
-											</ul>
-										</li>
-										<li><a href="#">Quick start </a></li>
-										<li><a href="#">Contact Us</a></li> -->
+										
 									</ul>
 								</nav>
 							</div>
@@ -334,7 +361,7 @@
 	</header>
     <!-- End Header Area -->
 
-    <!-- Sidebar -->
+            <!-- Sidebar -->
     <div style="height:1px; background-color:#ccc;"></div>
     <div id="sidebar-container">
         <div class="sidebar">
@@ -360,15 +387,12 @@
     </div>
     <div id="sidebar-container-media">
         <div class="mobile-topbar">
-            <button title="Action" aria-label="Action" class="btn-mobile"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+            <button title="upload" aria-label="upload" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="setting" aria-label="setting" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
+            <button title="result" aria-label="result" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
+            <button title="download" aria-label="download" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
         </div>
     </div>
-
-    
-
     <div class="main-content">
         <div style="padding: 10px;">
             <h3>Check your data. <br></h3>

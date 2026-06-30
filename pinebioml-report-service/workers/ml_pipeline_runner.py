@@ -43,6 +43,11 @@ from sklearn.preprocessing import (
     Normalizer, PowerTransformer,
 )
 from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from catboost import CatBoostClassifier, CatBoostRegressor
+from PineBioML.selection.classification import ensemble_selector as cls_ensemble_selector
+from PineBioML.selection.regression import ensemble_selector as reg_ensemble_selector
 from sklearn.feature_selection import (
     SelectKBest, f_classif, f_regression,
     SelectFromModel,
@@ -265,60 +270,93 @@ def run_dynamic_pipeline(
             logger.info(f"Imbalance detected ({imbalance_metadata.get('imbalance_strategy')}): "
                         f"applying class_weight='balanced'{', scale_pos_weight=' + str(round(xgb_spw, 2)) if xgb_spw else ''}.")
 
+    try:
+        validation_method = settings.get("validation_method", "k-fold cross validation")
+        evaluate_ncv = -1 if validation_method == "Leave-one-out cross validation" else int(settings.get("k_fold", "5"))
+    except ValueError:
+        evaluate_ncv = 5
+
+    from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, ParameterGrid
+
+    tuning_strategy = settings.get("tuning_strategy", "RandomizedSearchCV")
+    tuning_n_iter = settings.get("tuning_n_iter", 10)
+    
+    def tune_model(estimator, param_grid):
+        if not param_grid or tuning_strategy == "None":
+            return sklearn_esitimator_wrapper(estimator)
+        
+        cv_folds = evaluate_ncv if evaluate_ncv != -1 else 3 # Fallback to 3 if LOOCV is selected to prevent freezing
+        
+        if tuning_strategy == "GridSearchCV":
+            search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=-1)
+        elif tuning_strategy == "BayesianOptimization":
+            from skopt import BayesSearchCV
+            # Convert list to tuple to ensure skopt treats it as categorical choices rather than trying to infer mixed numerical ranges
+            skopt_grid = {k: tuple(v) if isinstance(v, list) else v for k, v in param_grid.items()}
+            search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=-1, random_state=42)
+        else: # RandomizedSearchCV
+            grid_size = len(list(ParameterGrid(param_grid)))
+            n_iter = min(tuning_n_iter, grid_size)
+            search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=-1, random_state=42)
+        
+        return sklearn_esitimator_wrapper(search)
+
     if is_regression:
         if has("RandomForest"):
-            model_dict["RandomForest"] = sklearn_esitimator_wrapper(RandomForestRegressor(n_estimators=100))
+            model_dict["RandomForest"] = tune_model(RandomForestRegressor(random_state=42), {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
         if has("LogisticRegression"):
-            # LogisticRegression is classification-only; map the selection to its
-            # regression analog (plain linear regression) so the UI option still runs.
-            model_dict["LogisticRegression"] = sklearn_esitimator_wrapper(LinearRegression())
+            model_dict["LogisticRegression"] = tune_model(LinearRegression(), {})
         if has("ElasticLogit"):
-            # ElasticNet regularization is the regression analog of ElasticNet-penalized
-            # logistic regression.
-            model_dict["ElasticLogit"] = sklearn_esitimator_wrapper(ElasticNet(alpha=0.001, l1_ratio=0.5, max_iter=5000))
+            model_dict["ElasticLogit"] = tune_model(ElasticNet(max_iter=5000), {"alpha": [0.001, 0.01, 0.1], "l1_ratio": [0.2, 0.5, 0.8]})
         if has("Support Vector Machine(SVM)"):
-            model_dict["Support Vector Machine(SVM)"] = sklearn_esitimator_wrapper(SVR())
+            model_dict["Support Vector Machine(SVM)"] = tune_model(SVR(), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
         if has("KNN"):
-            model_dict["KNN"] = sklearn_esitimator_wrapper(KNeighborsRegressor())
+            model_dict["KNN"] = tune_model(KNeighborsRegressor(), {"n_neighbors": [3, 5, 7, 9]})
         if has("MLP"):
-            model_dict["MLP"] = sklearn_esitimator_wrapper(MLPRegressor(max_iter=1000))
+            model_dict["MLP"] = tune_model(MLPRegressor(max_iter=1000), {"hidden_layer_sizes": [(50,), (100,), (50,50)], "alpha": [0.0001, 0.001]})
         if has("XGBoost"):
-            model_dict["XGBoost"] = sklearn_esitimator_wrapper(XGBRegressor())
+            model_dict["XGBoost"] = tune_model(XGBRegressor(random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("LightGBM"):
-            model_dict["LightGBM"] = sklearn_esitimator_wrapper(LGBMRegressor())
+            model_dict["LightGBM"] = tune_model(LGBMRegressor(verbose=-1, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("AdaBoost"):
-            model_dict["AdaBoost"] = sklearn_esitimator_wrapper(AdaBoostRegressor(n_estimators=100))
+            model_dict["AdaBoost"] = tune_model(AdaBoostRegressor(random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 1.0]})
+        if has("CatBoost"):
+            model_dict["CatBoost"] = tune_model(CatBoostRegressor(verbose=False, random_state=42), {"iterations": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("DecisionTree"):
-            model_dict["DecisionTree"] = sklearn_esitimator_wrapper(DecisionTreeRegressor())
+            model_dict["DecisionTree"] = tune_model(DecisionTreeRegressor(random_state=42), {"max_depth": [None, 5, 10, 20], "min_samples_split": [2, 5, 10]})
 
         if not model_dict:
-            model_dict["RandomForest"] = sklearn_esitimator_wrapper(RandomForestRegressor(n_estimators=100))
+            model_dict["RandomForest"] = tune_model(RandomForestRegressor(random_state=42), {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
     else:
         if has("RandomForest"):
-            model_dict["RandomForest"] = sklearn_esitimator_wrapper(RandomForestClassifier(n_estimators=100, class_weight=cw, random_state=42))
+            model_dict["RandomForest"] = tune_model(RandomForestClassifier(class_weight=cw, random_state=42), {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
         if has("LogisticRegression"):
-            model_dict["LogisticRegression"] = sklearn_esitimator_wrapper(LogisticRegression(max_iter=1000, class_weight=cw))
+            model_dict["LogisticRegression"] = tune_model(LogisticRegression(max_iter=1000, class_weight=cw), {"C": [0.01, 0.1, 1, 10]})
         if has("ElasticLogit"):
-            # ElasticNet-penalized logistic regression via SGDClassifier.
-            model_dict["ElasticLogit"] = sklearn_esitimator_wrapper(SGDClassifier(loss="log_loss", penalty="elasticnet", l1_ratio=0.5, alpha=0.0001, max_iter=1000, class_weight=cw))
+            model_dict["ElasticLogit"] = tune_model(SGDClassifier(loss="log_loss", penalty="elasticnet", max_iter=1000, class_weight=cw), {"alpha": [0.0001, 0.001, 0.01], "l1_ratio": [0.2, 0.5, 0.8]})
         if has("Support Vector Machine(SVM)"):
-            model_dict["Support Vector Machine(SVM)"] = sklearn_esitimator_wrapper(SVC(probability=True, class_weight=cw))
+            model_dict["Support Vector Machine(SVM)"] = tune_model(SVC(probability=True, class_weight=cw), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
         if has("KNN"):
-            model_dict["KNN"] = sklearn_esitimator_wrapper(KNeighborsClassifier())
+            model_dict["KNN"] = tune_model(KNeighborsClassifier(), {"n_neighbors": [3, 5, 7, 9]})
         if has("MLP"):
-            model_dict["MLP"] = sklearn_esitimator_wrapper(MLPClassifier(max_iter=1000))
+            model_dict["MLP"] = tune_model(MLPClassifier(max_iter=1000), {"hidden_layer_sizes": [(50,), (100,), (50,50)], "alpha": [0.0001, 0.001]})
         if has("XGBoost"):
-            model_dict["XGBoost"] = sklearn_esitimator_wrapper(XGBClassifier(use_label_encoder=False, eval_metric="logloss", scale_pos_weight=xgb_spw))
+            model_dict["XGBoost"] = tune_model(XGBClassifier(eval_metric="logloss", scale_pos_weight=xgb_spw, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("LightGBM"):
-            model_dict["LightGBM"] = sklearn_esitimator_wrapper(LGBMClassifier(class_weight=cw))
+            model_dict["LightGBM"] = tune_model(LGBMClassifier(verbose=-1, class_weight=cw, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("AdaBoost"):
-            model_dict["AdaBoost"] = sklearn_esitimator_wrapper(AdaBoostClassifier(n_estimators=100))
+            model_dict["AdaBoost"] = tune_model(AdaBoostClassifier(random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 1.0]})
+        if has("CatBoost"):
+            cb_kwargs = {"verbose": False, "random_state": 42}
+            if cw == "balanced":
+                cb_kwargs["auto_class_weights"] = "Balanced"
+            model_dict["CatBoost"] = tune_model(CatBoostClassifier(**cb_kwargs), {"iterations": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("DecisionTree"):
-            model_dict["DecisionTree"] = sklearn_esitimator_wrapper(DecisionTreeClassifier(class_weight=cw, random_state=42))
+            model_dict["DecisionTree"] = tune_model(DecisionTreeClassifier(class_weight=cw, random_state=42), {"max_depth": [None, 5, 10, 20], "min_samples_split": [2, 5, 10]})
 
         if not model_dict:
             # Default to RF if nothing valid selected
-            model_dict["RandomForest"] = sklearn_esitimator_wrapper(RandomForestClassifier(n_estimators=100, class_weight=cw, random_state=42))
+            model_dict["RandomForest"] = tune_model(RandomForestClassifier(class_weight=cw, random_state=42), {"n_estimators": [50, 100, 200], "max_depth": [None, 10, 20]})
         
     class PandasTransformerWrapper:
         def __init__(self, transformer):
@@ -352,6 +390,8 @@ def run_dynamic_pipeline(
                     res = self.transformer.fit_transform(X)
             else:
                 res = self.transformer.fit_transform(X)
+            if isinstance(res, pd.DataFrame):
+                return res
             if hasattr(self.transformer, "get_feature_names_out"):
                 try:
                     cols = self.transformer.get_feature_names_out(X.columns)
@@ -364,6 +404,8 @@ def run_dynamic_pipeline(
             import pandas as pd
             X = self._ensure_finite(X)
             res = self.transformer.transform(X)
+            if isinstance(res, pd.DataFrame):
+                return res
             if hasattr(self.transformer, "get_feature_names_out"):
                 try:
                     cols = self.transformer.get_feature_names_out(X.columns)
@@ -396,6 +438,8 @@ def run_dynamic_pipeline(
         missing_dict["Constant"] = PandasTransformerWrapper(SimpleImputer(strategy="most_frequent"))
     if "KNN" in missing_methods or "missing_all" in missing_methods:
         missing_dict["KNN"] = PandasTransformerWrapper(KNNImputer())
+    if "Iterative" in missing_methods or "missing_all" in missing_methods:
+        missing_dict["Iterative"] = PandasTransformerWrapper(IterativeImputer(random_state=42))
     if "None" in missing_methods or "missing_all" in missing_methods:
         missing_dict["None"] = PandasTransformerWrapper(_PassThrough())
         
@@ -457,6 +501,15 @@ def run_dynamic_pipeline(
         # A "stump" is a depth-1 decision tree.
         base = DecisionTreeRegressor(max_depth=1) if is_regression else DecisionTreeClassifier(max_depth=1)
         fs_dict["Decision Stump"] = PandasTransformerWrapper(SelectFromModel(base, threshold="median"))
+    if "AdaBoost" in fs_methods or "feature_all" in fs_methods:
+        base = AdaBoostRegressor() if is_regression else AdaBoostClassifier()
+        fs_dict["AdaBoost"] = PandasTransformerWrapper(SelectFromModel(base, threshold="median"))
+    if "Elastic Net_selection" in fs_methods or "feature_all" in fs_methods:
+        base = ElasticNet() if is_regression else SGDClassifier(loss="log_loss", penalty="elasticnet", max_iter=5000)
+        fs_dict["Elastic Net_selection"] = PandasTransformerWrapper(SelectFromModel(base, threshold="median"))
+    if "Ensemble" in fs_methods or "feature_all" in fs_methods:
+        base = reg_ensemble_selector() if is_regression else cls_ensemble_selector()
+        fs_dict["Ensemble"] = PandasTransformerWrapper(base)
     if "None" in fs_methods or "feature_all" in fs_methods:
         # "None" = do not select; pass through as a trackable fork.
         fs_dict["None"] = PandasTransformerWrapper(_PassThrough())
@@ -496,6 +549,22 @@ def run_dynamic_pipeline(
             evaluate_ncv = 5
     
     pine_model = Pine(experiment=experiment, target_label=target_label, cv_result=True, evaluate_ncv=evaluate_ncv)
+    
+    # Intercept the results list to extract best_params_ dynamically during the loop
+    class TrackingList(list):
+        def append(self, item):
+            model_name = item.get('model')
+            if model_name and model_name in model_dict:
+                kernel = model_dict[model_name].kernel
+                if hasattr(kernel, 'best_params_'):
+                    # Convert to standard dict for clean string representation
+                    params_dict = {k: v for k, v in kernel.best_params_.items()}
+                    item['best_hyperparameters'] = str(params_dict)
+                else:
+                    item['best_hyperparameters'] = "Default (No Tuning)"
+            super().append(item)
+            
+    pine_model.result = TrackingList()
     
     logger.info(f"Starting PineBioML Experiment for {report_id}...")
     pine_model.do_experiment(train_x, train_y)

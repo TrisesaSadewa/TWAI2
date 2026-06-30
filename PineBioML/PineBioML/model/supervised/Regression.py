@@ -517,6 +517,13 @@ class LightGBM_tuner(Regression_tuner):
 
     def optimize_fit(self, clr, train_data, sample_weight, valid_data):
         train_x, train_y = train_data
+        if hasattr(train_x, "columns"):
+            train_x.columns = train_x.columns.str.replace(' ', '_')
+
+        valid_x, valid_y = valid_data
+        if hasattr(valid_x, "columns"):
+            valid_x.columns = valid_x.columns.str.replace(' ', '_')
+            valid_data = (valid_x, valid_y)
 
         return clr.fit(train_x,
                        train_y,

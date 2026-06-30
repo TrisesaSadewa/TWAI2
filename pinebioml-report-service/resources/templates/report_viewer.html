@@ -96,7 +96,7 @@
         }
 
         body.light-mode .plot-container {
-            background-color: #0b0f19; /* Force dark background for plots to preserve white text legibility */
+            background-color: transparent;
         }
 
         * {
@@ -874,10 +874,24 @@
             <div class="logo-text">PineBioML Report Engine</div>
         </div>
         <div class="header-controls">
+            <a id="btn-back-dashboard" href="/report/{{ report_id }}" class="toggle-btn" style="text-decoration: none; margin-right: 0.5rem;">
+                <span>⬅</span> <span>Dashboard</span>
+            </a>
             <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn">
                 <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
             </button>
-
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const params = new URLSearchParams(window.location.search);
+                    const token = params.get('token');
+                    if (token) {
+                        const backBtn = document.getElementById('btn-back-dashboard');
+                        if (backBtn) {
+                            backBtn.href += '?token=' + encodeURIComponent(token);
+                        }
+                    }
+                });
+            </script>
         </div>
     </header>
 
@@ -1656,7 +1670,9 @@
                 if (rows.length === 0) return '';
                 let tHtml = '<div style="margin-bottom: 1.5rem;"><table class="model-table"><thead><tr>';
                 // Parse headers
-                let headers = rows[0].split('|').map(x => x.trim()).filter((x, idx, arr) => idx > 0 && idx < arr.length - 1);
+                let headers = rows[0].split('|').map(x => x.trim());
+                if (headers.length > 0 && headers[0] === '') headers.shift();
+                if (headers.length > 0 && headers[headers.length - 1] === '') headers.pop();
                 headers.forEach(h => {
                     tHtml += `<th>${parseInline(h)}</th>`;
                 });
@@ -1665,7 +1681,9 @@
                 for (let r = 1; r < rows.length; r++) {
                     if (rows[r].replace(/[|:\s\-]/g, '') === '') continue;
                     tHtml += '<tr>';
-                    let cells = rows[r].split('|').map(x => x.trim()).filter((x, idx, arr) => idx > 0 && idx < arr.length - 1);
+                    let cells = rows[r].split('|').map(x => x.trim());
+                    if (cells.length > 0 && cells[0] === '') cells.shift();
+                    if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
                     cells.forEach(c => {
                         tHtml += `<td>${parseInline(c)}</td>`;
                     });
@@ -1823,9 +1841,30 @@
                     return k.replace(/<[^>]+>/g, '').trim().toLowerCase();
                 });
                 let plotsHtml = '<div class="inline-plots-container">';
+                function normalizePlotKey(value) {
+                    let v = value.replace(/_png/g, '').replace(/_html/g, '').replace(/\.png/g, '').replace(/\.html/g, '');
+                    v = v.replace(/_/g, '').replace(/-/g, '').replace(/\s/g, '');
+                    const aliases = {
+                        "shapsummary": "shapplot",
+                        "shap": "shapplot",
+                        "featureimportance": "featureimportance",
+                        "roccurve": "roccurve",
+                        "prcurve": "precisionrecallcurve",
+                        "confusionmatrix": "confusionmatrix",
+                        "correlationheatmap": "corrheatmap",
+                        "pca2d": "pcaplot",
+                        "pls2d": "plsplot",
+                        "umap2d": "umapplot"
+                    };
+                    return aliases[v] || v;
+                }
+
                 keys.forEach(k => {
-                    const cleanK = k.replace(/_/g, '').replace(/\.png/g, '').trim();
-                    const matchKey = Object.keys(visualPlots).find(vk => vk === cleanK || vk.includes(cleanK) || cleanK.includes(vk));
+                    const cleanK = normalizePlotKey(k);
+                    const matchKey = Object.keys(visualPlots).find(vk => {
+                        const cleanVk = normalizePlotKey(vk);
+                        return cleanVk === cleanK || cleanVk.includes(cleanK) || cleanK.includes(cleanVk);
+                    });
                     if (matchKey && visualPlots[matchKey]) {
                         const val = visualPlots[matchKey];
                         const title = matchKey.replace('_png', '').replace('.png', '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());

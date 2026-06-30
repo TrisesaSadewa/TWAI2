@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html class="no-js" lang="zxx">
 
@@ -47,8 +46,11 @@
     <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
     <style>
-        html { overscroll-behavior-y: none; }
-        header{
+        html {
+            overscroll-behavior-y: none;
+        }
+
+        header {
             z-index: 999;
         }
 
@@ -60,6 +62,8 @@
             will-change: transform;
             position: fixed;
             z-index: 900;
+
+            height: 100vh;
         }
 
         .sidebar-item {
@@ -87,7 +91,10 @@
             padding: 20px;
             padding-bottom: 80px;
             min-height: 100vh;
+
+            padding-top: 100px;
         }
+
         .sidebar-item:hover {
             background-color: #d6d6d6;
         }
@@ -106,161 +113,228 @@
         }
 
         .column-small {
-            width: 2%;  /* 設置第一欄寬度為 5% */
+            width: 2%;
+            /* 設置第一欄寬度為 5% */
         }
+
         .column-medium {
-            width: 23%; /* 設置第二欄寬度為 20% */
+            width: 23%;
+            /* 設置第二欄寬度為 20% */
         }
+
         .column-big {
-            width: 75%; /* 設置第二欄寬度為 20% */
+            width: 75%;
+            /* 設置第二欄寬度為 20% */
         }
 
         .column-small-val {
-            width: 25%;  /* 設置第一欄寬度為 5% */
+            width: 25%;
+            /* 設置第一欄寬度為 5% */
         }
+
         .column-medium-val {
-            width: 20%; /* 設置第二欄寬度為 20% */
+            width: 20%;
+            /* 設置第二欄寬度為 20% */
         }
+
         .column-big-val {
-            width: 55%; /* 設置第二欄寬度為 20% */
+            width: 55%;
+            /* 設置第二欄寬度為 20% */
         }
 
         #sidebar-container {
-            display: block; /* 電腦版預設顯示 */
+            display: block;
+            /* 電腦版預設顯示 */
         }
+
         #sidebar-container-media {
-            display: none; /* 手機版預設隱藏 */
+            display: none;
+            /* 手機版預設隱藏 */
         }
-        
+
 
         @media (max-width: 1200px) {
             #sidebar-container {
-                display: none; /* 隱藏電腦版的 sidebar */
+                display: none;
+                /* 隱藏電腦版的 sidebar */
             }
 
             #sidebar-container-media {
-                display: block; /* 顯示手機版的 sidebar */
+                display: block;
+                /* 顯示手機版的 sidebar */
             }
 
             .sidebar {
-                width: 100%;  /* 全螢幕寬度 */
-                height: auto; /* 根據內容自適應高度 */
-                flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
-                overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
+                width: 100%;
+                /* 全螢幕寬度 */
+                height: auto;
+                /* 根據內容自適應高度 */
+                flex-direction: row;
+                /* 改為橫向排列，方便手機用戶瀏覽 */
+                overflow-x: auto;
+                /* 如果內容過多，可以橫向滾動 */
                 padding: 10px;
-                background-color: #333; /* 更深的顏色以便區分 */
-                color:rgb(95, 95, 95);
+                background-color: #333;
+                /* 更深的顏色以便區分 */
+                color: rgb(95, 95, 95);
                 height: 100vh;
                 position: fixed;
             }
 
             .sidebar-item {
-                font-size: 0.9rem; /* 調整字體大小 */
-                margin: 0 20px; /* 添加些許間距讓元素不緊貼 */
+                font-size: 0.9rem;
+                /* 調整字體大小 */
+                margin: 0 20px;
+                /* 添加些許間距讓元素不緊貼 */
             }
+
             .mobile-topbar {
-                display: flex;                    /* 使用 Flexbox 進行佈局 */
-                justify-content: space-around;    /* 子元素在水平方向均等分佈 */
-                align-items: center;              /* 子元素垂直居中 */
-                background-color: #fafafa;           /* 設置背景色（可根據需要調整） */
-                padding: 10px;                    /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
-                width: 100%;                      /* 設置寬度為全屏 */
+                display: flex;
+                /* 使用 Flexbox 進行佈局 */
+                justify-content: space-around;
+                /* 子元素在水平方向均等分佈 */
+                align-items: center;
+                /* 子元素垂直居中 */
+                background-color: #fafafa;
+                /* 設置背景色（可根據需要調整） */
+                padding: 10px;
+                /* 設置內邊距，讓內容與邊緣之間保持一些距離 */
+                width: 100%;
+                /* 設置寬度為全屏 */
             }
 
             .btn-mobile {
-                background: none;                 /* 去掉按鈕背景（可根據需要自定義） */
-                border: none;                     /* 去掉按鈕邊框 */
-                color: rgb(0, 0, 0);                     /* 設置按鈕文字或圖標顏色 */
-                font-size: 1.5rem;                /* 調整圖標大小 */
-                cursor: pointer;                  /* 設置鼠標樣式為指針 */
+                background: none;
+                /* 去掉按鈕背景（可根據需要自定義） */
+                border: none;
+                /* 去掉按鈕邊框 */
+                color: rgb(0, 0, 0);
+                /* 設置按鈕文字或圖標顏色 */
+                font-size: 1.5rem;
+                /* 調整圖標大小 */
+                cursor: pointer;
+                /* 設置鼠標樣式為指針 */
             }
 
             .btn-mobile.disabled {
-                color: grey;                      /* 設置不可用按鈕的顏色 */
-                cursor: not-allowed;              /* 鼠標樣式設為不可用 */
+                color: grey;
+                /* 設置不可用按鈕的顏色 */
+                cursor: not-allowed;
+                /* 鼠標樣式設為不可用 */
             }
 
             .main-content {
-            margin-left: 0px;
-            padding: 20px;
-            min-height: calc(100vh - 100px);
+                margin-left: 0px;
+                padding: 20px;
+                min-height: calc(100vh - 100px);
+
+                padding-top: 100px;
             }
 
             .column-small-val {
-                width: 70%;  /* 設置第一欄寬度為 5% */
+                width: 70%;
+                /* 設置第一欄寬度為 5% */
             }
+
             .column-medium-val {
-                width: 30%; /* 設置第二欄寬度為 20% */
+                width: 30%;
+                /* 設置第二欄寬度為 20% */
             }
+
             .column-big-val {
-                width: 0%; /* 設置第二欄寬度為 20% */
+                width: 0%;
+                /* 設置第二欄寬度為 20% */
             }
+        }
+
+        /* Force header to stay fixed even if JS removes .sticky class */
+        .header .header-inner {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100%;
+            z-index: 999 !important;
+            box-shadow: 0px 0px 13px #00000054 !important;
+            background-color: white;
+            animation: none !important;
+            transition: none !important;
         }
     </style>
 
 </head>
 
 <body>
-<div id="scroll-progress-bar"></div>
+    <div id="scroll-progress-bar"></div>
     <div class="preloader" id="loading">
-		<div class="loader">
-			<div class="loader-outter"></div>
-			<div class="loader-inner"></div>
+        <div class="loader">
+            <div class="loader-outter"></div>
+            <div class="loader-inner"></div>
 
-			<div class="indicator"> 
-				<svg width="16px" height="12px">
-					<polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
-					<polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
-				</svg>
-			</div>
-		</div>
-	</div>
+            <div class="indicator">
+                <svg width="16px" height="12px">
+                    <polyline id="back" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+                    <polyline id="front" points="1 6 4 6 6 11 10 1 12 6 15 6"></polyline>
+                </svg>
+            </div>
+        </div>
+    </div>
 
 
     <!-- Header Area -->
     <header class="header sticky">
-		<div class="header-inner">
-			<div class="container">
-				<div class="inner">
-					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
-						<div class="col-lg-3 col-md-3 col-12 ">
-							<!-- Start Logo -->
-							<div class="logo">
-								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
-							</div>
-							<!-- End Logo -->
+        <div class="header-inner">
+            <div class="container-fluid" style="padding-left: 15px;">
+                <div class="inner">
+                    <div class="row align-items-center justify-content-between">
+                        <div class="col-lg-3 col-md-3 col-12 ">
+                            <!-- Start Logo -->
+                            <div class="logo">
+                                <a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
+                                    <img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
+                                    <span
+                                        style="font-size: 0.9rem; font-weight: bold; color: #555; margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+                                </a>
+                            </div>
+                            <!-- End Logo -->
 
-							<!-- Mobile Nav -->
-							<div class="mobile-nav"></div>
-							<!-- End Mobile Nav -->
+                            <!-- Mobile Nav -->
+                            <div class="mobile-nav">
+                                <div class="slicknav_menu">
+                                    <a href="#" aria-haspopup="true" role="button" tabindex="0"
+                                        class="slicknav_btn slicknav_collapsed" style="outline: none;">
+                                        <span class="slicknav_menutxt"></span>
+                                        <span class="slicknav_icon slicknav_no-text">
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                        </span>
+                                    </a>
+                                    <ul class="slicknav_nav slicknav_hidden" aria-hidden="true" role="menu"
+                                        style="display: none;">
 
-						</div>
-						<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
-							<!-- Main Menu -->
-							<div class="main-menu">
-								<nav class="navigation">
-									<ul class="nav menu">
-										<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
-											<ul class="dropdown">
-												<li><a href="#">Upload</a></li>
-												<li><a href="#">Setting</a></li>
-												<li><a href="#">Result</a></li>
-												<li><a href="#">Download</a></li>
-											</ul>
-										</li>
-										<li><a href="#">Quick start </a></li>-->
-										
-									</ul>
-								</nav>
-							</div>
-							<!--/ End Main Menu -->
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<!--/ End Header Inner -->
-	</header>
+                                    </ul>
+                                </div>
+                            </div>
+                            <!-- End Mobile Nav -->
+
+                        </div>
+                        <div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+                            <!-- Main Menu -->
+                            <div class="main-menu">
+                                <nav class="navigation">
+                                    <ul class="nav menu">
+
+                                    </ul>
+                                </nav>
+                            </div>
+                            <!--/ End Main Menu -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--/ End Header Inner -->
+    </header>
     <!-- End Header Area -->
 
     <!-- Sidebar -->
@@ -268,34 +342,50 @@
     <div id="sidebar-container">
         <div class="sidebar">
             <br><br><br>
-            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
-            <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
-            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <label
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI
+                Analysis</label>
+            <a href="/Statistical_Analysis/upload">
+                <div class="sidebar-item active" style="background-color: white;
+            animation: none !important;
+            transition: none !important;">Upload</div>
+            </a>
+            <div class="arrow-container"
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-            </div>	
-            <a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active">Setting</div></a>
-            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            </div>
+            <a href="/Statistical_Analysis/setting/{{ uuid }}/">
+                <div class="sidebar-item active">Setting</div>
+            </a>
+            <div class="arrow-container"
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-            </div>	
+            </div>
             <div class="sidebar-item disabled">Result</div>
-            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div class="arrow-container"
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-            </div>	
+            </div>
             <div class="sidebar-item disabled">Download</div><br>
-            <a href="/" class="home-icon" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <a href="/" class="home-icon"
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <i class="fa fa-home" style=" font-size: 2rem;"></i>
             </a>
         </div>
     </div>
     <div id="sidebar-container-media">
         <div class="mobile-topbar">
-            <button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
-            <button title="Action" aria-label="Action" class="btn-mobile" style="color:black;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+            <button title="upload" aria-label="upload" class="btn-mobile" style="color:blue;"><a
+                    href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="setting" aria-label="setting" class="btn-mobile" style="color:blue;"><a
+                    href="/Statistical_Analysis/setting/{{ uuid }}/"><i
+                        class="icofont-duotone icofont-file-check"></i></a></button>
+            <button title="result" aria-label="result" class="btn-mobile disabled" disabled><i
+                    class="icofont-chart-bar-graph"></i></button>
+            <button title="download" aria-label="download" class="btn-mobile disabled" disabled><i
+                    class="icofont-download"></i></button>
         </div>
     </div>
-    <!-- Main Content -->
     <div class="main-content">
         <div style="padding: 10px;">
             <h3>Setting <br></h3>
@@ -306,9 +396,11 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-12">
-                            <form class="form" action="/Statistical_Analysis/result_example/{{ uuid }}/" method="POST" enctype="multipart/form-data"><!-- onsubmit="return validateCheckboxSelection();" -->
-                                  
-                                <input type="hidden" name="csrfmiddlewaretoken" value="h8y7q3d7LIEXmEGWMMABa0LT3co7keVnb9w9bn6TCWRDsigMiwCdhSjSi3NnhygD">
+                            <form class="form" action="/Statistical_Analysis/result_example/{{ uuid }}/" method="POST"
+                                enctype="multipart/form-data"><!-- onsubmit="return validateCheckboxSelection();" -->
+
+                                <input type="hidden" name="csrfmiddlewaretoken"
+                                    value="h8y7q3d7LIEXmEGWMMABa0LT3co7keVnb9w9bn6TCWRDsigMiwCdhSjSi3NnhygD">
                                 <input type="hidden" id="visitor_ip" name="visitor_ip" value="Unknown">
                                 <input type="hidden" id="visitor_country" name="visitor_country" value="Unknown">
                                 <input type="hidden" id="visitor_city" name="visitor_city" value="Unknown">
@@ -318,7 +410,8 @@
                                     <h5>1、Missing Value <br></h5>
                                     <label>Please choose the method to process missing values.</label>
                                 </div>
-                                <div id="checkbox-missing-warning" style="display: none; color: red; margin-bottom: 10px;">
+                                <div id="checkbox-missing-warning"
+                                    style="display: none; color: red; margin-bottom: 10px;">
                                     Please select at least one method from Missing Value.
                                 </div>
                                 <table style="vertical-align: middle; margin-bottom: 20px;">
@@ -330,7 +423,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" id="missing_all" name="missing_value_methods" value="missing_all" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" id="missing_all" name="missing_value_methods"
+                                                    value="missing_all" title="missing_value_methods"
+                                                    aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>ALL</td>
@@ -339,7 +434,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="mean" name="missing_value_methods" value="Mean" checked title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="mean"
+                                                    name="missing_value_methods" value="Mean" checked
+                                                    title="missing_value_methods" aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>Mean</td>
@@ -348,7 +445,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="median" name="missing_value_methods" value="Median" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="median"
+                                                    name="missing_value_methods" value="Median"
+                                                    title="missing_value_methods" aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>Median</td>
@@ -357,7 +456,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="constant" name="missing_value_methods" value="Constant" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="constant"
+                                                    name="missing_value_methods" value="Constant"
+                                                    title="missing_value_methods" aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>Constant</td>
@@ -366,25 +467,29 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="knn" name="missing_value_methods" value="KNN" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="knn"
+                                                    name="missing_value_methods" value="KNN"
+                                                    title="missing_value_methods" aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>KNN</td>
                                         <td>Using the K-Nearest Neighbors method to fill in missing values...</td>
                                     </tr>
-                                    <!-- <tr>
+                                    <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="Interative" name="missing_value_methods" value="Interative" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="Iterative" name="missing_value_methods" value="Iterative" title="missing_value_methods" aria-label="missing_value_methods"/>
                                             </div>
                                         </td>
                                         <td>Iterative</td>
                                         <td>Using iterative imputer to impute missing value.</td>
-                                    </tr> -->
+                                    </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="missing-checkbox" id="none-missing" name="missing_value_methods" value="None" title="missing_value_methods" aria-label="missing_value_methods"/>
+                                                <input type="checkbox" class="missing-checkbox" id="none-missing"
+                                                    name="missing_value_methods" value="None"
+                                                    title="missing_value_methods" aria-label="missing_value_methods" />
                                             </div>
                                         </td>
                                         <td>None</td>
@@ -408,7 +513,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" id="norm_all" name="normalization_methods" value="norm_all" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" id="norm_all" name="normalization_methods"
+                                                    value="norm_all" title="normalization_methods"
+                                                    aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>ALL</td>
@@ -417,7 +524,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="standard_scaler" name="normalization_methods" value="StandardScaler" checked title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="standard_scaler"
+                                                    name="normalization_methods" value="StandardScaler" checked
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>StandardScaler</td>
@@ -426,7 +535,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="robust_scaler" name="normalization_methods" value="RobustScaler" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="robust_scaler"
+                                                    name="normalization_methods" value="RobustScaler"
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>RobustScaler</td>
@@ -435,7 +546,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="minmax_scaler" name="normalization_methods" value="MinMaxScaler" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="minmax_scaler"
+                                                    name="normalization_methods" value="MinMaxScaler"
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>MinMaxScaler</td>
@@ -444,7 +557,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="normalizer" name="normalization_methods" value="Normalizer" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="normalizer"
+                                                    name="normalization_methods" value="Normalizer"
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>Normalizer</td>
@@ -453,7 +568,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="power_transformer" name="normalization_methods" value="PowerTransformer" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="power_transformer"
+                                                    name="normalization_methods" value="PowerTransformer"
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>PowerTransformer</td>
@@ -462,7 +579,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="norm-checkbox" id="none-normalization" name="normalization_methods" value="None" title="normalization_methods" aria-label="normalization_methods"/>
+                                                <input type="checkbox" class="norm-checkbox" id="none-normalization"
+                                                    name="normalization_methods" value="None"
+                                                    title="normalization_methods" aria-label="normalization_methods" />
                                             </div>
                                         </td>
                                         <td>None</td>
@@ -473,7 +592,8 @@
                                     <h5>3、Feature Selection<br></h5>
                                     <label>Please choose methods to process feature selection.</label>
                                 </div>
-                                <div id="checkbox-feature-warning" style="display: none; color: red; margin-bottom: 10px;">
+                                <div id="checkbox-feature-warning"
+                                    style="display: none; color: red; margin-bottom: 10px;">
                                     Please select at least one method from Feature Selection.
                                 </div>
                                 <table style="vertical-align: middle; margin-bottom: 20px;">
@@ -485,7 +605,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" id="feature_all" name="feature_selection_methods" value="feature_all" title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" id="feature_all" name="feature_selection_methods"
+                                                    value="feature_all" title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>ALL</td>
@@ -494,25 +616,36 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="lasso_selection" name="feature_selection_methods" value="Lasso_selection" title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="lasso_selection"
+                                                    name="feature_selection_methods" value="Lasso_selection"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>Lasso</td>
-                                        <td>Using Lasso (L1 penalty) regression as scoring method. L1 penalty will force feature weights to be zeros.</td>
+                                        <td>Using Lasso (L1 penalty) regression as scoring method. L1 penalty will force
+                                            feature weights to be zeros.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="lasso" name="feature_selection_methods" value="Multi-task Lasso" title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="lasso"
+                                                    name="feature_selection_methods" value="Multi-task Lasso"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>Multi-task Lasso</td>
-                                        <td>It is a regression method that simultaneously solves multiple related tasks to identify common features important to all tasks.</td>
+                                        <td>It is a regression method that simultaneously solves multiple related tasks
+                                            to identify common features important to all tasks.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="svm" name="feature_selection_methods" value="Support Vector Machine(SVM)"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="svm"
+                                                    name="feature_selection_methods" value="Support Vector Machine(SVM)"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>Support Vector Machine(SVM)</td>
@@ -521,43 +654,62 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="rf" name="feature_selection_methods" value="RandomForest"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="rf"
+                                                    name="feature_selection_methods" value="RandomForest"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>RandomForest</td>
-                                        <td>Use the feature importance ranking of the Random Forest model to filter out the most useful features for prediction.</td>
+                                        <td>Use the feature importance ranking of the Random Forest model to filter out
+                                            the most useful features for prediction.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="dt" name="feature_selection_methods" value="Decision Stump"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="dt"
+                                                    name="feature_selection_methods" value="Decision Stump"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>Decision Stump</td>
-                                        <td>It is a simple decision tree with only one split, used as a weak learner in ensemble methods like boosting.</td>
+                                        <td>It is a simple decision tree with only one split, used as a weak learner in
+                                            ensemble methods like boosting.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="xgboost" name="feature_selection_methods" value="XGBoost"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="xgboost"
+                                                    name="feature_selection_methods" value="XGBoost"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>XGBoost</td>
-                                        <td>A gradient boosting model that can identify the most important features.</td>
+                                        <td>A gradient boosting model that can identify the most important features.
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="lightgbm" name="feature_selection_methods" value="LightGBM"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="lightgbm"
+                                                    name="feature_selection_methods" value="LightGBM"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>LightGBM</td>
-                                        <td>An enhanced tree model that can quickly select the features with the greatest impact on the model.</td>
+                                        <td>An enhanced tree model that can quickly select the features with the
+                                            greatest impact on the model.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="ensemble" name="feature_selection_methods" value="Ensemble" checked title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="ensemble"
+                                                    name="feature_selection_methods" value="Ensemble" checked
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>Ensemble</td>
@@ -566,7 +718,10 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="feature-checkbox" id="none-feature" name="feature_selection_methods" value="None"  title="feature_selection_methods" aria-label="feature_selection_methods"/>
+                                                <input type="checkbox" class="feature-checkbox" id="none-feature"
+                                                    name="feature_selection_methods" value="None"
+                                                    title="feature_selection_methods"
+                                                    aria-label="feature_selection_methods" />
                                             </div>
                                         </td>
                                         <td>None</td>
@@ -578,7 +733,8 @@
                                     <h5>4、Modeling <br></h5>
                                     <label>Please choose methods to build the model.</label>
                                 </div>
-                                <div id="checkbox-model-warning" style="display: none; color: red; margin-bottom: 10px;">
+                                <div id="checkbox-model-warning"
+                                    style="display: none; color: red; margin-bottom: 10px;">
                                     Please select at least one method from Modeling Methods.
                                 </div>
                                 <table style="vertical-align: middle; margin-bottom: 20px;">
@@ -590,7 +746,9 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" id="modeling_all" name="modeling_methods" value="modeling_all"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" id="modeling_all" name="modeling_methods"
+                                                    value="modeling_all" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>ALL</td>
@@ -599,94 +757,182 @@
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="logisticRegression" name="modeling_methods" value="LogisticRegression"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="logisticRegression"
+                                                    name="modeling_methods" value="LogisticRegression"
+                                                    title="modeling_methods" aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>LogisticRegression</td>
-                                        <td> logistic regression estimates the parameters of a logistic model (the coefficients in the linear or non linear combinations).</td>
+                                        <td> logistic regression estimates the parameters of a logistic model (the
+                                            coefficients in the linear or non linear combinations).</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="elastic_logit" name="modeling_methods" value="ElasticLogit" checked  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="elastic_logit"
+                                                    name="modeling_methods" value="ElasticLogit" checked
+                                                    title="modeling_methods" aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>ElasticLogit</td>
-                                        <td>Logistic regression with Elastic Net regularization, combining L1 and L2 regularization techniques, suitable for scenarios with a large number of features.</td>
+                                        <td>Logistic regression with Elastic Net regularization, combining L1 and L2
+                                            regularization techniques, suitable for scenarios with a large number of
+                                            features.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="random_forest" name="modeling_methods" value="RandomForest"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="random_forest"
+                                                    name="modeling_methods" value="RandomForest"
+                                                    title="modeling_methods" aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>RandomForest</td>
-                                        <td>A model composed of multiple decision trees, which makes predictions through voting.</td>
+                                        <td>A model composed of multiple decision trees, which makes predictions through
+                                            voting.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="svm_model" name="modeling_methods" value="Support Vector Machine(SVM)"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="svm_model"
+                                                    name="modeling_methods" value="Support Vector Machine(SVM)"
+                                                    title="modeling_methods" aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>Support Vector Machine(SVM)</td>
-                                        <td>A powerful classification and regression model suitable for finding the optimal boundary between different classes in the data.</td>
+                                        <td>A powerful classification and regression model suitable for finding the
+                                            optimal boundary between different classes in the data.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="xgboost_model" name="modeling_methods" value="XGBoost"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="xgboost_model"
+                                                    name="modeling_methods" value="XGBoost" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>XGBoost</td>
-                                        <td>An enhanced tree model that effectively handles complex data with fast and efficient characteristics.</td>
+                                        <td>An enhanced tree model that effectively handles complex data with fast and
+                                            efficient characteristics.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="lightgbm_model" name="modeling_methods" value="LightGBM"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="lightgbm_model"
+                                                    name="modeling_methods" value="LightGBM" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>LightGBM</td>
-                                        <td>An efficient model based on gradient boosting, with extremely high training speed and low memory usage, suitable for large datasets.</td>
+                                        <td>An efficient model based on gradient boosting, with extremely high training
+                                            speed and low memory usage, suitable for large datasets.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="adaboost_model" name="modeling_methods" value="AdaBoost"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="catboost_model"
+                                                    name="modeling_methods" value="CatBoost" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
+                                            </div>
+                                        </td>
+                                        <td>CatBoost</td>
+                                        <td>A high-performance open source library for gradient boosting on decision trees. 
+                                            Particularly effective for datasets with categorical features.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="margin-right: 20px; margin-top: 8px;">
+                                                <input type="checkbox" class="modeling-checkbox" id="adaboost_model"
+                                                    name="modeling_methods" value="AdaBoost" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>AdaBoost</td>
-                                        <td>An ensemble method that combines multiple weak classifiers to improve prediction accuracy, suitable for simple datasets.</td>
+                                        <td>An ensemble method that combines multiple weak classifiers to improve
+                                            prediction accuracy, suitable for simple datasets.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="knn_model" name="modeling_methods" value="KNN"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="knn_model"
+                                                    name="modeling_methods" value="KNN" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>KNN</td>
-                                        <td>K-Nearest Neighbors predicts a sample from the majority class/value of its closest neighbors in feature space.</td>
+                                        <td>K-Nearest Neighbors predicts a sample from the majority class/value of its
+                                            closest neighbors in feature space.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="mlp_model" name="modeling_methods" value="MLP"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="mlp_model"
+                                                    name="modeling_methods" value="MLP" title="modeling_methods"
+                                                    aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>MLP</td>
-                                        <td>A multi-layer perceptron (neural network) that learns non-linear relationships between features and target.</td>
+                                        <td>A multi-layer perceptron (neural network) that learns non-linear
+                                            relationships between features and target.</td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div style="margin-right: 20px; margin-top: 8px;">
-                                                <input type="checkbox" class="modeling-checkbox" id="decision_tree" name="modeling_methods" value="DecisionTree"  title="modeling_methods" aria-label="modeling_methods"/>
+                                                <input type="checkbox" class="modeling-checkbox" id="decision_tree"
+                                                    name="modeling_methods" value="DecisionTree"
+                                                    title="modeling_methods" aria-label="modeling_methods" />
                                             </div>
                                         </td>
                                         <td>DecisionTree</td>
-                                        <td>An intuitive model that achieves classification or regression by continually splitting the data.</td>
+                                        <td>An intuitive model that achieves classification or regression by continually
+                                            splitting the data.</td>
                                     </tr>
                                 </table>
+                                <div style="padding-bottom: 10px;">
+                                    <h5>Hyperparameter Tuning <br></h5>
+                                    <label>Select your hyperparameter tuning strategy.</label>
+                                </div>
+                                <table style="vertical-align: middle; margin-bottom: 20px;">
+                                    <tr>
+                                        <th class="column-small-val" style="margin: 0px; vertical-align: middle;">
+                                            <select name="tuning_strategy" id="tuning-strategy-select"
+                                                style="width: 100%; border: 1px solid #e8e8e8; border-radius: 5px; height: 42px; padding-left: 18px; outline: none; margin: 0; display: inline-block; vertical-align: middle; box-sizing: border-box;"
+                                                onchange="toggleIterativeSize()">
+                                                <option value="None">None</option>
+                                                <option value="RandomizedSearchCV" selected>RandomizedSearchCV</option>
+                                                <option value="GridSearchCV">GridSearchCV</option>
+                                                <option value="BayesianOptimization">Bayesian Optimization</option>
+                                            </select>
+                                        </th>
+                                        <th class="column-medium-val" id="tuning-n-iter-container"
+                                            style="display: table-cell; vertical-align: middle;">
+                                            <div style="padding-left: 15px; white-space: nowrap;">
+                                                <input type="number" name="tuning_n_iter" min="1" max="1000" value="10"
+                                                    style="width: 80px; border: 1px solid #e8e8e8; border-radius: 5px; height: 42px; padding-left: 18px; outline: none; margin: 0 10px 0 0; display: inline-block; vertical-align: middle; box-sizing: border-box;"
+                                                    title="Iterative Size" aria-label="Iterative Size"
+                                                    oninput="validateInput(this)" />
+                                                <label
+                                                    style="margin: 0; font-weight: normal; color: #777; display: inline-block; vertical-align: middle;">iterative
+                                                    size</label>
+                                            </div>
+                                        </th>
+                                        <th class="column-big-val"></th>
+                                    </tr>
+                                </table>
+
+                                <script>
+                                    function toggleIterativeSize() {
+                                        var select = document.getElementById('tuning-strategy-select');
+                                        var nIterContainer = document.getElementById('tuning-n-iter-container');
+                                        if (select.value === 'RandomizedSearchCV' || select.value === 'BayesianOptimization') {
+                                            nIterContainer.style.display = 'table-cell';
+                                        } else {
+                                            nIterContainer.style.display = 'none';
+                                        }
+                                    }
+                                    // Initialize state on load
+                                    document.addEventListener('DOMContentLoaded', toggleIterativeSize);
+                                </script>
                                 <!-- Validation Selection -->
                                 <div style="padding-bottom: 10px;">
                                     <h5>5、Validation <br></h5>
@@ -695,18 +941,20 @@
                                 <table style="vertical-align: middle">
                                     <tr>
                                         <th class="column-small-val" style="margin: 0px;">
-                                            <select name="validation_method" id="validation-method-select" style="width: 100%; border: 1px solid #e8e8e8; border-radius: 5px; height: 42px; padding-left: 18px; outline: none;">
+                                            <select name="validation_method" id="validation-method-select"
+                                                style="width: 100%; border: 1px solid #e8e8e8; border-radius: 5px; height: 42px; padding-left: 18px; outline: none;">
                                                 <option selected>k-fold cross validation</option>
                                                 <option>Leave-one-out cross validation</option>
                                             </select>
                                         </th>
                                         <th class="column-medium-val">
-                                            <div class="nice-select form-control wide" tabindex="0" id="validation-select"><span
-                                                    class="current">5-fold</span>
+                                            <div class="nice-select form-control wide" tabindex="0"
+                                                id="validation-select"><span class="current">5-fold</span>
                                                 <ul class="list">
                                                     <li data-value="3" class="option" value="3-fold">3-fold</li>
                                                     <li data-value="4" class="option" value="4-fold">4-fold</li>
-                                                    <li data-value="5" class="option selected" value="5-fold">5-fold</li>
+                                                    <li data-value="5" class="option selected" value="5-fold">5-fold
+                                                    </li>
                                                     <li data-value="6" class="option" value="6-fold">6-fold</li>
                                                     <li data-value="7" class="option" value="7-fold">7-fold</li>
                                                     <li data-value="8" class="option" value="8-fold">8-fold</li>
@@ -718,7 +966,7 @@
                                         </th>
                                         <th class="column-big-val"></th>
                                     </tr>
-                                </table> 
+                                </table>
                                 <div style="padding-bottom: 10px;">
                                     <h5>6、The numbers of feature selection <br></h5>
                                     <label>Please select the numbers of feature selection.</label>
@@ -729,11 +977,15 @@
                                             <label>Feature selection numbers</label>
                                         </th>
                                         <th class="column-medium-val">
-                                            <input class="form-control" id="feature_selection_k" name="feature_selection_k" value="20" type="number" min="1" max="" step="1" placeholder="20" style="width: 85%;" oninput="validateInput(this)" title="feature_selection_k" aria-label="feature_selection_k">
+                                            <input class="form-control" id="feature_selection_k"
+                                                name="feature_selection_k" value="20" type="number" min="1" max=""
+                                                step="1" placeholder="20" style="width: 85%;"
+                                                oninput="validateInput(this)" title="feature_selection_k"
+                                                aria-label="feature_selection_k">
                                         </th>
                                         <th class="column-big-val"></th>
                                     </tr>
-                                </table> 
+                                </table>
                                 <div style="padding-bottom: 10px;">
                                     <h5>7、Train data size<br></h5>
                                     <label>Please select the size of train data.</label>
@@ -745,15 +997,20 @@
                                         </th>
                                         <th class="column-medium-val">
                                             <!-- <input class="form-control" id="train_size" name="train_size" value="0.8" type="number" min="0.6" max="1" step="0.1" placeholder="0.8" style="width: 85%;" oninput="validateInput(this)" title="train_size" aria-label="train_size"> -->
-                                            <label for="train_size">Train <span id="train_size_value">80</span> %</label>
-                                            <input type="range" id="train_size" name="train_size" min="60" max="100" step="1" value="80" oninput="updateSliderValue(this)" style="padding: 0;" title="train_size" aria-label="train_size"/>
+                                            <label for="train_size">Train <span id="train_size_value">80</span>
+                                                %</label>
+                                            <input type="range" id="train_size" name="train_size" min="60" max="100"
+                                                step="1" value="80" oninput="updateSliderValue(this)"
+                                                style="padding: 0;" title="train_size" aria-label="train_size" />
                                         </th>
                                         <th class="column-big-val"></th>
                                     </tr>
-                                </table> 
-                                <div class="button" >
-                                    <button title="Action" aria-label="Action" style="float: left;" type="button" class="btn" onclick="history.back();">Back</button>
-                                    <button title="Action" aria-label="Action" id="start-btn" style="float: right;" type="submit" class="btn no-preloader">Start</button>
+                                </table>
+                                <div class="button">
+                                    <button title="Action" aria-label="Action" style="float: left;" type="button"
+                                        class="btn" onclick="history.back();">Back</button>
+                                    <button title="Action" aria-label="Action" id="start-btn" style="float: right;"
+                                        type="submit" class="btn no-preloader">Start</button>
                                 </div>
                             </form>
                         </div>
@@ -824,144 +1081,144 @@
     <script src="/static/js/main.js"></script>
 
     <script>
-    // 1. 更新滑桿數值的函式 (需設為全域，讓 HTML 中的 oninput 可以呼叫)
-    function updateSliderValue(slider) {
-        const valueDisplay = document.getElementById('train_size_value');
-        if (valueDisplay) {
-            valueDisplay.textContent = slider.value;
+        // 1. 更新滑桿數值的函式 (需設為全域，讓 HTML 中的 oninput 可以呼叫)
+        function updateSliderValue(slider) {
+            const valueDisplay = document.getElementById('train_size_value');
+            if (valueDisplay) {
+                valueDisplay.textContent = slider.value;
+            }
         }
-    }
 
-    // 2. 顯示 Loading 畫面的函式
-    function showLoadingForForm() {
-        const loading = document.getElementById('loading');
-        if (loading) loading.style.display = 'flex';
-        const preloader = document.querySelector('.preloader');
-        if (preloader) preloader.classList.remove('preloader-deactivate');
-    }
+        // 2. 顯示 Loading 畫面的函式
+        function showLoadingForForm() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'flex';
+            const preloader = document.querySelector('.preloader');
+            if (preloader) preloader.classList.remove('preloader-deactivate');
+        }
 
-    // 當網頁元素載入完成後執行
-    document.addEventListener("DOMContentLoaded", function() {
-        
-        // --- A. Checkbox 全選/取消全選邏輯 ---
-        const missingAllCheckbox = document.getElementById('missing_all');
-        const missingCheckboxes = document.querySelectorAll('.missing-checkbox');
-        const normAllCheckbox = document.getElementById('norm_all');
-        const normCheckboxes = document.querySelectorAll('.norm-checkbox');
-        const featureAllCheckbox = document.getElementById('feature_all');
-        const featureCheckboxes = document.querySelectorAll('.feature-checkbox');
-        const modelingAllCheckbox = document.getElementById('modeling_all');
-        const modelingCheckboxes = document.querySelectorAll('.modeling-checkbox');
+        // 當網頁元素載入完成後執行
+        document.addEventListener("DOMContentLoaded", function () {
 
-        function bindAllCheckEvent(allCheckbox, individualCheckboxes) {
-            if(!allCheckbox) return;
-            // 點擊「全選」時，同步所有子項目
-            allCheckbox.addEventListener('change', function() {
-                individualCheckboxes.forEach(cb => cb.checked = this.checked);
-            });
-            // 點擊子項目時，檢查是否該把「全選」打勾或取消
-            individualCheckboxes.forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const allChecked = Array.from(individualCheckboxes).every(c => c.checked);
-                    allCheckbox.checked = allChecked;
+            // --- A. Checkbox 全選/取消全選邏輯 ---
+            const missingAllCheckbox = document.getElementById('missing_all');
+            const missingCheckboxes = document.querySelectorAll('.missing-checkbox');
+            const normAllCheckbox = document.getElementById('norm_all');
+            const normCheckboxes = document.querySelectorAll('.norm-checkbox');
+            const featureAllCheckbox = document.getElementById('feature_all');
+            const featureCheckboxes = document.querySelectorAll('.feature-checkbox');
+            const modelingAllCheckbox = document.getElementById('modeling_all');
+            const modelingCheckboxes = document.querySelectorAll('.modeling-checkbox');
+
+            function bindAllCheckEvent(allCheckbox, individualCheckboxes) {
+                if (!allCheckbox) return;
+                // 點擊「全選」時，同步所有子項目
+                allCheckbox.addEventListener('change', function () {
+                    individualCheckboxes.forEach(cb => cb.checked = this.checked);
+                });
+                // 點擊子項目時，檢查是否該把「全選」打勾或取消
+                individualCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', function () {
+                        const allChecked = Array.from(individualCheckboxes).every(c => c.checked);
+                        allCheckbox.checked = allChecked;
+                    });
+                });
+            }
+
+            bindAllCheckEvent(missingAllCheckbox, missingCheckboxes);
+            bindAllCheckEvent(normAllCheckbox, normCheckboxes);
+            bindAllCheckEvent(featureAllCheckbox, featureCheckboxes);
+            bindAllCheckEvent(modelingAllCheckbox, modelingCheckboxes);
+
+            // --- B. k-fold 選擇器邏輯 ---
+            document.querySelectorAll('.nice-select .option').forEach(function (option) {
+                option.addEventListener('click', function () {
+                    const hiddenInput = document.getElementById('k_fold_hidden');
+                    if (hiddenInput) {
+                        hiddenInput.value = this.getAttribute('data-value');
+                    }
                 });
             });
-        }
 
-        bindAllCheckEvent(missingAllCheckbox, missingCheckboxes);
-        bindAllCheckEvent(normAllCheckbox, normCheckboxes);
-        bindAllCheckEvent(featureAllCheckbox, featureCheckboxes);
-        bindAllCheckEvent(modelingAllCheckbox, modelingCheckboxes);
+            // --- C. 表單必選驗證邏輯 ---
+            function validateCheckboxSelection_preloader() {
+                const isMissingChecked = (missingAllCheckbox && missingAllCheckbox.checked) || Array.from(missingCheckboxes).some(cb => cb.checked);
+                const isNormChecked = (normAllCheckbox && normAllCheckbox.checked) || Array.from(normCheckboxes).some(cb => cb.checked);
+                const isFeatureChecked = (featureAllCheckbox && featureAllCheckbox.checked) || Array.from(featureCheckboxes).some(cb => cb.checked);
+                const isModelingChecked = (modelingAllCheckbox && modelingAllCheckbox.checked) || Array.from(modelingCheckboxes).some(cb => cb.checked);
 
-        // --- B. k-fold 選擇器邏輯 ---
-        document.querySelectorAll('.nice-select .option').forEach(function (option) {
-            option.addEventListener('click', function() {
-                const hiddenInput = document.getElementById('k_fold_hidden');
-                if (hiddenInput) {
-                    hiddenInput.value = this.getAttribute('data-value');
+                let isValid = true;
+                let firstErrorElement = null;
+
+                if (!isMissingChecked) {
+                    document.getElementById('checkbox-missing-warning').style.display = 'block';
+                    if (!firstErrorElement) firstErrorElement = missingAllCheckbox || missingCheckboxes[0];
+                    isValid = false;
+                } else { document.getElementById('checkbox-missing-warning').style.display = 'none'; }
+
+                if (!isNormChecked) {
+                    document.getElementById('checkbox-norm-warning').style.display = 'block';
+                    if (!firstErrorElement) firstErrorElement = normAllCheckbox || normCheckboxes[0];
+                    isValid = false;
+                } else { document.getElementById('checkbox-norm-warning').style.display = 'none'; }
+
+                if (!isFeatureChecked) {
+                    document.getElementById('checkbox-feature-warning').style.display = 'block';
+                    if (!firstErrorElement) firstErrorElement = featureAllCheckbox || featureCheckboxes[0];
+                    isValid = false;
+                } else { document.getElementById('checkbox-feature-warning').style.display = 'none'; }
+
+                if (!isModelingChecked) {
+                    document.getElementById('checkbox-model-warning').style.display = 'block';
+                    if (!firstErrorElement) firstErrorElement = modelingAllCheckbox || modelingCheckboxes[0];
+                    isValid = false;
+                } else { document.getElementById('checkbox-model-warning').style.display = 'none'; }
+
+                if (!isValid && firstErrorElement) {
+                    firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-            });
-        });
-
-        // --- C. 表單必選驗證邏輯 ---
-        function validateCheckboxSelection_preloader() {
-            const isMissingChecked = (missingAllCheckbox && missingAllCheckbox.checked) || Array.from(missingCheckboxes).some(cb => cb.checked);
-            const isNormChecked = (normAllCheckbox && normAllCheckbox.checked) || Array.from(normCheckboxes).some(cb => cb.checked);
-            const isFeatureChecked = (featureAllCheckbox && featureAllCheckbox.checked) || Array.from(featureCheckboxes).some(cb => cb.checked);
-            const isModelingChecked = (modelingAllCheckbox && modelingAllCheckbox.checked) || Array.from(modelingCheckboxes).some(cb => cb.checked);
-
-            let isValid = true;
-            let firstErrorElement = null;
-
-            if (!isMissingChecked) {
-                document.getElementById('checkbox-missing-warning').style.display = 'block';
-                if (!firstErrorElement) firstErrorElement = missingAllCheckbox || missingCheckboxes[0];
-                isValid = false;
-            } else { document.getElementById('checkbox-missing-warning').style.display = 'none'; }
-
-            if (!isNormChecked) {
-                document.getElementById('checkbox-norm-warning').style.display = 'block';
-                if (!firstErrorElement) firstErrorElement = normAllCheckbox || normCheckboxes[0];
-                isValid = false;
-            } else { document.getElementById('checkbox-norm-warning').style.display = 'none'; }
-
-            if (!isFeatureChecked) {
-                document.getElementById('checkbox-feature-warning').style.display = 'block';
-                if (!firstErrorElement) firstErrorElement = featureAllCheckbox || featureCheckboxes[0];
-                isValid = false;
-            } else { document.getElementById('checkbox-feature-warning').style.display = 'none'; }
-
-            if (!isModelingChecked) {
-                document.getElementById('checkbox-model-warning').style.display = 'block';
-                if (!firstErrorElement) firstErrorElement = modelingAllCheckbox || modelingCheckboxes[0];
-                isValid = false;
-            } else { document.getElementById('checkbox-model-warning').style.display = 'none'; }
-
-            if (!isValid && firstErrorElement) {
-                firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return isValid;
             }
-            return isValid;
-        }
 
-        // --- D. Start 按鈕點擊與表單送出邏輯 ---
-        const startBtn = document.getElementById("start-btn");
-        const form = startBtn ? startBtn.closest('form') : null;
+            // --- D. Start 按鈕點擊與表單送出邏輯 ---
+            const startBtn = document.getElementById("start-btn");
+            const form = startBtn ? startBtn.closest('form') : null;
 
-        if (startBtn && form) {
-            startBtn.addEventListener("click", async function(event) {
-                // 1. 擋住表單原本的重整送出動作
-                event.preventDefault();
+            if (startBtn && form) {
+                startBtn.addEventListener("click", async function (event) {
+                    // 1. 擋住表單原本的重整送出動作
+                    event.preventDefault();
 
-                // 2. 執行參數驗證，沒通過就直接 return 停止
-                if (!validateCheckboxSelection_preloader()) {
-                    return; 
-                }
+                    // 2. 執行參數驗證，沒通過就直接 return 停止
+                    if (!validateCheckboxSelection_preloader()) {
+                        return;
+                    }
 
-                // 3. 驗證通過，先轉圈圈安撫使用者
-                showLoadingForForm();
+                    // 3. 驗證通過，先轉圈圈安撫使用者
+                    showLoadingForForm();
 
-                // 4. 背景抓取 IP 與地理資訊
-                try {
-                    const geoResponse = await fetch('https://get.geojs.io/v1/ip/geo.json');
-                    const geoData = await geoResponse.json();
-                    
-                    const ipInput = document.getElementById('visitor_ip');
-                    const countryInput = document.getElementById('visitor_country');
-                    const cityInput = document.getElementById('visitor_city');
-                    
-                    if (ipInput) ipInput.value = geoData.ip;
-                    if (countryInput) countryInput.value = geoData.country || 'Unknown';
-                    if (cityInput) cityInput.value = geoData.city || 'Unknown';
-                } catch (error) {
-                    console.error("無法取得 IP 資訊，將使用預設值 Unknown 繼續送出", error);
-                }
+                    // 4. 背景抓取 IP 與地理資訊
+                    try {
+                        const geoResponse = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                        const geoData = await geoResponse.json();
 
-                // 5. 確保資料塞好後，正式將表單送出給 Django 後端
-                form.submit();
-            });
-        }
-    });
-</script>
+                        const ipInput = document.getElementById('visitor_ip');
+                        const countryInput = document.getElementById('visitor_country');
+                        const cityInput = document.getElementById('visitor_city');
+
+                        if (ipInput) ipInput.value = geoData.ip;
+                        if (countryInput) countryInput.value = geoData.country || 'Unknown';
+                        if (cityInput) cityInput.value = geoData.city || 'Unknown';
+                    } catch (error) {
+                        console.error("無法取得 IP 資訊，將使用預設值 Unknown 繼續送出", error);
+                    }
+
+                    // 5. 確保資料塞好後，正式將表單送出給 Django 後端
+                    form.submit();
+                });
+            }
+        });
+    </script>
 
     <!-- <script>
     // 更新滑桿數值
@@ -1158,27 +1415,27 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script> -->
-<script>
-    (function () {
-        function adjustSidebar() {
-            var headerInner = document.querySelector('.header-inner');
-            var sidebar = document.querySelector('.sidebar');
-            if (headerInner && sidebar) {
-                sidebar.style.top = headerInner.offsetHeight + 'px';
+    <script>
+        (function () {
+            function adjustSidebar() {
+                var headerInner = document.querySelector('.header-inner');
+                var sidebar = document.querySelector('.sidebar');
+                if (headerInner && sidebar) {
+                    sidebar.style.top = headerInner.offsetHeight + 'px';
+                }
             }
-        }
-        document.addEventListener('DOMContentLoaded', adjustSidebar);
-        window.addEventListener('resize', adjustSidebar);
+            document.addEventListener('DOMContentLoaded', adjustSidebar);
+            window.addEventListener('resize', adjustSidebar);
 
-        var progressBar = document.getElementById('scroll-progress-bar');
-        function updateProgress() {
-            var scrollTop = window.scrollY || document.documentElement.scrollTop;
-            var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-            if (progressBar) progressBar.style.height = pct + '%';
-        }
-        window.addEventListener('scroll', updateProgress, { passive: true });
-        document.addEventListener('DOMContentLoaded', updateProgress);
-    })();
+            var progressBar = document.getElementById('scroll-progress-bar');
+            function updateProgress() {
+                var scrollTop = window.scrollY || document.documentElement.scrollTop;
+                var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                if (progressBar) progressBar.style.height = pct + '%';
+            }
+            window.addEventListener('scroll', updateProgress, { passive: true });
+            document.addEventListener('DOMContentLoaded', updateProgress);
+        })();
 
-</html>
+</html >

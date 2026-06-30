@@ -54,6 +54,8 @@
             will-change: transform;
             position: fixed;
             z-index: 900;
+        
+            height: 100vh;
         }
 
         .sidebar-item {
@@ -80,7 +82,8 @@
             margin-left: 220px;
             padding: 20px;
             min-height: calc(100vh - 100px);
-        }
+        
+            padding-top: 100px;}
 
         .sidebar-item:hover {
             background-color: #d6d6d6;
@@ -279,7 +282,8 @@
             margin-left: 0px;
             padding: 20px;
             min-height: calc(100vh - 100px);
-            }   
+            
+            padding-top: 100px;}   
             .image-text-container {
                 display: block; /* 讓圖片和文字分行顯示 */
                 text-align: center; /* 可選：文字和圖片居中對齊 */
@@ -294,6 +298,19 @@
             .image-description {
                 margin-top: 10px; /* 圖片和文字的垂直間距 */
             }
+        }
+    
+        /* Force header to stay fixed even if JS removes .sticky class */
+        .header .header-inner {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100%;
+            z-index: 999 !important;
+            box-shadow: 0px 0px 13px #00000054 !important;
+            background-color: white;
+            animation: none !important;
+            transition: none !important;
         }
     </style>
 </head>
@@ -311,93 +328,96 @@
 </div>
 </div>
 </div>
-<!-- Header Area -->
-<header class="header sticky">
-<div class="header-inner">
-<div class="container">
-<div class="inner">
-<div class="row align-items-center justify-content-between"> <!--style="margin: 2%;"-->
-<div class="col-lg-3 col-md-3 col-12">
-<!-- Start Logo -->
-<div class="logo">
-<a href="/"><img alt="#" src="/static/result_assets/PinBio.png" style="height: 60px;"/></a>
-</div>
-<!-- End Logo -->
-<!-- Mobile Nav -->
-<div class="mobile-nav"><div class="slicknav_menu"><a aria-haspopup="true" class="slicknav_btn slicknav_collapsed" href="/Statistical_Analysis/result/{{ uuid }}/#" role="button" style="outline: none;" tabindex="0"><span class="slicknav_menutxt"></span><span class="slicknav_icon slicknav_no-text"><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span><span class="slicknav_icon-bar"></span></span></a><ul aria-hidden="true" class="slicknav_nav slicknav_hidden" role="menu" style="display: none;">
-<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
-											<ul class="dropdown">
-												<li><a href="#">Upload</a></li>
-												<li><a href="#">Setting</a></li>
-												<li><a href="#">Result</a></li>
-												<li><a href="#">Download</a></li>
-											</ul>
-										</li>
-										<li><a href="#">Quick start </a></li>-->
+    <!-- Header Area -->
+    <header class="header sticky">
+		<div class="header-inner">
+			<div class="container-fluid" style="padding-left: 15px;">
+				<div class="inner">
+					<div class="row align-items-center justify-content-between">
+						<div class="col-lg-3 col-md-3 col-12 ">
+							<!-- Start Logo -->
+							<div class="logo">
+								<a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
+									<img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
+									<span style="font-size: 0.9rem; font-weight: bold; color: #555; margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+								</a>
+							</div>
+							<!-- End Logo -->
 
-</ul></div></div>
-<!-- End Mobile Nav -->
-</div>
-<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
-<!-- Main Menu -->
-<div class="main-menu">
-<nav class="navigation">
-<ul class="nav menu">
-<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
-											<ul class="dropdown">
-												<li><a href="#">Upload</a></li>
-												<li><a href="#">Setting</a></li>
-												<li><a href="#">Result</a></li>
-												<li><a href="#">Download</a></li>
-											</ul>
-										</li>
-										<li><a href="#">Quick start </a></li>-->
+							<!-- Mobile Nav -->
+							<div class="mobile-nav">
+                                <div class="slicknav_menu">
+                                    <a href="#" aria-haspopup="true" role="button" tabindex="0" class="slicknav_btn slicknav_collapsed" style="outline: none;">
+                                        <span class="slicknav_menutxt"></span>
+                                        <span class="slicknav_icon slicknav_no-text">
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                        </span>
+                                    </a>
+                                    <ul class="slicknav_nav slicknav_hidden" aria-hidden="true" role="menu" style="display: none;">
+										
+									</ul>
+                                </div>
+                            </div>
+							<!-- End Mobile Nav -->
 
-</ul>
-</nav>
-</div>
-<!--/ End Main Menu -->
-</div>
-</div>
-</div>
-</div>
-</div>
-<!--/ End Header Inner -->
-</header>
-<!-- End Header Area -->
-<!-- Sidebar -->
-<div style="height:1px; background-color:#ccc;"></div>
-<div id="sidebar-container">
-<div class="sidebar">
-<label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
-<a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;">Setting</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<a href="/Statistical_Analysis/result/{{ uuid }}/"><div class="sidebar-item active">Result</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<div class="sidebar-item disabled">Download</div><br/>
-<a class="home-icon" href="/" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-home" style=" font-size: 2rem;"></i>
-</a>
-</div>
-</div>
-<div id="sidebar-container-media">
-<div class="mobile-topbar">
-<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile"><a href="/Statistical_Analysis/result/{{ uuid }}/"><i class="icofont-chart-bar-graph"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile disabled" disabled=""><i class="icofont-download"></i></button>
-</div>
-</div>
-<!-- AI Report Sticky Bar -->
-<div class="main-content">
+						</div>
+						<div class="col-lg-7 col-md-9 col-12 d-flex justify-content-end">
+							<!-- Main Menu -->
+							<div class="main-menu">
+								<nav class="navigation">
+									<ul class="nav menu">
+										
+									</ul>
+								</nav>
+							</div>
+							<!--/ End Main Menu -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--/ End Header Inner -->
+	</header>
+    <!-- End Header Area -->
+        <!-- Sidebar -->
+    <div style="height:1px; background-color:#ccc;"></div>
+    <div id="sidebar-container">
+        <div class="sidebar">
+            <br><br><br>
+            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+            <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;
+            animation: none !important;
+            transition: none !important;">Upload</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;
+            animation: none !important;
+            transition: none !important;">Setting</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <a href="/Statistical_Analysis/result/{{ uuid }}/"><div class="sidebar-item active">Result</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Download</div><br>
+            <a href="/" class="home-icon" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-home" style=" font-size: 2rem;"></i>
+            </a>
+        </div>
+    </div>
+    <div id="sidebar-container-media">
+        <div class="mobile-topbar">
+            <button title="upload" aria-label="upload" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="setting" aria-label="setting" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
+            <button title="result" aria-label="result" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/result/{{ uuid }}/"><i class="icofont-chart-bar-graph"></i></a></button>
+            <button title="download" aria-label="download" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+        </div>
+    </div>
+    <div class="main-content">
 <div class="ai-report-sticky-bar">
     <a id="view-ai-report-btn" href="/report/{{ uuid }}/html?token=ui_token" title="View AI Report" class="btn" style="background-color: #4CAF50; border-color: #4CAF50; color: white; white-space: nowrap;">View AI Report</a>
     <div id="ai-report-status" class="ai-report-status">
@@ -915,6 +935,9 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                 }
             }
 
+            let aiPollRetries = 0;
+            const MAX_AI_POLL_RETRIES = 10;
+
             function pollAIReportStatus() {
                 fetch(`/report/status/${reportId}?token=ui_token`)
                     .then(async res => {
@@ -925,7 +948,9 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                                 const errorData = await res.json();
                                 message = errorData.detail || message;
                             }
-                            throw new Error(message);
+                            const error = new Error(message);
+                            error.status = res.status;
+                            throw error;
                         }
                         if (!contentType.includes('application/json')) {
                             throw new Error('AI report status returned an unexpected response.');
@@ -933,6 +958,7 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                         return res.json();
                     })
                     .then(data => {
+                        aiPollRetries = 0; // reset on success
                         const status = data.status || '';
                         const pct = data.progress_pct || 0;
 
@@ -966,6 +992,17 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                         setTimeout(pollAIReportStatus, 2500);
                     })
                     .catch(error => {
+                        if (error.status === 404 || error.status === 403) {
+                            setAIReportProgress(0, `Status unavailable (${error.status}). Stopping poll.`, false);
+                            return;
+                        }
+
+                        aiPollRetries++;
+                        if (aiPollRetries > MAX_AI_POLL_RETRIES) {
+                            setAIReportProgress(0, "Stopping poll: Max retries exceeded. Please refresh.", false);
+                            return;
+                        }
+
                         setAIReportProgress(0, error.message || 'Checking AI report status...', false);
                         setTimeout(pollAIReportStatus, 5000);
                     });

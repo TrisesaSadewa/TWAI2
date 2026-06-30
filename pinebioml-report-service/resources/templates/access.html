@@ -68,6 +68,8 @@
             will-change: transform;
             position: fixed;
             z-index: 900;
+        
+            height: 100vh;
         }
 
         .sidebar-item {
@@ -95,7 +97,8 @@
             padding: 20px;
             padding-bottom: 80px;
             min-height: calc(100vh - 100px);
-        }
+        
+            padding-top: 100px;}
 
         .sidebar-item:hover {
             background-color: #d6d6d6;
@@ -153,14 +156,16 @@
 
             .sidebar {
                 width: 100%;  /* 全螢幕寬度 */
-                height: auto; /* 根據內容自適應高度 */
+                 /* 根據內容自適應高度 */
                 flex-direction: row; /* 改為橫向排列，方便手機用戶瀏覽 */
                 overflow-x: auto; /* 如果內容過多，可以橫向滾動 */
                 padding: 10px;
                 background-color: #333; /* 更深的顏色以便區分 */
                 color:rgb(95, 95, 95);
                 position: fixed;
-            }
+            
+            height: 100vh;
+        }
 
             .sidebar-item {
                 font-size: 0.9rem; /* 調整字體大小 */
@@ -193,7 +198,8 @@
             padding: 20px;
             padding-bottom: 80px;
             min-height: calc(100vh - 100px);
-            }
+            
+            padding-top: 100px;}
 
             .column-small-val {
                 width: 70%;  /* 設置第一欄寬度為 5% */
@@ -205,6 +211,51 @@
                 width: 0%; /* 設置第二欄寬度為 20% */
             }
         }
+    
+        /* Force header to stay fixed even if JS removes .sticky class */
+        .header .header-inner {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100%;
+            z-index: 999 !important;
+            box-shadow: 0px 0px 13px #00000054 !important;
+            background-color: white;
+            animation: none !important;
+            transition: none !important;
+        }
+    
+        .example-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            color: #1A76D1;
+            margin-left: 15px;
+            font-size: 1.5rem;
+        }
+
+        .example-tooltip .tooltip-image {
+            visibility: hidden;
+            width: max-content;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            position: absolute;
+            z-index: 10000;
+            top: 130%; 
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
+            border: 1px solid #ccc;
+        }
+
+        .example-tooltip:hover .tooltip-image {
+            visibility: visible;
+            opacity: 1;
+        }
+
     </style>
 
 </head>
@@ -227,21 +278,38 @@
 	</div>
 
 
-    <!-- Header Area -->
+        <!-- Header Area -->
     <header class="header sticky">
 		<div class="header-inner">
-			<div class="container">
+			<div class="container-fluid" style="padding-left: 15px;">
 				<div class="inner">
-					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
+					<div class="row align-items-center justify-content-between">
 						<div class="col-lg-3 col-md-3 col-12 ">
 							<!-- Start Logo -->
 							<div class="logo">
-								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
+								<a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
+									<img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
+									<span style="font-size: 0.9rem; font-weight: bold; color: #555; margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+								</a>
 							</div>
 							<!-- End Logo -->
 
 							<!-- Mobile Nav -->
-							<div class="mobile-nav"></div>
+							<div class="mobile-nav">
+                                <div class="slicknav_menu">
+                                    <a href="#" aria-haspopup="true" role="button" tabindex="0" class="slicknav_btn slicknav_collapsed" style="outline: none;">
+                                        <span class="slicknav_menutxt"></span>
+                                        <span class="slicknav_icon slicknav_no-text">
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                            <span class="slicknav_icon-bar"></span>
+                                        </span>
+                                    </a>
+                                    <ul class="slicknav_nav slicknav_hidden" aria-hidden="true" role="menu" style="display: none;">
+										
+									</ul>
+                                </div>
+                            </div>
 							<!-- End Mobile Nav -->
 
 						</div>
@@ -250,15 +318,6 @@
 							<div class="main-menu">
 								<nav class="navigation">
 									<ul class="nav menu">
-										<!-- <li><a href="#">Functions <i class="icofont-rounded-down"></i></a>
-											<ul class="dropdown">
-												<li><a href="#">Upload</a></li>
-												<li><a href="#">Setting</a></li>
-												<li><a href="#">Result</a></li>
-												<li><a href="#">Download</a></li>
-											</ul>
-										</li>
-										<li><a href="#">Quick start </a></li>-->
 										
 									</ul>
 								</nav>
@@ -273,7 +332,7 @@
 	</header>
     <!-- End Header Area -->
 
-    <!-- Sidebar -->
+            <!-- Sidebar -->
     <div style="height:1px; background-color:#ccc;"></div>
     <div id="sidebar-container">
         <div class="sidebar">
@@ -299,18 +358,23 @@
     </div>
     <div id="sidebar-container-media">
         <div class="mobile-topbar">
-            <button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
-            <button title="Action" aria-label="Action" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+            <button title="upload" aria-label="upload" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="setting" aria-label="setting" class="btn-mobile disabled" disabled><i class="icofont-duotone icofont-file-check"></i></button>
+            <button title="result" aria-label="result" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
+            <button title="download" aria-label="download" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
         </div>
     </div>
-
-    <!-- Main Content -->
     <div class="main-content">
         <div style="padding: 10px;">
-            <h3>Upload <br></h3>
-            <label>Please select your data type and upload the corresponding file.</label>
+            <h3 style="display: flex; align-items: center;">Upload 
+                <div class="example-tooltip">
+                    <i class="fas fa-question-circle"></i>
+                    <div class="tooltip-image">
+                        <img src="/static/img/input_example.png" alt="Example Format" style="max-width: 600px; display: block;">
+                    </div>
+                </div>
+            </h3>
+            <label style="margin-top: 10px;">Please select your data type and upload the corresponding file.</label>
         </div>
         <div class="parameter-form">
             <section class="appointment" style="padding: 0;">
@@ -368,17 +432,7 @@
         </div><br>
 
 
-        <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px; padding: 10px;">
-            <h6 style="margin: 0; text-align: left; margin-right: 10px; font-size:1.5rem;">Input Example Table</h6>
-            <button title="Action" aria-label="Action" class="no-preloader" type="button" onclick="toggleContent('input-example-table')" style="background: none; border: none; cursor: pointer; margin-right: 10px;">
-                <i class="fas fa-chevron-down" id="arrow-input_example_table"></i>
-            </button>
-        </div>
-        <div id="input-example-table" style="display: none; margin-top: 10px;">
-            <div class="image-text-container">
-                <img src="/static/img/input_example.png" alt="Image" class="responsive-image">
-            </div>
-        </div>  
+          
 
 
 

@@ -360,9 +360,26 @@ Write a JSON object with this EXACT structure. All values MUST be a single Markd
 {{
   "expert": {{
     "executive_summary": "1) Short Summary of results. 2) Example of the performance (e.g., 'In 100 patients, the model can...'). 3) Key Points Identified. Readable in 30 seconds. NO dramatic language.",
-    "preprocessing_and_data_quality": "Write 5-10 sentences explaining the data quality. You MUST explicitly discuss this metadata: {data_quality_text}",
-    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Put [PLOT: roc_curve, pr_curve] at the top. 2) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a Markdown table with columns: | Metric | Value |. DO NOT include an interpretation column. 3) Write a detailed paragraph (STRICTLY 5-10 sentences minimum) directly below the metrics table explaining the metrics and their clinical relevance. 4) Put [PLOT: confusion_matrix]. 5) Write a detailed paragraph (STRICTLY 5-10 sentences minimum) explaining the Confusion Matrix, expanding deeply on the specific clinical implications of False Positives and False Negatives. Do not write brief 2-sentence summaries. 6) Put [PLOT: feature_importance, shap_summary]. 7) Write a detailed paragraph (STRICTLY 5-10 sentences minimum) explaining the top driving features, their physiological relevance, and how they influence the model's predictions.{' 8) Add Overfitting analysis.' if has_overfit_data else ''}",
+    "preprocessing_and_data_quality": "Write 4-5 sentences explaining the data quality. You MUST explicitly discuss this metadata: {data_quality_text}",
+    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a standard Markdown table with EXACTLY two columns: Metric and Value. DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. 2) Put [PLOT: roc_curve]. 3) Write a 3-5 sentence explanation of the ROC curve. 4) Put [PLOT: pr_curve]. 5) Write a 3-5 sentence explanation of the PR curve. 6) Put [PLOT: confusion_matrix]. 7) Write a 3-5 sentence explanation of the Confusion Matrix. 8) Put [PLOT: correlation_heatmap]. 9) Write a 3-5 sentence explanation of the Correlation Heatmap (top 5-10 features). 10) Put [PLOT: feature_importance]. 11) Write a 3-5 sentence explanation of Feature Importance (top 5-10 features). 12) Put [PLOT: shap_summary]. 13) Write a 3-5 sentence explanation of SHAP (top 5-10 features). 14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each if present.{' 15) Add Overfitting analysis.' if has_overfit_data else ''}",
     "visuals_analysis": "Explain each available plot as a SINGLE MARKDOWN STRING. Put the relevant [PLOT: plot_name] placeholder directly above each explanation. Explain how to read the plot axes, colors, bars, or clusters. Do not invent metrics or repeat unsupported performance claims.",
+    "conclusion": "Conclusion of the model. MUST BE A SINGLE STRING of at least 5-10 sentences.",
+    "recommendations": "1) Dataset fix / how to improve data quality. 2) Recommendations on model usage. 3) Other tips. MUST BE A SINGLE STRING of at least 5-10 sentences."
+  }},
+  "glossary": {{
+    "Accuracy": "English definition",
+    "AUC-ROC": "English definition",
+    "false alarms": "English definition",
+    "missed cases": "English definition"
+  }}
+}}
+
+RULES:
+1. Use ONLY the metric values from the DATA section. Do not invent numbers.
+2. The expert findings MUST reference specific values (e.g., "Precision of 77.31%").
+3. If per-class data is provided, include a per-class breakdown table.
+    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a standard Markdown table with EXACTLY two columns: Metric and Value. DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. 2) Put [PLOT: roc_curve]. 3) Write a 3-5 sentence explanation of the ROC curve. 4) Put [PLOT: pr_curve]. 5) Write a 3-5 sentence explanation of the PR curve. 6) Put [PLOT: confusion_matrix]. 7) Write a 3-5 sentence explanation of the Confusion Matrix. 8) Put [PLOT: correlation_heatmap]. 9) Write a 3-5 sentence explanation of the Correlation Heatmap (top 5-10 features). 10) Put [PLOT: feature_importance]. 11) Write a 3-5 sentence explanation of Feature Importance (top 5-10 features). 12) Put [PLOT: shap_summary]. 13) Write a 3-5 sentence explanation of SHAP (top 5-10 features). 14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each if present.{' 15) Add Overfitting analysis.' if has_overfit_data else ''}",
+    "visuals_analysis": "Explain each available plot as a SINGLE MARKDOWN STRING. Put the relevant [PLOT: plot_name] placeholder directly above each explanation. Explain how to read the axes, colors, bars, clusters. Do not invent metrics or repeat unsupported performance claims.",
     "conclusion": "Conclusion of the model. MUST BE A SINGLE STRING of at least 5-10 sentences.",
     "recommendations": "1) Dataset fix / how to improve data quality. 2) Recommendations on model usage. 3) Other tips. MUST BE A SINGLE STRING of at least 5-10 sentences."
   }},
@@ -416,27 +433,30 @@ EXPERT REPORT (Follow these EXACT sections and instructions. All section values 
    *Rule: Must be readable in 30 seconds. NO dramatic language or grand proclamations (e.g., avoid "struck a balance", "harmonic balance").*
 
 - "preprocessing_and_data_quality":
-   1) Provide a detailed, definitive, and actionable explanation of the input data quality and preprocessing. MUST BE AT LEAST 5-10 SENTENCES.
+   1) Provide a detailed, definitive, and actionable explanation of the input data quality and preprocessing. MUST BE EXACTLY 4-5 SENTENCES.
    *Rule: You MUST explicitly mention the class distribution and exact imbalance strategy/tools only when they are recorded in DATA QUALITY & PREPROCESSING or PER-CLASS PERFORMANCE. If imbalance metadata is "not recorded", say it was not recorded and do NOT infer balanced classes, no imbalance correction, SMOTE, oversampling, class weighting, or threshold tuning. Do NOT use speculative language like "likely", "appears", or "I feel like". State facts based ONLY on the provided DATA section.*
 
 - "findings":
-   **MUST BE A SINGLE MARKDOWN STRING OF AT LEAST 5-10 SENTENCES. DO NOT OUTPUT AS NESTED JSON OBJECTS.**
+   **MUST BE A SINGLE MARKDOWN STRING OF AT LEAST 10 SENTENCES. DO NOT OUTPUT AS NESTED JSON OBJECTS.**
    **Quantitative Analysis & Findings**
-   1) Put [PLOT: roc_curve, pr_curve] at the very top of this section.
-   2) Write a detailed text paragraph (at least 5 sentences) directly below the plots explaining the ROC and PR curves and what they imply for the model's discriminative power.
-   3) Render the Overall Performance Metrics (Accuracy, ROC-AUC, Precision, Recall/Sensitivity, Specificity, F1-Score, MCC) as a Markdown table with EXACTLY two columns: | Metric | Value |. DO NOT include an interpretation column.
-      **CRITICAL RULE: YOU MUST USE THE EXACT NUMBERS PROVIDED IN THE `PRE-COMPUTED METRICS` SECTION. DO NOT INVENT OR HALLUCINATE NUMBERS. If Accuracy is 99.12%, you must write 99.12%.**
-   4) Write a detailed text paragraph (at least 5 sentences) directly below the metrics table explaining the overall metrics (Accuracy, ROC-AUC, Precision, Recall, Specificity, F1-Score, MCC) and their clinical relevance. If an ACCURACY / CLASS IMBALANCE WARNING is present, explicitly say accuracy alone may be misleading and explain why. Do not use bullet points, write flowing text paragraphs.
-   5) Put [PLOT: confusion_matrix] directly below the metrics explanation.
-   6) Write a highly verbose and detailed text paragraph (STRICTLY 5-10 sentences minimum) explaining the Confusion Matrix Analysis (TNs, TPs, FPs, FNs). You MUST expand deeply on the real-world clinical significance of the False Positives and False Negatives, discussing patient impact and triage risks. Do NOT write brief 2-sentence summaries.
-   7) Put [PLOT: feature_importance, shap_summary] directly below the confusion matrix paragraph.
-   8) Write a highly verbose and detailed text paragraph (STRICTLY 5-10 sentences minimum) listing the specific driving features. You MUST explain their underlying physiological or clinical relevance, discussing both the directionality (positive/negative correlation) and magnitude of their impact on the prediction.{f'''
-   9) Write an Overfitting Analysis paragraph based on train/test gaps.''' if has_overfit_data else ''}
+   1) Render the Overall Performance Metrics (Accuracy, ROC-AUC, Precision, Recall/Sensitivity, Specificity, F1-Score, MCC) as a standard Markdown table with EXACTLY two columns: "Metric" and "Value". DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. **CRITICAL RULE: YOU MUST USE THE EXACT NUMBERS PROVIDED IN THE `PRE-COMPUTED METRICS` SECTION. DO NOT INVENT OR HALLUCINATE NUMBERS. If Accuracy is 99.12%, you must write 99.12%.**
+   2) Put [PLOT: roc_curve] directly below the metrics table.
+   3) Write a 3-5 sentence explanation of the ROC curve and its implications.
+   4) Put [PLOT: pr_curve] directly below the ROC curve explanation.
+   5) Write a 3-5 sentence explanation of the PR curve.
+   6) Put [PLOT: confusion_matrix] directly below the PR curve explanation.
+   7) Write a 3-5 sentence explanation of the Confusion Matrix (TNs, TPs, FPs, FNs) and clinical impact.
+   8) Put [PLOT: correlation_heatmap] directly below the confusion matrix explanation.
+   9) Write a 3-5 sentence explanation of the Correlation Heatmap, focusing on the top 5-10 features.
+   10) Put [PLOT: feature_importance] directly below the correlation heatmap explanation.
+   11) Write a 3-5 sentence explanation of Feature Importance, focusing on the top 5-10 features.
+   12) Put [PLOT: shap_summary] directly below the feature importance explanation.
+   13) Write a 3-5 sentence explanation of SHAP, focusing on the top 5-10 features.
+   14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each plot if present.{f'''
+   15) Write an Overfitting Analysis paragraph based on train/test gaps.''' if has_overfit_data else ''}
 
 - "visuals_analysis":
-   **MUST BE A SINGLE MARKDOWN STRING. DO NOT OUTPUT AS A NESTED JSON OBJECT.**
-   Explain each available plot with the relevant [PLOT: plot_name] placeholder directly above the explanation.
-   Focus on how to read the axes, colors, bars, clusters, or curves. Do not invent values. Do not repeat unsupported performance scores.
+   Explain any other available plots with the relevant [PLOT: plot_name] placeholder directly above the explanation. Focus on how to read the axes, colors, bars, clusters, or curves. Do not invent values. Do not repeat unsupported performance scores.
 
 - "conclusion":
    - Detailed conclusion of what has been discussed. Read in 60 seconds. NO dramatic language. Avoid technical/convoluted words. MUST BE A SINGLE STRING OF AT LEAST 5-10 SENTENCES.

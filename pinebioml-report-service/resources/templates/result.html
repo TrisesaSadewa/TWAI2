@@ -60,6 +60,8 @@
             will-change: transform;
             position: fixed;
             z-index: 900;
+        
+            height: 100vh;
         }
 
         .sidebar-item {
@@ -87,7 +89,8 @@
             padding: 20px;
             padding-bottom: 80px;
             min-height: 100vh;
-        }
+        
+            padding-top: 100px;}
         .sidebar-item:hover {
             background-color: #d6d6d6;
         }
@@ -223,7 +226,8 @@
             margin-left: 0px;
             padding: 20px;
             min-height: calc(100vh - 100px);
-            }
+            
+            padding-top: 100px;}
 
             .column-small-val {
                 width: 70%;  /* 設置第一欄寬度為 5% */
@@ -234,6 +238,19 @@
             .column-big-val {
                 width: 0%; /* 設置第二欄寬度為 20% */
             }
+        }
+    
+        /* Force header to stay fixed even if JS removes .sticky class */
+        .header .header-inner {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100%;
+            z-index: 999 !important;
+            box-shadow: 0px 0px 13px #00000054 !important;
+            background-color: white;
+            animation: none !important;
+            transition: none !important;
         }
     </style>
 
@@ -259,13 +276,16 @@
     <!-- Header Area -->
     <header class="header sticky">
 		<div class="header-inner">
-			<div class="container">
+			<div class="container-fluid" style="padding-left: 15px;">
 				<div class="inner">
 					<div class="row align-items-center justify-content-between" > <!--style="margin: 2%;"-->
 						<div class="col-lg-3 col-md-3 col-12 ">
 							<!-- Start Logo -->
 							<div class="logo">
-								<a href="/"><img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;"></a>
+								<a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
+									<img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
+									<span style="font-size: 0.9rem; font-weight: bold; color: #555; margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+								</a>
 							</div>
 							<!-- End Logo -->
 
@@ -300,40 +320,41 @@
 		</div>
 		<!--/ End Header Inner -->
 	</header>
-<!-- Sidebar -->
-<div style="height:1px; background-color:#ccc;"></div>
-<div id="sidebar-container">
-<div class="sidebar">
-<label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
-<a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;">Upload</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active" style="background-color: white;">Setting</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<a href="#"><div class="sidebar-item active">Result</div></a>
-<div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
-</div>
-<div class="sidebar-item disabled">Download</div><br/>
-<a class="home-icon" href="/" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-<i class="fa fa-home" style=" font-size: 2rem;"></i>
-</a>
-</div>
-</div>
-<div id="sidebar-container-media">
-<div class="mobile-topbar">
-<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile"><a href="#"><i class="icofont-chart-bar-graph"></i></a></button>
-<button title="Action" aria-label="Action" class="btn-mobile disabled" disabled=""><i class="icofont-download"></i></button>
-</div>
-</div>
-
-<!-- Main Content -->
-<div class="main-content">
+        <!-- Sidebar -->
+    <div style="height:1px; background-color:#ccc;"></div>
+    <div id="sidebar-container">
+        <div class="sidebar">
+            <br><br><br>
+            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1rem; color: black;">AI Analysis</label>
+            <a href="/Statistical_Analysis/upload"><div class="sidebar-item active" style="background-color: white;
+            animation: none !important;
+            transition: none !important;">Upload</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <a href="/Statistical_Analysis/setting/{{ uuid }}/"><div class="sidebar-item active">Setting</div></a>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Result</div>
+            <div class="arrow-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-long-arrow-down" style=" font-size: 1.5rem;"></i>
+            </div>	
+            <div class="sidebar-item disabled">Download</div><br>
+            <a href="/" class="home-icon" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <i class="fa fa-home" style=" font-size: 2rem;"></i>
+            </a>
+        </div>
+    </div>
+    <div id="sidebar-container-media">
+        <div class="mobile-topbar">
+            <button title="upload" aria-label="upload" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/upload"><i class="icofont-upload-alt"></i></a></button>
+            <button title="setting" aria-label="setting" class="btn-mobile" style="color:blue;"><a href="/Statistical_Analysis/setting/{{ uuid }}/"><i class="icofont-duotone icofont-file-check"></i></a></button>
+            <button title="result" aria-label="result" class="btn-mobile disabled" disabled><i class="icofont-chart-bar-graph"></i></button>
+            <button title="download" aria-label="download" class="btn-mobile disabled" disabled><i class="icofont-download"></i></button>
+        </div>
+    </div>
+    <div class="main-content">
 <div style="padding: 10px;">
 <label style="color: #666;">Start</label>
 </div>
@@ -399,6 +420,9 @@
         window.location.href = newUrl;
     }
     
+    let pollRetries = 0;
+    const MAX_POLL_RETRIES = 10;
+
     function pollMLTask() {
         const uuid = "{{ uuid }}";
         fetch(`/report/status/${uuid}?token=ui_token`)
@@ -410,7 +434,9 @@
                         const errorData = await res.json();
                         message = errorData.detail || message;
                     }
-                    throw new Error(message);
+                    const error = new Error(message);
+                    error.status = res.status;
+                    throw error;
                 }
                 if (!contentType.includes('application/json')) {
                     throw new Error('Status endpoint returned an unexpected response.');
@@ -418,6 +444,7 @@
                 return res.json();
             })
             .then(data => {
+                pollRetries = 0; // reset retries on successful fetch
                 let pct = data.progress_pct || 0;
                 updateProgressBar(pct);
 
@@ -470,12 +497,28 @@
                 }
             })
             .catch(err => {
-                console.error("Polling error", err);
+                console.error("Polling error:", err.message);
                 const desc = document.getElementById('main-status-desc');
                 if (desc) {
                     desc.innerText = err.message || "Waiting for status update...";
                 }
-                setTimeout(pollMLTask, 2000);
+
+                if (err.status === 404 || err.status === 403) {
+                    console.error("Stopping poll: Non-retriable error.", err.status);
+                    return;
+                }
+
+                pollRetries++;
+                if (pollRetries > MAX_POLL_RETRIES) {
+                    console.error("Stopping poll: Max retries exceeded.");
+                    if (desc) {
+                        desc.innerText = "Stopping poll: Max retries exceeded. Please refresh or contact support.";
+                        desc.style.color = "red";
+                    }
+                    return; 
+                }
+
+                setTimeout(pollMLTask, 3000);
             });
     }
 
