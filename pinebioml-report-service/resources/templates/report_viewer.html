@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,8 +23,10 @@
     <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         @media print {
             :root {
@@ -34,26 +37,50 @@
                 --text-secondary: #475569 !important;
                 --border-color: rgba(0, 0, 0, 0.08) !important;
             }
+
             body {
                 background-color: #ffffff !important;
                 color: #0f172a !important;
             }
-            header, .header-controls, .sidebar, .toggle-btn, button, .zoom-modal {
+
+            header,
+            .header-controls,
+            .sidebar,
+            .toggle-btn,
+            button,
+            .zoom-modal {
                 display: none !important;
             }
+
             .main-container {
                 display: block !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
+
             .content-area {
                 width: 100% !important;
             }
-            section, .card, .plot-container, .metric-card, .model-table, tr, li, p, h1, h2, h3, h4, h5, h6 {
+
+            section,
+            .card,
+            .plot-container,
+            .metric-card,
+            .model-table,
+            tr,
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
             }
         }
+
         /* Default (no data-theme) = LIGHT. Dark values scoped to [data-theme="dark"]
            so the first paint is light and the JS init only switches to dark when
            the user previously chose it (persisted in localStorage). */
@@ -263,7 +290,7 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
             width: fit-content;
         }
-        
+
         .verdict-badge {
             font-size: 1.5rem;
             font-weight: 700;
@@ -277,14 +304,14 @@
             text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
             text-transform: uppercase;
         }
-        
+
         .verdict-badge.fair {
             background: rgba(245, 158, 11, 0.2);
             border-color: #f59e0b;
             color: #f59e0b;
             text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
         }
-        
+
         .verdict-badge.needs-review {
             background: rgba(239, 68, 68, 0.2);
             border-color: #ef4444;
@@ -302,12 +329,15 @@
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
-        .model-table th, .model-table td {
+
+        .model-table th,
+        .model-table td {
             padding: 1.1rem 1.25rem;
             text-align: center;
             border-bottom: 1px solid var(--border-color);
             font-size: 1rem;
         }
+
         .model-table th {
             background: rgba(255, 255, 255, 0.03);
             color: var(--accent-teal);
@@ -317,30 +347,36 @@
             letter-spacing: 0.08em;
             border-bottom: 2px solid var(--border-color);
         }
-        .model-table th:first-child, .model-table td:first-child {
+
+        .model-table th:first-child,
+        .model-table td:first-child {
             text-align: left;
             padding-left: 2rem;
             width: 28%;
             font-weight: 600;
         }
+
         .model-table td:first-child {
             color: var(--text-primary);
         }
+
         .model-table tr:hover {
             background: rgba(255, 255, 255, 0.025);
         }
-        
+
         .bar-chart-container {
             display: flex;
             flex-direction: column;
             gap: 1rem;
             margin-top: 1rem;
         }
+
         .bar-row {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
+
         .bar-label {
             width: 160px;
             flex-shrink: 0;
@@ -350,13 +386,15 @@
             font-weight: 500;
             color: var(--text-secondary);
         }
+
         .bar-track {
             flex: 1;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             height: 24px;
             border-radius: 12px;
             overflow: hidden;
         }
+
         .bar-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--accent-purple), var(--accent-teal));
@@ -433,7 +471,7 @@
             margin-bottom: 2rem;
             backdrop-filter: var(--glass-backdrop);
         }
-        
+
         .report-card-title {
             grid-column: 1 / -1;
             text-align: center;
@@ -466,9 +504,10 @@
 
         .star {
             font-size: 2.5rem;
-            color: rgba(255,255,255,0.1);
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            color: rgba(255, 255, 255, 0.1);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
+
         .star.filled {
             color: var(--accent-teal);
             text-shadow: 0 0 20px var(--accent-teal-glow);
@@ -507,17 +546,17 @@
             white-space: normal;
             width: max-content;
             max-width: 250px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
         .tooltip-trigger:hover .tooltip-text {
             visibility: visible;
             opacity: 1;
         }
-        
+
         /* Expert styled box */
         .expert-summary-box {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border-left: 4px solid var(--accent-teal);
             padding: 1.5rem;
             border-radius: 0 12px 12px 0;
@@ -711,7 +750,8 @@
             margin-bottom: 1.25rem;
         }
 
-        .section-body ol, .section-body ul {
+        .section-body ol,
+        .section-body ul {
             margin-bottom: 1.25rem;
             padding-left: 1.5rem;
         }
@@ -727,7 +767,10 @@
             gap: 0.5rem;
         }
 
-        .btn-edit, .btn-cancel, .btn-save, .btn-clone {
+        .btn-edit,
+        .btn-cancel,
+        .btn-save,
+        .btn-clone {
             background: transparent;
             border: 1px solid var(--border-color);
             padding: 0.4rem 0.8rem;
@@ -738,17 +781,38 @@
             transition: all var(--transition-speed);
         }
 
-        .btn-edit { color: var(--text-secondary); }
-        .btn-edit:hover { border-color: var(--accent-purple); color: var(--text-primary); }
+        .btn-edit {
+            color: var(--text-secondary);
+        }
 
-        .btn-cancel { color: #ef4444; }
-        .btn-cancel:hover { border-color: #ef4444; }
-        
-        .btn-save { color: #10b981; }
-        .btn-save:hover { border-color: #10b981; }
+        .btn-edit:hover {
+            border-color: var(--accent-purple);
+            color: var(--text-primary);
+        }
 
-        .btn-clone { color: #3b82f6; }
-        .btn-clone:hover { border-color: #3b82f6; }
+        .btn-cancel {
+            color: #ef4444;
+        }
+
+        .btn-cancel:hover {
+            border-color: #ef4444;
+        }
+
+        .btn-save {
+            color: #10b981;
+        }
+
+        .btn-save:hover {
+            border-color: #10b981;
+        }
+
+        .btn-clone {
+            color: #3b82f6;
+        }
+
+        .btn-clone:hover {
+            border-color: #3b82f6;
+        }
 
         /* Visual Plots Section */
         .plots-grid {
@@ -829,7 +893,8 @@
             max-width: 90%;
             max-height: 90%;
             border-radius: 16px;
-            background: #0b0f19; /* Dark background to preserve plot legibility */
+            background: #0b0f19;
+            /* Dark background to preserve plot legibility */
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
@@ -866,6 +931,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <header>
@@ -874,8 +940,9 @@
             <div class="logo-text">PineBioML Report Engine</div>
         </div>
         <div class="header-controls">
-            <a id="btn-back-dashboard" href="/report/{{ report_id }}" class="toggle-btn" style="text-decoration: none; margin-right: 0.5rem;">
-                <span>⬅</span> <span>Dashboard</span>
+            <a id="btn-back-dashboard" href="/Statistical_Analysis/result/{{ report_id }}/" class="toggle-btn"
+                style="text-decoration: none; margin-right: 0.5rem;">
+                <span>⬅</span> <span>Results</span>
             </a>
             <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn">
                 <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
@@ -896,7 +963,7 @@
     </header>
 
     <div class="main-container">
-        
+
         <!-- Sidebar Metadata -->
         <aside class="sidebar">
             <div class="meta-section">
@@ -920,7 +987,8 @@
                     </li>
                     <li class="meta-item">
                         <span class="meta-label">Hallucination Check</span>
-                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">✅ Verified</span>
+                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">✅
+                            Verified</span>
                     </li>
                     <li class="meta-item">
                         <span class="meta-label">Status</span>
@@ -928,7 +996,7 @@
                     </li>
                 </ul>
             </div>
-            
+
             <div class="meta-section">
                 <h4 class="sidebar-section-title">Timeline</h4>
                 <ul class="meta-list" style="margin-top: 1rem;">
@@ -942,7 +1010,8 @@
             <div class="meta-section">
                 <h4 class="sidebar-section-title">Exports</h4>
                 <div class="download-panel" style="margin-top: 1rem;">
-                    <a href="/report/{{ report_id }}/download/pdf" class="btn-download btn-pdf" target="_blank">Export to PDF</a>
+                    <a href="/report/{{ report_id }}/download/pdf" class="btn-download btn-pdf" target="_blank">Export
+                        to PDF</a>
                     <a href="/report/{{ report_id }}/download/docx" class="btn-download btn-docx">Export to Word</a>
                 </div>
             </div>
@@ -950,18 +1019,21 @@
 
         <!-- Main Report Body -->
         <main class="content-area">
-            
+
 
             <!-- Clinical Insights Report Card -->
             <div class="report-card" id="report-card-container">
                 <div class="report-card-title">Clinical Insights Report Card</div>
                 <div class="perf-col">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">Model Performance Summary</div>
+                    <div
+                        style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">
+                        Model Performance Summary</div>
                     <div id="report-card-bars"></div>
                 </div>
                 <div class="rating-col">
                     <div class="stars-container" id="stars-container">
-                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span
+                            class="star">★</span><span class="star">★</span>
                     </div>
                     <div class="rating-label" id="rating-label">Overall Clarity & Resolution: Pending</div>
                 </div>
@@ -1008,10 +1080,14 @@
                 <div class="section-header">
                     <h2 class="section-title">Executive Summary</h2>
                     <div class="edit-controls" id="controls-executive_summary">
-                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('executive_summary')">Edit</button>
-                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('executive_summary')" style="display:none;">Cancel</button>
-                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('executive_summary', false)" style="display:none;">Save Override</button>
-                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('executive_summary', true)" style="display:none;">Save a Copy</button>
+                        <button title="Action" aria-label="Action" class="btn-edit"
+                            onclick="toggleEdit('executive_summary')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel"
+                            onclick="cancelEdit('executive_summary')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save"
+                            onclick="saveEdit('executive_summary', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone"
+                            onclick="saveEdit('executive_summary', true)" style="display:none;">Save a Copy</button>
                     </div>
                 </div>
                 <div id="verdict-container" style="display: none; text-align: center;">
@@ -1030,7 +1106,7 @@
                 <div class="section-body" id="body-model_performance">
                     {{ model_performance_table }}
                 </div>
-                
+
                 <div id="sec-preprocessing" style="margin-top: 2.5rem;">
                     <h3>Data Quality &amp; Preprocessing</h3>
                     <div class="section-body" id="body-preprocessing_and_data_quality">
@@ -1053,10 +1129,14 @@
                 <div class="section-header">
                     <h2 class="section-title">Quantitative Analysis & Findings</h2>
                     <div class="edit-controls" id="controls-findings">
-                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('findings')">Edit</button>
-                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('findings')" style="display:none;">Cancel</button>
-                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('findings', false)" style="display:none;">Save Override</button>
-                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('findings', true)" style="display:none;">Save a Copy</button>
+                        <button title="Action" aria-label="Action" class="btn-edit"
+                            onclick="toggleEdit('findings')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('findings')"
+                            style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save"
+                            onclick="saveEdit('findings', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone"
+                            onclick="saveEdit('findings', true)" style="display:none;">Save a Copy</button>
                     </div>
                 </div>
                 <div class="section-body" id="body-findings">
@@ -1064,19 +1144,21 @@
                 </div>
             </section>
 
-                <!-- High-res PNG Plots with Glassmorphic hover zoom effects (hidden for parsing) -->
-                <div class="plots-grid" style="display:none;">
-                    {% for key, val in visuals.items() %}
-                    <div class="plot-container" onclick="{% if not val.endswith('.html') %}zoomPlot('{{ val }}'){% endif %}">
-                        {% if val.endswith('.html') %}
-                        <iframe class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
-                        {% else %}
-                        <img class="plot-img" src="{{ val }}" alt="{{ key }}">
-                        {% endif %}
-                        <div class="plot-title">{{ key.replace('_png', '').replace('.png', '').replace('_', ' ').title() }}</div>
+            <!-- High-res PNG Plots with Glassmorphic hover zoom effects (hidden for parsing) -->
+            <div class="plots-grid" style="display:none;">
+                {% for key, val in visuals.items() %}
+                <div class="plot-container" {% if val is string and not val.endswith('.html')
+                    %}onclick="zoomPlot('{{ val }}')" {% endif %}>
+                    {% if val is string and val.endswith('.html') %}
+                    <iframe class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
+                    {% else %}
+                    <img class="plot-img" src="{{ val }}" alt="{{ key }}">
+                    {% endif %}
+                    <div class="plot-title">{{ key.replace('_png', '').replace('.png', '').replace('_', ' ').title() }}
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
+            </div>
 
 
 
@@ -1084,10 +1166,14 @@
                 <div class="section-header">
                     <h2 class="section-title">Conclusion</h2>
                     <div class="edit-controls" id="controls-conclusion">
-                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('conclusion')">Edit</button>
-                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('conclusion')" style="display:none;">Cancel</button>
-                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('conclusion', false)" style="display:none;">Save Override</button>
-                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('conclusion', true)" style="display:none;">Save a Copy</button>
+                        <button title="Action" aria-label="Action" class="btn-edit"
+                            onclick="toggleEdit('conclusion')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('conclusion')"
+                            style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save"
+                            onclick="saveEdit('conclusion', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone"
+                            onclick="saveEdit('conclusion', true)" style="display:none;">Save a Copy</button>
                     </div>
                 </div>
                 <div class="section-body" id="body-conclusion">
@@ -1101,10 +1187,14 @@
                 <div class="section-header">
                     <h2 class="section-title">Recommendations</h2>
                     <div class="edit-controls" id="controls-recommendations">
-                        <button title="Action" aria-label="Action" class="btn-edit" onclick="toggleEdit('recommendations')">Edit</button>
-                        <button title="Action" aria-label="Action" class="btn-cancel" onclick="cancelEdit('recommendations')" style="display:none;">Cancel</button>
-                        <button title="Action" aria-label="Action" class="btn-save" onclick="saveEdit('recommendations', false)" style="display:none;">Save Override</button>
-                        <button title="Action" aria-label="Action" class="btn-clone" onclick="saveEdit('recommendations', true)" style="display:none;">Save a Copy</button>
+                        <button title="Action" aria-label="Action" class="btn-edit"
+                            onclick="toggleEdit('recommendations')">Edit</button>
+                        <button title="Action" aria-label="Action" class="btn-cancel"
+                            onclick="cancelEdit('recommendations')" style="display:none;">Cancel</button>
+                        <button title="Action" aria-label="Action" class="btn-save"
+                            onclick="saveEdit('recommendations', false)" style="display:none;">Save Override</button>
+                        <button title="Action" aria-label="Action" class="btn-clone"
+                            onclick="saveEdit('recommendations', true)" style="display:none;">Save a Copy</button>
                     </div>
                 </div>
                 <div class="section-body" id="body-recommendations">
@@ -1122,7 +1212,8 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 PineBioML Intelligence Systems. Generated by AI Model: <strong>{{ model_name }}</strong>. Not intended for clinical diagnosis without human oversight.</p>
+        <p>&copy; 2026 PineBioML Intelligence Systems. Generated by AI Model: <strong>{{ model_name }}</strong>. Not
+            intended for clinical purposes without human oversight.</p>
     </footer>
 
     <!-- JSON Data blocks -->
@@ -1150,7 +1241,7 @@
 
         const glossaryEl = document.getElementById('glossary-json');
         const allModelsEl = document.getElementById('all-models-json');
-        
+
         let glossary = {};
         let allModels = [];
         let overfitData = {};
@@ -1200,7 +1291,7 @@
 
             const bodyEl = document.getElementById(`body-${key === 'visuals_analysis' ? 'visuals' : key}`);
             const markdown = narratives[currentMode][key];
-            
+
             bodyEl.innerHTML = `<textarea id="textarea-${key}" style="width:100%; height: 250px; padding:1rem; border-radius:8px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--accent-purple); font-family:inherit; font-size:1rem; line-height:1.6; outline:none; resize:vertical;">${markdown}</textarea>`;
         }
 
@@ -1217,7 +1308,7 @@
             const textarea = document.getElementById(`textarea-${key}`);
             if (!textarea) return;
             const newContent = textarea.value;
-            
+
             const payload = {
                 key: key,
                 content: newContent,
@@ -1245,7 +1336,7 @@
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error('Failed to edit');
-                    
+
                     narratives[currentMode][key] = newContent;
                     alert('Saved and PDF regenerated.');
                     cancelEdit(key);
@@ -1258,7 +1349,7 @@
 
         function switchMode(mode, el) {
             currentMode = mode;
-            
+
             // Manage Active Tab UI
             document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
             el.classList.add('active');
@@ -1274,9 +1365,9 @@
         function renderModelPerformance() {
             const bodyEl = document.getElementById('body-model_performance');
             if (!bodyEl) return;
-            
+
             const prepEl = document.getElementById('sec-preprocessing');
-            
+
             if (currentMode === 'expert') {
                 document.getElementById('verdict-container').style.display = 'none';
                 if (prepEl) prepEl.style.display = 'block';
@@ -1392,7 +1483,7 @@
                             }).join('');
                             pVal = `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:0;">${chunks}</div>`;
                         }
-                        
+
                         // Render full width row underneath
                         const bgCol = isB ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:rgba(255,255,255,0.015);';
                         tableHtml += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pVal}</td></tr>`;
@@ -1412,13 +1503,13 @@
                 ['MSE', fallbackMetrics.mse]
             ];
             const classificationRows = [
-                    ['Accuracy', fallbackMetrics.accuracy],
-                    ['Precision', fallbackMetrics.precision],
-                    ['Recall / Sensitivity', fallbackMetrics.recall],
-                    ['F1-Score', fallbackMetrics.f1Score],
-                    ['ROC-AUC', fallbackMetrics.rocAuc],
-                    ['MCC', fallbackMetrics.mcc]
-                ];
+                ['Accuracy', fallbackMetrics.accuracy],
+                ['Precision', fallbackMetrics.precision],
+                ['Recall / Sensitivity', fallbackMetrics.recall],
+                ['F1-Score', fallbackMetrics.f1Score],
+                ['ROC-AUC', fallbackMetrics.rocAuc],
+                ['MCC', fallbackMetrics.mcc]
+            ];
             const sourceRows = String('{{ task_type }}').toLowerCase().includes('regression') ? regressionRows : classificationRows;
             const rows = sourceRows.filter(([, value]) => {
                 const clean = String(value ?? '').trim();
@@ -1512,19 +1603,19 @@
                 calculateStarRating();
                 return;
             }
-            
+
             // Find accuracy key - try multiple patterns
             let accKey = Object.keys(allModels[0]).find(k => {
                 const kl = k.toLowerCase();
                 return kl === 'test_accuracy' || kl === 'accuracy' || kl === 'acc' ||
-                       kl.includes('test_accuracy') || kl.includes('accuracy');
+                    kl.includes('test_accuracy') || kl.includes('accuracy');
             });
             if (!accKey) {
                 // Fall back to first numeric-valued key that's not a name/string key
                 accKey = Object.keys(allModels[0]).find(k => typeof allModels[0][k] === 'number');
             }
             if (!accKey) accKey = Object.keys(allModels[0])[1];
-            
+
             // Find model name key - try multiple patterns
             let modelKey = Object.keys(allModels[0]).find(k => {
                 const kl = k.toLowerCase();
@@ -1535,14 +1626,14 @@
                 modelKey = Object.keys(allModels[0]).find(k => typeof allModels[0][k] === 'string');
             }
             if (!modelKey) modelKey = Object.keys(allModels[0])[0];
-            
+
             let sorted = [...allModels].sort((a, b) => {
                 const bVal = parseFloat(b[accKey]) || 0;
                 const aVal = parseFloat(a[accKey]) || 0;
                 return bVal - aVal;
             });
             let top3 = sorted.slice(0, 3);
-            
+
             let html = '<div class="bar-chart-container" style="margin-top: 0;">';
             top3.forEach(m => {
                 const rawVal = parseFloat(m[accKey]) || 0;
@@ -1558,44 +1649,44 @@
                 </div>`;
             });
             html += '</div>';
-            
+
             const barsContainer = document.getElementById('report-card-bars');
             if (barsContainer) barsContainer.innerHTML = html;
-            
+
             calculateStarRating();
         }
 
         function calculateStarRating() {
             const cards = document.querySelectorAll('.metric-card');
             if (cards.length === 0) return;
-            
+
             let totalScore = 0;
             let count = 0;
-            
+
             cards.forEach(card => {
                 const valStr = card.querySelector('.metric-value').innerText.trim();
                 let val = parseFloat(valStr);
                 if (isNaN(val)) return;
-                
+
                 // If percentage, convert to 0-1
                 if (valStr.includes('%') || val > 1) {
                     val = val / 100;
                 }
-                
+
                 totalScore += val;
                 count++;
             });
-            
+
             if (count === 0) return;
-            
+
             const avgScore = totalScore / count;
-            
+
             let stars = 1;
             if (avgScore >= 0.90) stars = 5;
             else if (avgScore >= 0.80) stars = 4;
             else if (avgScore >= 0.70) stars = 3;
             else if (avgScore >= 0.60) stars = 2;
-            
+
             const starEls = document.querySelectorAll('#stars-container .star');
             starEls.forEach((el, index) => {
                 if (index < stars) {
@@ -1606,7 +1697,7 @@
                     el.innerText = '☆';
                 }
             });
-            
+
             const labelEl = document.getElementById('rating-label');
             if (stars === 5) labelEl.innerText = 'Overall Clarity & Resolution: Excellent';
             else if (stars === 4) labelEl.innerText = 'Overall Clarity & Resolution: Strong';
@@ -1653,13 +1744,13 @@
             if (!markdown) return '';
             let src = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
             src = src.replace(/([^\n])(\|[^\n]*\|\s*\n\s*\|[\s:|-]+\|)/g, '$1\n$2');
-            
+
             const codeBlocks = [];
             src = src.replace(/```([\s\S]*?)```/g, (match, code) => {
                 codeBlocks.push(code.trim());
                 return `\n===CODEBLOCK_${codeBlocks.length - 1}===\n`;
             });
-            
+
             const lines = src.split('\n');
             let html = '';
             let inList = null;
@@ -1692,11 +1783,11 @@
                 tHtml += '</tbody></table></div>';
                 return tHtml;
             }
-            
+
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i];
                 let trimmed = line.trim();
-                
+
                 if (trimmed.startsWith('===CODEBLOCK_') && trimmed.endsWith('===')) {
                     if (inList) {
                         html += `</${inList}>\n`;
@@ -1710,7 +1801,7 @@
                     html += `<pre><code>${escapeHtml(codeBlocks[index])}</code></pre>\n`;
                     continue;
                 }
-                
+
                 if (trimmed === '') {
                     if (inList) {
                         html += `</${inList}>\n`;
@@ -1750,7 +1841,7 @@
                         inTable = false;
                     }
                 }
-                
+
                 const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
                 if (headerMatch) {
                     if (inList) {
@@ -1762,7 +1853,7 @@
                     html += `<h${level}>${content}</h${level}>\n`;
                     continue;
                 }
-                
+
                 const ulMatch = line.match(/^(\s*)([-*+])\s+(.*)$/);
                 if (ulMatch) {
                     const content = parseInline(ulMatch[3]);
@@ -1774,7 +1865,7 @@
                     html += `<li>${content}</li>\n`;
                     continue;
                 }
-                
+
                 const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
                 if (olMatch) {
                     const content = parseInline(olMatch[3]);
@@ -1786,31 +1877,31 @@
                     html += `<li>${content}</li>\n`;
                     continue;
                 }
-                
+
                 if (inList) {
                     html += `</${inList}>\n`;
                     inList = null;
                 }
-                
+
                 let para = line;
-                while (i + 1 < lines.length && lines[i + 1].trim() !== '' && 
-                       !lines[i + 1].match(/^(#{1,6})\s+/) && 
-                       !lines[i + 1].match(/^(\s*)([-*+])\s+/) && 
-                       !lines[i + 1].match(/^(\s*)(\d+)\.\s+/) &&
-                       !(lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|'))) {
+                while (i + 1 < lines.length && lines[i + 1].trim() !== '' &&
+                    !lines[i + 1].match(/^(#{1,6})\s+/) &&
+                    !lines[i + 1].match(/^(\s*)([-*+])\s+/) &&
+                    !lines[i + 1].match(/^(\s*)(\d+)\.\s+/) &&
+                    !(lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|'))) {
                     i++;
                     para += ' ' + lines[i].trim();
                 }
                 html += `<p>${parseInline(para)}</p>\n`;
             }
-            
+
             if (inList) {
                 html += `</${inList}>\n`;
             }
             if (inTable) {
                 html += renderTableHtml(tableRows);
             }
-            
+
             return html;
         }
 
@@ -1820,7 +1911,7 @@
 
             const bodyEl = document.getElementById('body-' + (key === 'visuals_analysis' ? 'visuals' : key));
             if (!bodyEl) return;
-            
+
             let markdown = narratives[currentMode][key] || '';
             let html = parseMarkdown(markdown);
 
@@ -1885,13 +1976,13 @@
                 plotsHtml += '</div>';
                 return plotsHtml;
             });
-            
+
             // Merge adjacent plot containers so they display side-by-side in the CSS grid
             // This handles cases where the LLM outputs multiple adjacent [PLOT: ...] tags
             html = html.replace(/<\/div>\s*<\/p>\s*<p>\s*<div class="inline-plots-container">/gi, '');
             html = html.replace(/<\/div>\s*<br\s*\/?>\s*<div class="inline-plots-container">/gi, '');
             html = html.replace(/<\/div>\s*<div class="inline-plots-container">/gi, '');
-                
+
             bodyEl.innerHTML = html;
         }
 
@@ -1904,7 +1995,7 @@
             root.setAttribute('data-theme', next);
             // Keep the legacy body.light-mode class in sync for any old selectors.
             document.body.classList.toggle('light-mode', next === 'light');
-            try { localStorage.setItem('pinebioml-theme', next); } catch (e) {}
+            try { localStorage.setItem('pinebioml-theme', next); } catch (e) { }
             document.getElementById('theme-icon').innerText = next === 'dark' ? "☀️" : "🌙";
             document.getElementById('theme-text').innerText = next === 'dark' ? "Light Mode" : "Dark Mode";
         }
@@ -1966,7 +2057,7 @@
             updateSection('findings');
             updateSection('conclusion');
             updateSection('recommendations');
-            
+
             // Dynamically update download links to include the access token
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token') || '';
@@ -2037,4 +2128,5 @@
         }
     </script>
 </body>
+
 </html>

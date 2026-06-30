@@ -550,6 +550,68 @@ class roc_plot(basic_plot):
         plt.legend(loc='lower right')
 
 
+class pr_curve_plot(basic_plot):
+    """
+    Depends on how the number of class in y_true and pos_label, this function will plot a PR curve or several curves of given data.    
+    """
+
+    def __init__(self,
+                 pos_label: Union[str, int, float] = None,
+                 prefix="",
+                 save_path="./output/images/",
+                 save_fig=True,
+                 show_fig=True):
+        """
+
+        Args:
+            pos_label (Union[str, int, float], optional): If not None, the result will be pos_label vs rest (ovr) PR curve. Defaults to None.
+        """
+        super().__init__(prefix=prefix,
+                         save_path=save_path,
+                         save_fig=save_fig,
+                         show_fig=show_fig)
+        self.name = "PR Curve"
+        self.pos_label = pos_label
+
+    def draw(self, y_true: pd.Series, y_pred_prob: pd.DataFrame):
+        """
+        draw PR curve
+
+        Args:
+            y_true (pd.Series): Ground true
+            y_pred_prob (pd.DataFrame): The probability that model predicted for each class. y_pred_prob should have shape (n_samples, n_class)
+        """
+
+        # PR curve
+        if len(y_true.value_counts()) <= 2:
+            if self.pos_label is None:
+                self.pos_label = y_true.iloc[0]
+            # binary PR curve
+            precision, recall, _ = metrics.precision_recall_curve(
+                y_true, y_pred_prob[self.pos_label], pos_label=self.pos_label)
+            pr_auc = metrics.auc(recall, precision)
+            plt.plot(recall, precision, 'b', label='AUC = %0.3f' % pr_auc)
+            plt.title(self.prefix + 'Precision-Recall curve')
+
+        else:
+            # one vs rest PR curve
+            for label in y_pred_prob.columns:
+                label_prob = y_pred_prob[label]
+
+                precision, recall, _ = metrics.precision_recall_curve(
+                    y_true == label, label_prob)
+                pr_auc = metrics.auc(recall, precision)
+
+                plt.plot(recall, precision, label=str(label) + ' (AUC=%0.3f)' % pr_auc)
+            plt.title(self.prefix + 'one vs rest Precision-Recall curves')
+
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.ylabel('Precision')
+        plt.xlabel('Recall')
+        plt.legend(loc='lower right')
+
+
 def data_overview(input_x: pd.DataFrame,
                   y: pd.Series,
                   is_classification: bool = True,
@@ -685,6 +747,13 @@ def classification_summary(y_true,
              show_fig=show_fig,
              save_fig=save_fig).make_figure(y_true, y_pred_prob)
 
+    # pr curve
+    pr_curve_plot(pos_label=target_label,
+                  prefix=prefix,
+                  save_path=save_path,
+                  show_fig=show_fig,
+                  save_fig=save_fig).make_figure(y_true, y_pred_prob)
+
     # ── FastAPI Artifacts Export ──────────────────────────────────
     try:
         import requests, os, glob
@@ -796,19 +865,4 @@ class learning_curve_plot(basic_plot):
             plt.ylabel('Loss / Score')
             plt.legend()
 
-class pr_curve_plot(basic_plot):
-    def __init__(self, prefix="", save_path="./output/images/", save_fig=True, show_fig=True):
-        super().__init__(prefix=prefix, save_path=save_path, save_fig=save_fig, show_fig=show_fig)
-        self.name = "pr_curve"
-        
-    def draw(self, y_true, y_pred_prob):
-        if len(y_true.value_counts()) <= 2:
-            probs = y_pred_prob.iloc[:, 1] if isinstance(y_pred_prob, pd.DataFrame) else y_pred_prob
-            precision, recall, _ = precision_recall_curve(y_true, probs)
-            plt.figure()
-            plt.plot(recall, precision, label='PR Curve', color='purple')
-            plt.xlabel('Recall')
-            plt.ylabel('Precision')
-            plt.title(f'{self.prefix} Precision-Recall Curve')
-            plt.legend()
 # ─────────────────────────────────────────────────────────────

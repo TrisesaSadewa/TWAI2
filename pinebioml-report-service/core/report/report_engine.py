@@ -203,7 +203,8 @@ class ReportEngine:
             overfit_analysis=overfit_analysis,
             selected_features=selected_features,
             imbalance_metadata=prep_meta if prep_meta else None,
-            imbalance_warning=imbalance_warning if imbalance_warning else None
+            imbalance_warning=imbalance_warning if imbalance_warning else None,
+            all_models=all_models
         )
         
         # Save results in report structure
