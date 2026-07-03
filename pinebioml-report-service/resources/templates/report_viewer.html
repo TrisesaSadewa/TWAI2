@@ -862,6 +862,10 @@
             aspect-ratio: 4/3;
         }
 
+        iframe.plot-img {
+            min-height: 500px;
+        }
+
         .plot-title {
             font-family: 'Outfit', sans-serif;
             font-size: 1.1rem;
@@ -1401,10 +1405,6 @@
                     { label: 'Test F1', key: keys.find(k => k.toLowerCase() === 'test_f1') || keys.find(k => k.toLowerCase() === 'cv_f1') || keys.find(k => k.toLowerCase().includes('f1')) },
                     { label: 'Test Specificity', key: keys.find(k => k.toLowerCase() === 'test_specificity') || keys.find(k => k.toLowerCase() === 'cv_specificity') || keys.find(k => k.toLowerCase().includes('specificity')) },
                     { label: 'Test MCC', key: keys.find(k => k.toLowerCase() === 'test_mcc') || keys.find(k => k.toLowerCase() === 'cv_mcc') || keys.find(k => k.toLowerCase().includes('mcc')) },
-                    { label: 'Missing Value', key: keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing') },
-                    { label: 'Normalization', key: keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
-                    { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection') },
-                    { label: 'Hyperparameters', key: keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters') },
                 ].filter(c => c.key);
 
                 // Find best model (highest test_accuracy)
@@ -1448,45 +1448,75 @@
                             val = isProb ? `${(val * 100).toFixed(1)}%` : val.toFixed(4);
                         }
                         const bold = isB && c.label !== 'Model' ? 'font-weight:700;color:var(--accent-teal);' : '';
-                        // Remove bottom border from main row if we have params to show, so they look joined
-                        const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params');
-                        const hasParams = paramsKey && row[paramsKey];
-                        const borderStyle = hasParams ? 'border-bottom:none;' : '';
+                        // Remove bottom border from main row if we have config/params to show, so they look joined
+                        const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
+                        const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+                        const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+                        const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
+                        const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
+                        const borderStyle = hasConfig ? 'border-bottom:none;' : '';
                         tableHtml += `<td style="${bold} ${borderStyle}">${val ?? 'N/A'}</td>`;
                     });
                     tableHtml += '</tr>';
 
-                    // Sub-row for hyperparameters
-                    const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params');
-                    if (paramsKey && row[paramsKey]) {
-                        let pVal = row[paramsKey];
-                        if (typeof pVal === 'string') {
-                            pVal = pVal.replace(/['"]?clf__([^'"]+)['"]?/g, "'$1'").replace(/['"]?selector__([^'"]+)['"]?/g, "'$1'");
-                            if (pVal.startsWith('{') && pVal.endsWith('}')) {
-                                const inner = pVal.substring(1, pVal.length - 1);
-                                const chunks = inner.split(/,\s*(?=['"]?[a-zA-Z0-9_]+['"]?\s*:)/);
-                                pVal = chunks.map(chunk => {
-                                    const parts = chunk.split(':');
-                                    if (parts.length >= 2) {
-                                        const k = parts[0].trim().replace(/^['"]|['"]$/g, '');
-                                        const v = parts.slice(1).join(':').trim();
-                                        return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
-                                    }
-                                    return chunk;
-                                }).join('');
-                                pVal = `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:0;">${pVal}</div>`;
-                            }
-                        } else if (typeof pVal === 'object' && pVal !== null) {
-                            const chunks = Object.entries(pVal).map(([k, v]) => {
-                                k = k.replace('clf__', '').replace('selector__', '');
-                                return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
-                            }).join('');
-                            pVal = `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:0;">${chunks}</div>`;
+                    // Sub-row for configurations and hyperparameters
+                    const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
+                    const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+                    const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+                    const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
+                    const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
+
+                    if (hasConfig) {
+                        let configChunks = [];
+                        if (missingKey && row[missingKey] && row[missingKey] !== 'None' && row[missingKey] !== 'N/A') {
+                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[missingKey]}</span></span>`);
                         }
+                        if (normKey && row[normKey] && row[normKey] !== 'None' && row[normKey] !== 'N/A') {
+                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[normKey]}</span></span>`);
+                        }
+                        if (fsKey && row[fsKey] && row[fsKey] !== 'None' && row[fsKey] !== 'N/A') {
+                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[fsKey]}</span></span>`);
+                        }
+
+                        let pValHtml = '';
+                        if (paramsKey && row[paramsKey]) {
+                            let pVal = row[paramsKey];
+                            if (typeof pVal === 'string') {
+                                pVal = pVal.replace(/['"]?clf__([^'"]+)['"]?/g, "'$1'").replace(/['"]?selector__([^'"]+)['"]?/g, "'$1'");
+                                if (pVal.startsWith('{') && pVal.endsWith('}')) {
+                                    const inner = pVal.substring(1, pVal.length - 1);
+                                    const chunks = inner.split(/,\s*(?=['"]?[a-zA-Z0-9_]+['"]?\s*:)/);
+                                    pValHtml = chunks.map(chunk => {
+                                        const parts = chunk.split(':');
+                                        if (parts.length >= 2) {
+                                            const k = parts[0].trim().replace(/^['"]|['"]$/g, '');
+                                            const v = parts.slice(1).join(':').trim();
+                                            return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                        }
+                                        return chunk;
+                                    }).join('');
+                                } else {
+                                    if (pVal !== 'Default (No Tuning)') {
+                                        pValHtml = `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--text-primary); font-family:monospace;">${pVal}</span></span>`;
+                                    }
+                                }
+                            } else if (typeof pVal === 'object' && pVal !== null) {
+                                pValHtml = Object.entries(pVal).map(([k, v]) => {
+                                    k = k.replace('clf__', '').replace('selector__', '');
+                                    return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                }).join('');
+                            }
+                        }
+
+                        let allChunksStr = configChunks.join('');
+                        if (pValHtml) {
+                            allChunksStr += (configChunks.length > 0 ? '<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid rgba(255,255,255,0.1); height: 16px;"></span>' : '') + pValHtml;
+                        }
+                        const pValDiv = `<div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:0;">${allChunksStr}</div>`;
 
                         // Render full width row underneath
                         const bgCol = isB ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:rgba(255,255,255,0.015);';
-                        tableHtml += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pVal}</td></tr>`;
+                        tableHtml += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pValDiv}</td></tr>`;
                     }
                 });
                 tableHtml += '</tbody></table></div>';
@@ -1561,10 +1591,6 @@
                 { label: 'Model', key: modelKey },
                 { label: r2Key ? 'Test R2' : 'Score', key: scoreKey },
                 ...errorKeys,
-                { label: 'Missing Value', key: keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing') },
-                { label: 'Normalization', key: keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization') },
-                { label: 'Feature Selection', key: keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection') },
-                { label: 'Hyperparameters', key: keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters') },
             ].filter(c => c.key);
 
             let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;">
@@ -1581,9 +1607,75 @@
                 preferredCols.forEach(c => {
                     let val = row[c.key];
                     if (typeof val === 'number') val = val.toFixed(4);
-                    html += `<td>${val ?? 'N/A'}</td>`;
+                    const bold = isBest && c.label !== 'Model' ? 'font-weight:700;color:var(--accent-teal);' : '';
+                    const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
+                    const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+                    const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+                    const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
+                    const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
+                    const borderStyle = hasConfig ? 'border-bottom:none;' : '';
+                    html += `<td style="${bold} ${borderStyle}">${val ?? 'N/A'}</td>`;
                 });
                 html += '</tr>';
+
+                // Sub-row for configurations and hyperparameters
+                const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
+                const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+                const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+                const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
+                const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
+
+                if (hasConfig) {
+                    let configChunks = [];
+                    if (missingKey && row[missingKey] && row[missingKey] !== 'None' && row[missingKey] !== 'N/A') {
+                        configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[missingKey]}</span></span>`);
+                    }
+                    if (normKey && row[normKey] && row[normKey] !== 'None' && row[normKey] !== 'N/A') {
+                        configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[normKey]}</span></span>`);
+                    }
+                    if (fsKey && row[fsKey] && row[fsKey] !== 'None' && row[fsKey] !== 'N/A') {
+                        configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[fsKey]}</span></span>`);
+                    }
+
+                    let pValHtml = '';
+                    if (paramsKey && row[paramsKey]) {
+                        let pVal = row[paramsKey];
+                        if (typeof pVal === 'string') {
+                            pVal = pVal.replace(/['"]?clf__([^'"]+)['"]?/g, "'$1'").replace(/['"]?selector__([^'"]+)['"]?/g, "'$1'");
+                            if (pVal.startsWith('{') && pVal.endsWith('}')) {
+                                const inner = pVal.substring(1, pVal.length - 1);
+                                const chunks = inner.split(/,\s*(?=['"]?[a-zA-Z0-9_]+['"]?\s*:)/);
+                                pValHtml = chunks.map(chunk => {
+                                    const parts = chunk.split(':');
+                                    if (parts.length >= 2) {
+                                        const k = parts[0].trim().replace(/^['"]|['"]$/g, '');
+                                        const v = parts.slice(1).join(':').trim();
+                                        return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                    }
+                                    return chunk;
+                                }).join('');
+                            } else {
+                                if (pVal !== 'Default (No Tuning)') {
+                                    pValHtml = `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--text-primary); font-family:monospace;">${pVal}</span></span>`;
+                                }
+                            }
+                        } else if (typeof pVal === 'object' && pVal !== null) {
+                            pValHtml = Object.entries(pVal).map(([k, v]) => {
+                                k = k.replace('clf__', '').replace('selector__', '');
+                                return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                            }).join('');
+                        }
+                    }
+
+                    let allChunksStr = configChunks.join('');
+                    if (pValHtml) {
+                        allChunksStr += (configChunks.length > 0 ? '<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid rgba(255,255,255,0.1); height: 16px;"></span>' : '') + pValHtml;
+                    }
+                    const pValDiv = `<div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:0;">${allChunksStr}</div>`;
+
+                    const bgCol = isBest ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:rgba(255,255,255,0.015);';
+                    html += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pValDiv}</td></tr>`;
+                }
             });
             html += '</tbody></table></div>';
             return html;

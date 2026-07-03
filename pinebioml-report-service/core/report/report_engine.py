@@ -1075,24 +1075,19 @@ class ReportEngine:
                         return k_orig
             return None
 
-        # New layout as requested: model name + accuracy + precision + sensitivity + specificity
         col_specs = [
-            ("Model",             [k for k in keys if k == model_key]),
-            ("Accuracy",          [find_metric_key(("test_accuracy", "test_acc", "cv_accuracy", "accuracy", "acc"))]),
-            ("Precision",         [find_metric_key(("test_precision", "cv_precision", "precision"))]),
-            ("Sensitivity",       [find_metric_key(("test_recall", "test_sensitivity", "cv_recall", "recall", "sensitivity"))]),
-            ("Specificity",       [find_metric_key(("test_specificity", "cv_specificity", "specificity"))]),
+            ("MODEL",             [k for k in keys if k == model_key]),
+            ("TEST ACCURACY",     [find_metric_key(("test_accuracy", "test_acc", "cv_accuracy", "accuracy", "acc"))]),
+            ("TEST AUC",          [find_metric_key(("test_auc", "auc", "roc_auc", "roc-auc"))]),
+            ("TEST F1",           [find_metric_key(("test_f1", "f1", "f1_score", "f1-score"))]),
         ]
         
         # Pipeline components
-        missing_key = next((k for k in keys if k.lower() in ("missing", "missingvalueprocessing")), None)
-        norm_key = next((k for k in keys if k.lower() in ("normalization", "standarization", "standardization")), None)
-        feat_key = next((k for k in keys if k.lower() in ("selection", "feature_selection")), None)
         params_key = next((k for k in keys if k.lower() in ("best_params", "params", "hyperparameters")), None)
 
         cols = [(label, key_list[0]) for label, key_list in col_specs if key_list and key_list[0]]
         
-        acc_col_key = next((k for label, k in cols if label == "Accuracy"), None)
+        acc_col_key = next((k for label, k in cols if label == "TEST ACCURACY"), None)
         best_idx = 0
         if acc_col_key:
             best_val = -float("inf")
@@ -1115,17 +1110,6 @@ class ReportEngine:
             return str(val)
 
         def get_pipeline_html(row, is_callout=False):
-            chunks = []
-            m_val = row.get(missing_key)
-            if m_val and str(m_val).lower() not in ("none", "nan", ""):
-                chunks.append(f"Missing: {m_val}")
-            n_val = row.get(norm_key)
-            if n_val and str(n_val).lower() not in ("none", "nan", ""):
-                chunks.append(f"Normalization: {n_val}")
-            f_val = row.get(feat_key)
-            if f_val and str(f_val).lower() not in ("none", "nan", ""):
-                chunks.append(f"Feature Selection: {f_val}")
-                
             p_val = row.get(params_key)
             p_dict = None
             if isinstance(p_val, str):
@@ -1141,31 +1125,25 @@ class ReportEngine:
                 p_chunks = []
                 for k, v in p_dict.items():
                     clean_k = str(k).replace("clf__", "").replace("selector__", "")
-                    p_chunks.append(f'<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:#10b981;font-family:monospace;font-weight:600;">{clean_k}</span> <span style="color:#94a3b8; font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:#f8fafc;">{v}</span></span>')
-                margin_top = "8px" if not is_callout else "6px"
-                p_html = f'<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:{margin_top};">{"".join(p_chunks)}</div>'
+                    p_chunks.append(f'<span style="background:rgba(255,255,255,0.04); padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.85em;"><span style="color:#10b981;font-family:monospace;font-weight:600;">{clean_k}</span> <span style="color:#94a3b8; font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:#f8fafc; font-weight:600;">{v}</span></span>')
+                margin_top = "0px" if not is_callout else "6px"
+                return f'<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:{margin_top};">{"".join(p_chunks)}</div>'
             else:
-                margin_top = "8px" if not is_callout else "6px"
-                p_html = f'<div style="margin-top:{margin_top};">{p_val}</div>' if p_val else ''
-                
-            pipeline_str = " &bull; ".join(chunks)
-            if pipeline_str:
-                margin_top_str = "6px" if is_callout else "0px"
-                return f'<div style="margin-top: {margin_top_str}; font-size: 0.9rem; color: #94a3b8;">{pipeline_str}</div>{p_html}'
-            return p_html
+                margin_top = "0px" if not is_callout else "6px"
+                return f'<div style="margin-top:{margin_top};">{p_val}</div>' if p_val else ''
 
         best = all_models[best_idx]
         best_name = best.get(model_key, "Unknown")
+        best_acc = fmt_val("TEST ACCURACY", best.get(acc_col_key)) if acc_col_key else "N/A"
         
-        best_pipeline_html = get_pipeline_html(best, is_callout=True)
-
         callout_html = (
-            f'<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);'
+            f'<div style="margin-bottom:1.25rem;padding:1rem 1.5rem;background:rgba(16,185,129,0.08);'
             f'border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;'
             f'box-shadow: 0 4px 12px rgba(16,185,129,0.05);">'
-            f'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Best Model</span>'
-            f'<strong style="color:#f8fafc;font-size:1.05rem;font-weight:600;">{best_name}</strong>'
-            f'{best_pipeline_html}'
+            f'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;margin-right:12px;">BEST MODEL</span>'
+            f'<strong style="color:#f8fafc;font-size:1.1rem;font-weight:700;">{best_name}</strong>'
+            f'<span style="color:#94a3b8;margin:0 12px;font-size:1.2rem;vertical-align:middle;">&bull;</span>'
+            f'<span style="color:#94a3b8;">Test Accuracy:</span> <strong style="color:#10b981;font-size:1.1rem;margin-left:4px;">{best_acc}</strong>'
             f'</div>'
         )
 
@@ -1185,7 +1163,7 @@ class ReportEngine:
             for label, key in cols:
                 val = row.get(key)
                 cell_val = fmt_val(label, val)
-                cell_style = "font-weight:700;color:#10b981;" if is_best and label != "Model" else ""
+                cell_style = "font-weight:700;color:#10b981;" if is_best and label != "MODEL" else ""
                 if has_pipeline:
                     cell_style += " border-bottom:none;"
                 html += f'<td style="{cell_style}">{cell_val}</td>'
@@ -1193,7 +1171,7 @@ class ReportEngine:
             
             if has_pipeline:
                 bg_col = 'background:rgba(16,185,129,0.05);border-left:3px solid #10b981;' if is_best else 'background:rgba(255,255,255,0.015);'
-                html += f'<tr style="{bg_col}"><td colspan="{len(cols)}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:#94a3b8; border-top:none; text-align:center;">{pipeline_html}</td></tr>'
+                html += f'<tr style="{bg_col}"><td colspan="{len(cols)}" style="padding-top:8px; padding-bottom:16px; font-size:0.9em; color:#94a3b8; border-top:none; text-align:center;">{pipeline_html}</td></tr>'
         
         html += "</tbody></table></div>"
         return html

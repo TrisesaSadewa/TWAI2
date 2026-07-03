@@ -172,15 +172,24 @@ def run_dynamic_pipeline(
         
         # PCA
         numeric_x_clean = numeric_x.dropna(axis=1, how='all')
+        if numeric_x_clean.empty:
+            raise ValueError("No numeric features available for dimensionality reduction plots.")
+            
         numeric_x_imputed = numeric_x_clean.fillna(numeric_x_clean.mean())
-        pca = PCA(n_components=2)
+        pca_components = min(2, numeric_x_imputed.shape[1], numeric_x_imputed.shape[0])
+        pca = PCA(n_components=pca_components)
         scaled_x = (numeric_x_imputed - numeric_x_imputed.mean()) / (numeric_x_imputed.std() + 1e-4)
         pcs = pca.fit_transform(scaled_x)
+        if pcs.shape[1] == 1:
+            pcs = np.column_stack([pcs[:, 0], np.zeros(len(pcs))])
+            
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.scatterplot(x=pcs[:,0], y=pcs[:,1], hue=train_y_orig.astype(str), s=34, alpha=0.85, edgecolor="none", ax=ax)
         ax.set_title("PCA scatter plot")
-        ax.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0] * 100:.1f}% variance)")
-        ax.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1] * 100:.1f}% variance)")
+        pc1_var = pca.explained_variance_ratio_[0] * 100 if len(pca.explained_variance_ratio_) > 0 else 0
+        pc2_var = pca.explained_variance_ratio_[1] * 100 if len(pca.explained_variance_ratio_) > 1 else 0
+        ax.set_xlabel(f"PC1 ({pc1_var:.1f}% variance)")
+        ax.set_ylabel(f"PC2 ({pc2_var:.1f}% variance)")
         ax.grid(alpha=0.2)
         ax.legend(title=str(target_col), loc="best")
         fig.tight_layout()
@@ -191,8 +200,12 @@ def run_dynamic_pipeline(
         fig_pca.write_html(os.path.join(output_dir, "pca_plot.html"))
         
         # UMAP
-        reducer = UMAP(n_neighbors=max(2, round(np.log2(numeric_x_imputed.shape[0]))), n_components=2, random_state=42)
+        umap_components = min(2, numeric_x_imputed.shape[1])
+        reducer = UMAP(n_neighbors=max(2, round(np.log2(numeric_x_imputed.shape[0]))), n_components=umap_components, random_state=42)
         umap_emb = reducer.fit_transform(scaled_x)
+        if umap_emb.shape[1] == 1:
+            umap_emb = np.column_stack([umap_emb[:, 0], np.zeros(len(umap_emb))])
+            
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.scatterplot(x=umap_emb[:,0], y=umap_emb[:,1], hue=train_y_orig.astype(str), s=34, alpha=0.85, edgecolor="none", ax=ax)
         ax.set_title("UMAP scatter plot")
@@ -559,9 +572,9 @@ def run_dynamic_pipeline(
                 if hasattr(kernel, 'best_params_'):
                     # Convert to standard dict for clean string representation
                     params_dict = {k: v for k, v in kernel.best_params_.items()}
-                    item['best_hyperparameters'] = str(params_dict)
+                    item['best_params'] = str(params_dict)
                 else:
-                    item['best_hyperparameters'] = "Default (No Tuning)"
+                    item['best_params'] = "Default (No Tuning)"
             super().append(item)
             
     pine_model.result = TrackingList()
@@ -860,6 +873,8 @@ def run_dynamic_pipeline(
             
             # Extract underlying sklearn model from PineBioML wrapper
             underlying_model = model.kernel if hasattr(model, 'kernel') else model
+            if hasattr(underlying_model, 'best_estimator_'):
+                underlying_model = underlying_model.best_estimator_
             
             # Align features with what the model actually expects (handles dropped variance/NaN columns)
             if hasattr(underlying_model, "feature_names_in_"):
@@ -874,17 +889,17 @@ def run_dynamic_pipeline(
 
                 from PineBioML.selection.classification import ensemble_selector
                 selector = ensemble_selector()
-                # eval_x is raw numeric_x (not the experiment's preprocessed space),
-                # so it may still contain NaNs (e.g. when missing=None was chosen or
-                # the raw data has gaps). ensemble_selector runs LassoLars / SVM /
-                # RandomForest internally; LassoLars rejects NaN and would abort the
-                # whole feature-importance chart. Defensively median-fill any
-                # remaining NaNs so the ensemble scoring always runs.
-                fi_x = eval_x
+                # ensemble_selector evaluates the dataset intrinsically.
+                # Use raw numeric_x so it evaluates all features.
+                fi_x = numeric_x.copy()
                 if fi_x.isna().any().any():
                     fi_x = fi_x.fillna(fi_x.median(numeric_only=True))
                     # all-NaN columns (median is NaN) -> fill with 0
                     fi_x = fi_x.fillna(0)
+                
+                if fi_x.shape[1] <= 1:
+                    raise ValueError("Only 1 feature remaining; ensemble relative importance is not mathematically defined.")
+                    
                 selector.fit(fi_x, train_y)
                 
                 scores = selector.scores_.copy()
@@ -894,7 +909,7 @@ def run_dynamic_pipeline(
                 # Standardize scores like in Plotting()
                 numeric_scores = scores.drop(['ensemble', 'Feature'], axis=1)
                 if len(numeric_scores) <= 1:
-                    z_scores = numeric_scores.copy()
+                    raise ValueError("Ensemble selector dropped too many features (<= 1 remaining). Falling back to underlying model importances.")
                 else:
                     z_scores = (numeric_scores - numeric_scores.mean()) / (numeric_scores.std() + 1e-4)
                     z_scores = z_scores.fillna(0)
@@ -1045,7 +1060,7 @@ img {{
                         raise ValueError(f"Could not build SHAP fallback: {reason}")
 
                     scores = np.nan_to_num(np.abs(scores), nan=0.0, posinf=0.0, neginf=0.0)
-                    top_idx = np.argsort(scores)[-20:]
+                    top_idx = np.argsort(scores)
                     top_scores = scores[top_idx]
                     top_features = [feature_names[i] for i in top_idx]
 
@@ -1125,7 +1140,7 @@ img {{
                     _write_feature_contribution_fallback(f"SHAP feature count {vals.shape[1]} did not match sample columns {len(sample_x.columns)}")
                 elif vals.shape[1] == 0 or not np.isfinite(vals).any():
                     _write_feature_contribution_fallback("SHAP returned no finite feature values")
-                elif float(np.nanmax(np.abs(vals))) <= 1e-12:
+                elif np.max(np.abs(vals)) < 1e-6:
                     _write_feature_contribution_fallback("SHAP values were all near zero")
                 else:
                     logger.info(
@@ -1133,21 +1148,16 @@ img {{
                         f"fork={stage_method_map}, sample_x.shape={sample_x.shape}, "
                         f"max|shap|={float(np.max(np.abs(vals))):.4g}, mean|shap|={float(np.mean(np.abs(vals))):.4g}"
                     )
-
+                    
                     plt.close("all")
-                    n_features = min(20, len(sample_x.columns))
+                    n_features = len(sample_x.columns)
                     fig_height = max(4.5, 0.35 * n_features + 1.5)
                     fig = plt.figure(figsize=(10, fig_height))
                     shap.summary_plot(vals, sample_x, show=False, max_display=n_features)
                     _write_shap_html(plt.gcf())
+                        
             except Exception as e:
                 logger.warning(f"Error generating SHAP plot: {e}")
-                with open(os.path.join(output_dir, "shap_plot.html"), "w", encoding="utf-8") as f:
-                    f.write("""<!doctype html>
-<html><body style="font-family:Arial,sans-serif;text-align:center;padding:24px;color:#555;">
-<h3>SHAP plot not available</h3>
-<p>The model finished training, but SHAP could not produce a readable plot for this run.</p>
-</body></html>""")
                     
     except Exception as e:
         logger.warning(f"Error generating evaluation plots: {e}")

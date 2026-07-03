@@ -444,7 +444,10 @@ class Pine():
             pd.DataFrame: the result
         """
         # clear the results.
-        self.result = []
+        if hasattr(self, 'result') and hasattr(self.result, 'clear'):
+            self.result.clear()
+        else:
+            self.result = []
         self.do_stage(train_x, train_y, test_x, test_y, 0, {}, {})
             
         # ── FastAPI Export Hook ──────────────────────────────────────
