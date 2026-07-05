@@ -7,7 +7,7 @@
     <title>PineBioML AI Clinical Report Viewer</title>
     <!-- No-FOUC theme init: apply persisted theme (default light) before the
          body paints, so there's no flash of the wrong theme on load. -->
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         (function () {
             try {
                 var saved = localStorage.getItem('pinebioml-theme');
@@ -27,7 +27,7 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         @media print {
             :root {
                 --bg-primary: #ffffff !important;
@@ -951,7 +951,7 @@
             <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn">
                 <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
             </button>
-            <script>
+            <script nonce="{{ request.state.csp_nonce }}">
                 document.addEventListener('DOMContentLoaded', () => {
                     const params = new URLSearchParams(window.location.search);
                     const token = params.get('token');
@@ -1221,17 +1221,17 @@
     </footer>
 
     <!-- JSON Data blocks -->
-    <script id="glossary-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce }}" id="glossary-json" type="application/json">
         {{ glossary_json }}
     </script>
-    <script id="all-models-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce }}" id="all-models-json" type="application/json">
         {{ all_models_json }}
     </script>
-    <script id="overfit-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce }}" id="overfit-json" type="application/json">
         {{ overfit_json }}
     </script>
 
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         // Inline variables injected by engine
         const narratives = {
             expert: {

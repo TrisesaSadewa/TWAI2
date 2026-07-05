@@ -20,3 +20,4 @@ rep_*_test.pdf
 rep_*_test.docx
 test_*.html
 fix_layout.py
+.env

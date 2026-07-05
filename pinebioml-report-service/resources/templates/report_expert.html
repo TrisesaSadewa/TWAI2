@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PineBioML Scientific Report - {{ dataset_name | default('Dataset') }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         /* Premium Modern Dark Theme - Vanilla CSS */
         :root {
             --bg-main: #0B0F19;
@@ -424,15 +424,15 @@
     </div>
 
     <!-- PDF.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}">
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
 
-    <script id="glossary-data" type="application/json">
+    <script nonce="{{ request.state.csp_nonce }}" id="glossary-data" type="application/json">
         {{ glossary_json | default('{"AUC": "Area Under the Curve: measures the ability of a classifier to distinguish between classes.", "SHAP": "SHapley Additive exPlanations: a method to explain individual predictions.", "MCC": "Matthews Correlation Coefficient: a balanced measure of binary classification quality."}') | safe }}
     </script>
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         // Inline Glossary JSON Data
         const glossaryText = document.getElementById('glossary-data').textContent;
         const glossary = glossaryText ? JSON.parse(glossaryText) : {};

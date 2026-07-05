@@ -5,9 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PinBioML - Upload</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
+  <script nonce="{{ request.state.csp_nonce }}" src="https://cdn.tailwindcss.com"></script>
+  <script nonce="{{ request.state.csp_nonce }}" src="https://unpkg.com/lucide@latest"></script>
+  <style nonce="{{ request.state.csp_nonce }}">
     /* Prevent overscroll bouncing effectively */
     html {
       height: 100%;
@@ -62,7 +62,7 @@
       font-weight: 500;
     }
   </style>
-  <style>
+  <style nonce="{{ request.state.csp_nonce }}">
     @keyframes shimmer {
       100% {
         transform: translateX(100%);
@@ -1372,7 +1372,7 @@
     </div>
   </div>
 
-  <script>
+  <script nonce="{{ request.state.csp_nonce }}">
     // Initialize Lucide icons
     lucide.createIcons();
 
@@ -2387,7 +2387,7 @@ F,16.13,20.68,108.1,798.8,0.117`;
       };
     }
   </script>
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     (function () {
         function adjustSidebar() {
             var headerInner = document.querySelector('.header-inner');

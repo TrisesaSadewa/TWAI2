@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 from core.IO.database import SessionLocal, engine, Base
 from core.model.models import JobRecord
+from core.security import safe_error_detail
 
 
 def _isoformat_z(value):
@@ -197,8 +198,8 @@ def process_job(report_id, manifest_dict):
         from workers.tasks import train_and_generate_report_task_sync
         train_and_generate_report_task_sync(manifest_dict)
     except Exception as e:
-        logger.error(f"Worker failed on job {report_id}: {e}")
-        update_job_state(report_id, "FAILED", 100, f"System error: {str(e)}")
+        msg = safe_error_detail("System error during processing", e)
+        update_job_state(report_id, "FAILED", 100, msg)
 
 
 def worker_loop(concurrency: int = 4):

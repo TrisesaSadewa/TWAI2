@@ -1023,14 +1023,14 @@ class ReportEngine:
             '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;'
             'font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">'
             'Best Regression Model</span>'
-            f'<strong style="color:#f8fafc;font-size:1.05rem;font-weight:600;">{best_name}</strong>'
+            f'<strong style="color:#f8fafc;font-size:1.05rem;font-weight:600;">{html_lib.escape(str(best_name))}</strong>'
         )
         if score_key:
             label = "Test R2" if "r2" in score_key.lower() else "Score"
             html += f'<span style="color:#94a3b8;margin:0 10px;">&bull;</span><span style="color:#94a3b8;">{label}:</span> <strong style="color:#10b981;font-size:1.05rem;">{best_score}</strong>'
         html += '</div><div style="overflow-x:auto;"><table class="model-table"><thead><tr>'
         for label, _ in cols:
-            html += f"<th>{label}</th>"
+            html += f"<th>{html_lib.escape(str(label))}</th>"
         html += "</tr></thead><tbody>"
         for row in sorted_models:
             is_best = row is best
@@ -1040,7 +1040,7 @@ class ReportEngine:
                 val = row.get(key, "N/A")
                 if isinstance(val, (int, float)):
                     val = f"{val:.4f}"
-                html += f"<td>{val}</td>"
+                html += f"<td>{html_lib.escape(str(val))}</td>"
             html += "</tr>"
         html += "</tbody></table></div>"
         return html
@@ -1125,12 +1125,12 @@ class ReportEngine:
                 p_chunks = []
                 for k, v in p_dict.items():
                     clean_k = str(k).replace("clf__", "").replace("selector__", "")
-                    p_chunks.append(f'<span style="background:rgba(255,255,255,0.04); padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.85em;"><span style="color:#10b981;font-family:monospace;font-weight:600;">{clean_k}</span> <span style="color:#94a3b8; font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:#f8fafc; font-weight:600;">{v}</span></span>')
+                    p_chunks.append(f'<span style="background:rgba(255,255,255,0.04); padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.85em;"><span style="color:#10b981;font-family:monospace;font-weight:600;">{html_lib.escape(str(clean_k))}</span> <span style="color:#94a3b8; font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:#f8fafc; font-weight:600;">{html_lib.escape(str(v))}</span></span>')
                 margin_top = "0px" if not is_callout else "6px"
                 return f'<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:{margin_top};">{"".join(p_chunks)}</div>'
             else:
                 margin_top = "0px" if not is_callout else "6px"
-                return f'<div style="margin-top:{margin_top};">{p_val}</div>' if p_val else ''
+                return f'<div style="margin-top:{margin_top};">{html_lib.escape(str(p_val))}</div>' if p_val else ''
 
         best = all_models[best_idx]
         best_name = best.get(model_key, "Unknown")
@@ -1141,7 +1141,7 @@ class ReportEngine:
             f'border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;'
             f'box-shadow: 0 4px 12px rgba(16,185,129,0.05);">'
             f'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;margin-right:12px;">BEST MODEL</span>'
-            f'<strong style="color:#f8fafc;font-size:1.1rem;font-weight:700;">{best_name}</strong>'
+            f'<strong style="color:#f8fafc;font-size:1.1rem;font-weight:700;">{html_lib.escape(str(best_name))}</strong>'
             f'<span style="color:#94a3b8;margin:0 12px;font-size:1.2rem;vertical-align:middle;">&bull;</span>'
             f'<span style="color:#94a3b8;">Test Accuracy:</span> <strong style="color:#10b981;font-size:1.1rem;margin-left:4px;">{best_acc}</strong>'
             f'</div>'
@@ -1149,7 +1149,7 @@ class ReportEngine:
 
         html = callout_html + '<div style="overflow-x:auto;"><table class="model-table"><thead><tr>'
         for label, _ in cols:
-            html += f"<th>{label}</th>"
+            html += f"<th>{html_lib.escape(str(label))}</th>"
         html += "</tr></thead><tbody>"
         
         for i, row in enumerate(all_models):
@@ -1166,7 +1166,7 @@ class ReportEngine:
                 cell_style = "font-weight:700;color:#10b981;" if is_best and label != "MODEL" else ""
                 if has_pipeline:
                     cell_style += " border-bottom:none;"
-                html += f'<td style="{cell_style}">{cell_val}</td>'
+                html += f'<td style="{cell_style}">{html_lib.escape(str(cell_val))}</td>'
             html += "</tr>"
             
             if has_pipeline:
@@ -1179,6 +1179,7 @@ class ReportEngine:
     def _markdown_to_html(self, text) -> str:
         """Converts basic markdown to HTML for server-side rendering (e.g. for PDF export)."""
         import re
+        from core.security import sanitize_html_content
         if not text:
             return ""
             
@@ -1188,6 +1189,8 @@ class ReportEngine:
             text = str(text)
         
         text = text.replace('\r\n', '\n').replace('\r', '\n')
+        # Sanitize dangerous HTML tags/event handlers from LLM output
+        text = sanitize_html_content(text)
         # Ensure numbered list items start on a new line (e.g. "1. " or "2. ")
         import re as re_mod
         text = re_mod.sub(r'(?<!\n)(?<![\d\.])\b(\d{1,2}\.\s)', r'\n\1', text)
@@ -1291,26 +1294,26 @@ class ReportEngine:
             
         # Replace template placeholders
         # Meta info
-        html = template.replace("{{ report_id }}", data["report_id"])
-        html = html.replace("{{ job_id }}", data["job_id"])
-        html = html.replace("{{ dataset_name }}", data["dataset_name"])
-        html = html.replace("{{ task_type }}", data["task_type"].replace("_", " ").title())
-        html = html.replace("{{ generated_at }}", data["created_at"])
-        html = html.replace("{{ model_name }}", data.get("model_name", "PineBioML Default"))
+        html = template.replace("{{ report_id }}", html_lib.escape(data["report_id"]))
+        html = html.replace("{{ job_id }}", html_lib.escape(data["job_id"]))
+        html = html.replace("{{ dataset_name }}", html_lib.escape(data["dataset_name"]))
+        html = html.replace("{{ task_type }}", html_lib.escape(data["task_type"].replace("_", " ").title()))
+        html = html.replace("{{ generated_at }}", html_lib.escape(data["created_at"]))
+        html = html.replace("{{ model_name }}", html_lib.escape(data.get("model_name", "PineBioML Default")))
         
         # Diagnostic metrics
         metrics = data["metrics"]
-        html = html.replace("{{ accuracy }}", str(metrics.get("accuracy", "N/A")))
-        html = html.replace("{{ roc_auc }}", str(metrics.get("ROC-AUC", "N/A")))
-        html = html.replace("{{ precision }}", str(metrics.get("precision", "N/A")))
-        html = html.replace("{{ recall }}", str(metrics.get("recall", "N/A")))
-        html = html.replace("{{ f1_score }}", str(metrics.get("F1-Score", "N/A")))
-        html = html.replace("{{ specificity }}", str(metrics.get("specificity", "N/A")))
-        html = html.replace("{{ mcc }}", str(metrics.get("MCC", "N/A")))
-        html = html.replace("{{ r2 }}", str(metrics.get("R2", "N/A")))
-        html = html.replace("{{ rmse }}", str(metrics.get("RMSE", "N/A")))
-        html = html.replace("{{ mae }}", str(metrics.get("MAE", "N/A")))
-        html = html.replace("{{ mse }}", str(metrics.get("MSE", "N/A")))
+        html = html.replace("{{ accuracy }}", html_lib.escape(str(metrics.get("accuracy", "N/A"))))
+        html = html.replace("{{ roc_auc }}", html_lib.escape(str(metrics.get("ROC-AUC", "N/A"))))
+        html = html.replace("{{ precision }}", html_lib.escape(str(metrics.get("precision", "N/A"))))
+        html = html.replace("{{ recall }}", html_lib.escape(str(metrics.get("recall", "N/A"))))
+        html = html.replace("{{ f1_score }}", html_lib.escape(str(metrics.get("F1-Score", "N/A"))))
+        html = html.replace("{{ specificity }}", html_lib.escape(str(metrics.get("specificity", "N/A"))))
+        html = html.replace("{{ mcc }}", html_lib.escape(str(metrics.get("MCC", "N/A"))))
+        html = html.replace("{{ r2 }}", html_lib.escape(str(metrics.get("R2", "N/A"))))
+        html = html.replace("{{ rmse }}", html_lib.escape(str(metrics.get("RMSE", "N/A"))))
+        html = html.replace("{{ mae }}", html_lib.escape(str(metrics.get("MAE", "N/A"))))
+        html = html.replace("{{ mse }}", html_lib.escape(str(metrics.get("MSE", "N/A"))))
 
         imbalance_warning = data.get("imbalance_warning") or {}
         if imbalance_warning:
@@ -1440,9 +1443,10 @@ class ReportEngine:
                 except Exception:
                     pct_str = "0.0"
                 
+                esc_name = html_lib.escape(str(model_name))
                 report_card_bars_html += f"""
                 <div class="bar-row">
-                    <div class="bar-label" title="{model_name}">{model_name}</div>
+                    <div class="bar-label" title="{esc_name}">{esc_name}</div>
                     <div class="bar-track">
                         <div class="bar-fill" style="width: {pct_str}%;">{pct_str}%</div>
                     </div>

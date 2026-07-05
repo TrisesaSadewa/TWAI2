@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generating Report...</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700&display=swap" rel="stylesheet">
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --bg-main: #0B0F19;
             --text-main: #E2E8F0;
@@ -88,7 +88,7 @@
         <div id="live-preview" style="margin-top: 2rem; text-align: left; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #a1a1aa; display: none;"></div>
     </div>
 
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         const reportId = "{{ REPORT_ID }}";
         const token = "{{ TOKEN }}";
         
@@ -112,21 +112,8 @@
                     document.getElementById("status-text").innerText = "Complete! Seamlessly loading report...";
                     document.getElementById("progress-fill").style.width = "100%";
                     
-                    // Seamless DOM replacement instead of a jarring page reload
-                    setTimeout(async () => {
-                        try {
-                            const htmlRes = await fetch(`/report/${reportId}/html?token=${token}&direct=true`);
-                            if (htmlRes.ok) {
-                                const newHtml = await htmlRes.text();
-                                document.open();
-                                document.write(newHtml);
-                                document.close();
-                            } else {
-                                window.location.reload();
-                            }
-                        } catch (e) {
-                            window.location.reload();
-                        }
+                    setTimeout(() => {
+                        window.location.replace(`/report/${reportId}/html?token=${token}&direct=true`);
                     }, 800);
                 } else if (data.status === "FAILED") {
                     document.getElementById("status-text").innerText = "Error: " + (data.message || "Pipeline failed");
@@ -181,7 +168,8 @@
                         }
                     }
                     if (newlyTyped) {
-                        livePreview.innerHTML += newlyTyped;
+                        const node = document.createTextNode(newlyTyped.replace(/<br>/g, "\n"));
+                        livePreview.appendChild(node);
                         livePreview.scrollTop = livePreview.scrollHeight;
                     }
                 }

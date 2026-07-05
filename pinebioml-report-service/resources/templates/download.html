@@ -24,7 +24,7 @@
 <link href="/static/download_assets/normalize.css" rel="stylesheet"/>
 <link href="/static/download_assets/style.css?v=20260630" rel="stylesheet"/>
 <link href="/static/download_assets/responsive.css" rel="stylesheet"/>
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
         html { overscroll-behavior-y: none; }
         header{
             z-index: 999;
@@ -278,6 +278,7 @@
 <div class="row">
 <div class="col-lg-12 col-md-12 col-12">
 <form action="/Statistical_Analysis/download/download_selected_files/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
 <input name="csrfmiddlewaretoken" type="hidden" value="bbX3k9ipNbKGLUdMx2AeJqwQk39Oy9km5cV55tbbEpXmRyNC3MCQQi4PzUy4vtFC"/>
 <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
 <input checked="" id="select-all" onclick="toggleAll(this)" style="margin-right: 10px; width: 15px;" type="checkbox" title="input" aria-label="input"/>
@@ -577,27 +578,27 @@
 </section>
 </div>
 </div>
-<script src="/static/download_assets/jquery.min.js.download"></script>
-<script src="/static/download_assets/jquery-migrate-3.0.0.js.download"></script>
-<script src="/static/download_assets/jquery-ui.min.js.download"></script>
-<script src="/static/download_assets/easing.js.download"></script>
-<script src="/static/download_assets/colors.js.download"></script>
-<script src="/static/download_assets/popper.min.js.download"></script>
-<script src="/static/download_assets/bootstrap-datepicker.js.download"></script>
-<script src="/static/download_assets/jquery.nav.js.download"></script>
-<script src="/static/download_assets/slicknav.min.js.download"></script>
-<script src="/static/download_assets/jquery.scrollUp.min.js.download"></script>
-<script src="/static/download_assets/niceselect.js.download"></script>
-<script src="/static/download_assets/tilt.jquery.min.js.download"></script>
-<script src="/static/download_assets/owl-carousel.js.download"></script>
-<script src="/static/download_assets/jquery.counterup.min.js.download"></script>
-<script src="/static/download_assets/steller.js.download"></script>
-<script src="/static/download_assets/wow.min.js.download"></script>
-<script src="/static/download_assets/jquery.magnific-popup.min.js.download"></script>
-<script src="/static/download_assets/waypoints.min.js.download"></script>
-<script src="/static/download_assets/bootstrap.min.js.download"></script>
-<script src="/static/download_assets/main.js.download"></script>
-<script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery-migrate-3.0.0.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery-ui.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/easing.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/colors.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/popper.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/bootstrap-datepicker.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery.nav.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/slicknav.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery.scrollUp.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/niceselect.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/tilt.jquery.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/owl-carousel.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery.counterup.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/steller.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/wow.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/jquery.magnific-popup.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/waypoints.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/bootstrap.min.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}" src="/static/download_assets/main.js.download"></script>
+<script nonce="{{ request.state.csp_nonce }}">
         function toggleContent(id) {
             const content = document.getElementById(id);
             const arrow = document.getElementById(`arrow-${id}`);
@@ -729,7 +730,7 @@
             }
         }
     </script>
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     (function () {
         function adjustSidebar() {
             var headerInner = document.querySelector('.header-inner');

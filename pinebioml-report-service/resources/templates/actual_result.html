@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="/static/css/normalize.css">
     <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
         html {
 			scroll-behavior: smooth;
 			overscroll-behavior-y: none;
@@ -498,7 +498,9 @@
 <div class="row">
 <div class="col-lg-12 col-md-12 col-12">
 <form action="/Statistical_Analysis/download/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
-<!-- <form class="form" action="/Statistical_Analysis/result/{{ uuid }}/" method="POST" enctype="multipart/form-data"></form> -->
+    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+<!-- <form class="form" action="/Statistical_Analysis/result/{{ uuid }}/" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}"></form> -->
 <input name="csrfmiddlewaretoken" type="hidden" value="cr4HyGgAdpa9w5Ez2VEYDeuKhCJM5LrU6s2Jj09m4DnPCJepyFGAK62Jwt8225Ma"/>
 <div class="results-layout">
 <div class="plot-detail-section">
@@ -870,46 +872,46 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 <!-- Footer -->
 <!--/ End Footer Area -->
     <!-- jquery Min JS -->
-    <script src="/static/js/jquery.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.min.js"></script>
     <!-- jquery Migrate JS -->
-    <script src="/static/js/jquery-migrate-3.0.0.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery-migrate-3.0.0.js"></script>
     <!-- jquery Ui JS -->
-    <script src="/static/js/jquery-ui.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery-ui.min.js"></script>
     <!-- Easing JS -->
-    <script src="/static/js/easing.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/easing.js"></script>
     <!-- Color JS -->
-    <script src="/static/js/colors.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/colors.js"></script>
     <!-- Popper JS -->
-    <script src="/static/js/popper.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/popper.min.js"></script>
     <!-- Bootstrap Datepicker JS -->
-    <script src="/static/js/bootstrap-datepicker.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/bootstrap-datepicker.js"></script>
     <!-- Jquery Nav JS -->
-    <script src="/static/js/jquery.nav.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.nav.js"></script>
     <!-- Slicknav JS -->
-    <script src="/static/js/slicknav.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/slicknav.min.js"></script>
     <!-- ScrollUp JS -->
-    <script src="/static/js/jquery.scrollUp.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.scrollUp.min.js"></script>
     <!-- Niceselect JS -->
-    <script src="/static/js/niceselect.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/niceselect.js"></script>
     <!-- Tilt Jquery JS -->
-    <script src="/static/js/tilt.jquery.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/tilt.jquery.min.js"></script>
     <!-- Owl Carousel JS -->
-    <script src="/static/js/owl-carousel.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/owl-carousel.js"></script>
     <!-- counterup JS -->
-    <script src="/static/js/jquery.counterup.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.counterup.min.js"></script>
     <!-- Steller JS -->
-    <script src="/static/js/steller.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/steller.js"></script>
     <!-- Wow JS -->
-    <script src="/static/js/wow.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/wow.min.js"></script>
     <!-- Magnific Popup JS -->
-    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.magnific-popup.min.js"></script>
     <!-- Counter Up CDN JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
     <!-- Bootstrap JS -->
-    <script src="/static/js/bootstrap.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/bootstrap.min.js"></script>
     <!-- Main JS -->
-    <script src="/static/js/main.js"></script>
-<script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/main.js"></script>
+<script nonce="{{ request.state.csp_nonce }}">
         document.addEventListener('DOMContentLoaded', function () {
             const reportId = "{{ uuid }}";
             const aiStatus = document.getElementById('ai-report-status');
@@ -1011,7 +1013,7 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
             pollAIReportStatus();
         });
 </script>
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
         function showLoadingForForm(event) {
             const loading = document.getElementById('loading');
             loading.style.display = 'flex';
@@ -1058,7 +1060,7 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 
 
     </script>
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     (function () {
         function adjustStickyBar() {
             var headerInner = document.querySelector('.header-inner');

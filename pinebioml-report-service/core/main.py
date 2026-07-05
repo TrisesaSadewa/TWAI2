@@ -11,9 +11,10 @@ import uuid
 import secrets
 from pathlib import Path as FilePath
 from datetime import datetime
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Path, Body, Query, Depends, Security, Request
 from fastapi.security import APIKeyHeader
-from fastapi.responses import HTMLResponse, FileResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response, StreamingResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import asyncio
@@ -34,6 +35,15 @@ def verify_metrics_access(api_key: str = Security(api_key_optional_header)):
     return api_key
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+from core.security import (
+    sanitize_report_id, validate_uuid_param, sanitize_filename, 
+    safe_path_join, safe_error_detail, SecurityHeadersMiddleware, CSRFMiddleware
+)
 
 import core.model.schemas as schemas
 from core.config import settings, get_deployment_writer_model
@@ -61,6 +71,35 @@ logger = structlog.get_logger(__name__)
 # Initialize DB Tables
 Base.metadata.create_all(bind=engine)
 
+limiter = Limiter(key_func=get_remote_address)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the background worker loop in a separate thread
+    from core.queue_manager import worker_loop
+    import threading
+    worker_thread = threading.Thread(target=worker_loop, kwargs={"concurrency": 4}, daemon=True)
+    worker_thread.start()
+    logger.info("Started Postgres-backed queue worker thread.")
+
+    # Start the daily storage-cleanup thread
+    def _cleanup_loop():
+        import time as _time
+        from core.cleanup import run_cleanup
+        while True:
+            try:
+                run_cleanup()
+            except Exception as _e:
+                logger.warning(f"Storage cleanup pass failed: {_e}")
+            _time.sleep(86400)  # run once per day
+
+    cleanup_thread = threading.Thread(target=_cleanup_loop, daemon=True)
+    cleanup_thread.start()
+    logger.info("Started storage cleanup thread (dataset_ttl=7d, report_ttl=90d).")
+    
+    yield
+    # Shutdown logic goes here
+
 app = FastAPI(
     title=settings.API_TITLE,
     version=settings.API_VERSION,
@@ -68,7 +107,12 @@ app = FastAPI(
     docs_url="/docs" if settings.ENABLE_API_DOCS else None,
     redoc_url="/redoc" if settings.ENABLE_API_DOCS else None,
     openapi_url="/openapi.json" if settings.ENABLE_API_DOCS else None,
+    lifespan=lifespan
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "templates"))
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")), name="static")
 
@@ -83,6 +127,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFMiddleware)
 
 # Global variables for prometheus counters
 START_TIME = time.time()
@@ -100,28 +146,6 @@ report_engine = ReportEngine()
 from core.queue_manager import enqueue_job, get_job_status, get_job_manifest, worker_loop
 from core.streaming import subscribe as subscribe_stream, unsubscribe as unsubscribe_stream
 import threading
-
-@app.on_event("startup")
-def startup_event():
-    # Start the background worker loop in a separate thread
-    worker_thread = threading.Thread(target=worker_loop, kwargs={"concurrency": 4}, daemon=True)
-    worker_thread.start()
-    logger.info("Started Postgres-backed queue worker thread.")
-
-    # Start the daily storage-cleanup thread (dataset + report/media/export retention).
-    def _cleanup_loop():
-        import time as _time
-        from core.cleanup import run_cleanup
-        while True:
-            try:
-                run_cleanup()
-            except Exception as _e:
-                logger.warning(f"Storage cleanup pass failed: {_e}")
-            _time.sleep(86400)  # run once per day
-
-    cleanup_thread = threading.Thread(target=_cleanup_loop, daemon=True)
-    cleanup_thread.start()
-    logger.info("Started storage cleanup thread (dataset_ttl=7d, report_ttl=90d).")
 
 from fastapi import UploadFile, File, Form
 
@@ -220,7 +244,8 @@ async def _save_validated_upload(file: UploadFile, destination: str) -> int:
     return total
 
 @app.post("/api/upload")
-async def upload_dataset(file: UploadFile = File(...)):
+@limiter.limit("5/minute")
+async def upload_dataset(request: Request, file: UploadFile = File(...), api_key: str = Depends(verify_api_key)):
     """Temporarily store dataset for ML training."""
     ext = _validate_upload_metadata(file)
     dataset_id = f"data_{uuid_hash()}"
@@ -234,9 +259,12 @@ async def upload_dataset(file: UploadFile = File(...)):
     return {"file_id": dataset_id, "filename": file.filename, "path": file_path, "size_bytes": size_bytes}
 
 @app.post("/api/train")
+@limiter.limit("10/minute")
 def train_and_report(
+    request: Request,
     payload: dict = Body(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
 ):
     """Unified endpoint to run PineBioML and then generate report."""
     REPORTS_TRIGGERED.inc()
@@ -265,7 +293,9 @@ def train_and_report(
     }
 
 @app.post("/report/generate", response_model=schemas.ReportStatus, status_code=202)
+@limiter.limit("10/minute")
 def generate_report(
+    request: Request,
     manifest: schemas.JobManifest, 
     db: Session = Depends(get_db),
     api_key: str = Depends(verify_api_key)
@@ -309,12 +339,15 @@ def generate_report(
     }
 
 @app.get("/report/status/{report_id}", response_model=schemas.ReportStatus)
+@limiter.limit("60/minute")
 def get_status(
+    request: Request,
     report_id: str = Path(..., description="The generated report ID"), 
     token: str = Query(None, description="Access token for browser polling"),
     db: Session = Depends(get_db)
 ):
     """Get the current generation status of the report. Allows either X-API-Key or token."""
+    report_id = sanitize_report_id(report_id)
     job_record = db.query(JobRecord).filter(JobRecord.report_id == report_id).first()
     
     if job_record and job_record.access_token:
@@ -378,8 +411,10 @@ def get_status(
     }
 
 @app.get("/report/{report_id}", response_model=schemas.ReportMetadata)
-def get_report_metadata(report_id: str = Path(...), db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def get_report_metadata(request: Request, report_id: str = Path(...), db: Session = Depends(get_db), api_key: str = Depends(verify_api_key)):
     """Retrieve report details and download links."""
+    report_id = sanitize_report_id(report_id)
     report_data = load_report_json(report_id)
     if not report_data:
         raise HTTPException(status_code=404, detail="Report not found or not yet complete")
@@ -403,8 +438,10 @@ def get_report_metadata(report_id: str = Path(...), db: Session = Depends(get_db
     }
 
 @app.get("/report/{report_id}/data")
-def get_raw_data(report_id: str = Path(...)):
+@limiter.limit("30/minute")
+def get_raw_data(request: Request, report_id: str = Path(...), api_key: str = Depends(verify_api_key)):
     """Get the raw quantitative metrics and visual metadata."""
+    report_id = sanitize_report_id(report_id)
     report_data = load_report_json(report_id)
     if not report_data:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -448,8 +485,10 @@ def get_dashboard_result(request: Request, report_id: str):
     })
 
 @app.get("/api/report/{report_id}/manifest")
-def get_manifest(report_id: str):
+@limiter.limit("30/minute")
+def get_manifest(request: Request, report_id: str, api_key: str = Depends(verify_api_key)):
     """Retrieve the ML job manifest."""
+    report_id = sanitize_report_id(report_id)
     manifest = get_job_manifest(report_id)
     if not manifest:
         manifest = load_report_json(report_id)
@@ -458,8 +497,10 @@ def get_manifest(report_id: str):
     return manifest
 
 @app.get("/report/{report_id}/html", response_class=HTMLResponse)
-def get_html_viewer(report_id: str = Path(...), token: str = Query(None), direct: bool = Query(False), db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def get_html_viewer(request: Request, report_id: str = Path(...), token: str = Query(None), direct: bool = Query(False), db: Session = Depends(get_db)):
     """Serve the interactive HTML viewer or the polling page."""
+    report_id = sanitize_report_id(report_id)
     job_record = db.query(JobRecord).filter(JobRecord.report_id == report_id).first()
     if job_record and job_record.access_token and job_record.access_token != token:
         raise HTTPException(status_code=403, detail="Invalid or missing access token")
@@ -497,8 +538,10 @@ def get_html_viewer(report_id: str = Path(...), token: str = Query(None), direct
     raise HTTPException(status_code=404, detail="HTML report not found and not processing")
 
 @app.get("/report/stream/{report_id}")
-async def stream_report(report_id: str = Path(...), token: str = Query(None), db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+async def stream_report(request: Request, report_id: str = Path(...), token: str = Query(None), db: Session = Depends(get_db)):
     """SSE endpoint for streaming the LLM JSON narrative chunks."""
+    report_id = sanitize_report_id(report_id)
     job_record = db.query(JobRecord).filter(JobRecord.report_id == report_id).first()
     if job_record and job_record.access_token and job_record.access_token != token:
         raise HTTPException(status_code=403, detail="Invalid token")
@@ -529,8 +572,10 @@ async def stream_report(report_id: str = Path(...), token: str = Query(None), db
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/report/{report_id}/download/{fmt}")
-def download_export(report_id: str = Path(...), fmt: str = Path(...), token: str = Query(None), db: Session = Depends(get_db)):
+@limiter.limit("15/minute")
+def download_export(request: Request, report_id: str = Path(...), fmt: str = Path(...), token: str = Query(None), db: Session = Depends(get_db)):
     """Download the report as a PDF or DOCX file."""
+    report_id = sanitize_report_id(report_id)
     job_record = db.query(JobRecord).filter(JobRecord.report_id == report_id).first()
     if job_record and job_record.access_token and job_record.access_token != token:
         raise HTTPException(status_code=403, detail="Invalid token")
@@ -550,8 +595,10 @@ def download_export(report_id: str = Path(...), fmt: str = Path(...), token: str
     return FileResponse(export_path, media_type=media_type, filename=filename)
 
 @app.patch("/report/{report_id}/edit", response_model=schemas.EditResponse)
-def edit_report_section(report_id: str = Path(...), edit: schemas.SectionEdit = Body(...)):
+@limiter.limit("15/minute")
+def edit_report_section(request: Request, report_id: str = Path(...), edit: schemas.SectionEdit = Body(...), api_key: str = Depends(verify_api_key)):
     """Allow saving edits directly to sections of the AI narrative."""
+    report_id = sanitize_report_id(report_id)
     report_data = load_report_json(report_id)
     if not report_data:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -594,8 +641,10 @@ def edit_report_section(report_id: str = Path(...), edit: schemas.SectionEdit = 
         raise HTTPException(status_code=500, detail=f"Failed to edit report section: {str(e)}")
 
 @app.post("/report/{report_id}/clone", response_model=schemas.ReportMetadata)
-def clone_report(report_id: str = Path(...), edit: schemas.SectionEdit = Body(None), db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def clone_report(request: Request, report_id: str = Path(...), edit: schemas.SectionEdit = Body(None), db: Session = Depends(get_db), api_key: str = Depends(verify_api_key)):
     """Clone an existing report and optionally apply an edit to the new copy."""
+    report_id = sanitize_report_id(report_id)
     report_data = load_report_json(report_id)
     if not report_data:
         raise HTTPException(status_code=404, detail="Original report not found")
@@ -705,8 +754,15 @@ def redirect_to_upload():
     return RedirectResponse(url="/Statistical_Analysis/upload")
 
 @app.get("/api/artifacts/{report_id}/{filename:path}")
-def get_artifact(report_id: str, filename: str):
-    file_path = os.path.join(settings.MEDIA_ROOT, report_id, "output", filename)
+@limiter.limit("30/minute")
+def get_artifact(request: Request, report_id: str, filename: str, api_key: str = Depends(verify_api_key)):
+    report_id = sanitize_report_id(report_id)
+    filename = sanitize_filename(filename)
+    try:
+        file_path = safe_path_join(os.path.join(settings.MEDIA_ROOT, report_id, "output"), filename)
+    except HTTPException:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+        
     if os.path.exists(file_path):
         from fastapi.responses import FileResponse
         return FileResponse(file_path)
@@ -732,6 +788,7 @@ def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None
     import os
     import shutil
     
+    uuid = validate_uuid_param(uuid)
     dataset_path = os.path.join(app_settings.STORAGE_DIR, "datasets")
     os.makedirs(dataset_path, exist_ok=True)
     
@@ -878,6 +935,7 @@ def load_ml_metrics(uuid: str):
 
 @app.api_route("/Statistical_Analysis/result/{uuid}/", methods=["GET"])
 def ui_actual_result_page(request: Request, uuid: str):
+    uuid = validate_uuid_param(uuid)
     media_base = f"/media/{uuid}/output"
     all_results, all_results_columns, classification_report, regression_report, task_type, imbalance_metadata = load_ml_metrics(uuid)
 
@@ -895,6 +953,7 @@ def ui_actual_result_page(request: Request, uuid: str):
 
 @app.api_route("/Statistical_Analysis/setting/{uuid}/", methods=["GET", "POST"])
 async def ui_setting_page(request: Request, uuid: str):
+    uuid = validate_uuid_param(uuid)
     target_column = ""
     if request.method == "POST":
         form_data = await request.form()
@@ -903,6 +962,7 @@ async def ui_setting_page(request: Request, uuid: str):
 
 @app.api_route("/Statistical_Analysis/result_example/{uuid}/", methods=["GET", "POST"])
 async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_db)):
+    uuid = validate_uuid_param(uuid)
     form_data = await request.form()
     
     missing_methods = form_data.getlist("missing_value_methods")
@@ -963,6 +1023,7 @@ async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_
 
 @app.api_route("/Statistical_Analysis/download/{uuid}/", methods=["GET", "POST"])
 def ui_download_page(request: Request, uuid: str):
+    uuid = validate_uuid_param(uuid)
     all_results, all_results_columns, classification_report, regression_report, task_type, _imbalance = load_ml_metrics(uuid)
     return templates.TemplateResponse(name="download.html", request=request, context={
         "request": request,
@@ -976,6 +1037,7 @@ def ui_download_page(request: Request, uuid: str):
 
 @app.api_route("/Statistical_Analysis/download/download_selected_files/{uuid}/", methods=["POST"])
 def ui_download_zip(request: Request, uuid: str):
+    uuid = validate_uuid_param(uuid)
     from fastapi.responses import FileResponse
     from core.config import settings as app_settings
     import os, zipfile

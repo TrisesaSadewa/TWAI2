@@ -45,7 +45,7 @@
     <link rel="stylesheet" href="/static/css/normalize.css">
     <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         html {
             overscroll-behavior-y: none;
         }
@@ -397,7 +397,8 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-12">
                             <form class="form" action="/Statistical_Analysis/result_example/{{ uuid }}/" method="POST"
-                                enctype="multipart/form-data"><!-- onsubmit="return validateCheckboxSelection();" -->
+                                enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}"><!-- onsubmit="return validateCheckboxSelection();" -->
 
                                 <input type="hidden" name="csrfmiddlewaretoken"
                                     value="h8y7q3d7LIEXmEGWMMABa0LT3co7keVnb9w9bn6TCWRDsigMiwCdhSjSi3NnhygD">
@@ -920,7 +921,7 @@
                                     </tr>
                                 </table>
 
-                                <script>
+                                <script nonce="{{ request.state.csp_nonce }}">
                                     function toggleIterativeSize() {
                                         var select = document.getElementById('tuning-strategy-select');
                                         var nIterContainer = document.getElementById('tuning-n-iter-container');
@@ -1040,47 +1041,47 @@
     <!--/ End Footer Area -->
 
     <!-- jquery Min JS -->
-    <script src="/static/js/jquery.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.min.js"></script>
     <!-- jquery Migrate JS -->
-    <script src="/static/js/jquery-migrate-3.0.0.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery-migrate-3.0.0.js"></script>
     <!-- jquery Ui JS -->
-    <script src="/static/js/jquery-ui.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery-ui.min.js"></script>
     <!-- Easing JS -->
-    <script src="/static/js/easing.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/easing.js"></script>
     <!-- Color JS -->
-    <script src="/static/js/colors.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/colors.js"></script>
     <!-- Popper JS -->
-    <script src="/static/js/popper.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/popper.min.js"></script>
     <!-- Bootstrap Datepicker JS -->
-    <script src="/static/js/bootstrap-datepicker.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/bootstrap-datepicker.js"></script>
     <!-- Jquery Nav JS -->
-    <script src="/static/js/jquery.nav.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.nav.js"></script>
     <!-- Slicknav JS -->
-    <script src="/static/js/slicknav.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/slicknav.min.js"></script>
     <!-- ScrollUp JS -->
-    <script src="/static/js/jquery.scrollUp.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.scrollUp.min.js"></script>
     <!-- Niceselect JS -->
-    <script src="/static/js/niceselect.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/niceselect.js"></script>
     <!-- Tilt Jquery JS -->
-    <script src="/static/js/tilt.jquery.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/tilt.jquery.min.js"></script>
     <!-- Owl Carousel JS -->
-    <script src="/static/js/owl-carousel.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/owl-carousel.js"></script>
     <!-- counterup JS -->
-    <script src="/static/js/jquery.counterup.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.counterup.min.js"></script>
     <!-- Steller JS -->
-    <script src="/static/js/steller.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/steller.js"></script>
     <!-- Wow JS -->
-    <script src="/static/js/wow.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/wow.min.js"></script>
     <!-- Magnific Popup JS -->
-    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/jquery.magnific-popup.min.js"></script>
     <!-- Counter Up CDN JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.3/waypoints.min.js"></script>
     <!-- Bootstrap JS -->
-    <script src="/static/js/bootstrap.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/bootstrap.min.js"></script>
     <!-- Main JS -->
-    <script src="/static/js/main.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/static/js/main.js"></script>
 
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         // 1. 更新滑桿數值的函式 (需設為全域，讓 HTML 中的 oninput 可以呼叫)
         function updateSliderValue(slider) {
             const valueDisplay = document.getElementById('train_size_value');
@@ -1220,7 +1221,7 @@
         });
     </script>
 
-    <!-- <script>
+    <!-- <script nonce="{{ request.state.csp_nonce }}">
     // 更新滑桿數值
     function updateSliderValue(slider) {
         const value = slider.value;
@@ -1374,7 +1375,7 @@
     });
 </script>
 
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
 document.addEventListener("DOMContentLoaded", function() {
     // 選取 Start 按鈕與整個表單
     const startBtn = document.getElementById("start-btn");
@@ -1415,7 +1416,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script> -->
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         (function () {
             function adjustSidebar() {
                 var headerInner = document.querySelector('.header-inner');

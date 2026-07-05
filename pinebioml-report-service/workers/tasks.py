@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.report.report_engine import ReportEngine
 import structlog
 from core.queue_manager import update_job_state
+from core.security import safe_error_detail
 
 logger = structlog.get_logger(__name__)
 
@@ -159,7 +160,7 @@ def train_and_generate_report_task_sync(payload: dict):
 
         return {'status': 'SUCCESS', 'report_id': report_id}
     except Exception as e:
-        logger.error(f"Pipeline failed: {e}")
-        update_job_state(report_id, "FAILED", 100, f"Pipeline failed: {str(e)}")
+        msg = safe_error_detail("Pipeline failed", e)
+        update_job_state(report_id, "FAILED", 100, msg)
         _delete_dataset(actual_file)
         return {'status': 'FAILED'}

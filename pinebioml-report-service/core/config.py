@@ -229,6 +229,7 @@ class Settings(BaseSettings):
     CALLBACK_API_KEY: Optional[str] = None
     SERVICE_API_KEY: str
     ALLOWED_ORIGINS: str = "https://pinebioml.ncu.edu.tw"
+    POSTGRES_PASSWORD: Optional[str] = None
 
     class Config:
         env_file = ".env"
