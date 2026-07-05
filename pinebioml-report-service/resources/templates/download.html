@@ -93,18 +93,21 @@
         }
         .image-text-container {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .responsive-image {
-            height: 200px;
-            width: auto;
+            height: auto;
+            width: 100%;
+            max-width: 900px;
             object-fit: contain;
         }
 
         .image-description {
-            flex: 1;
+            order: -1;
+            font-size: 1.05em;
+            margin-bottom: 10px;
         }
 
 

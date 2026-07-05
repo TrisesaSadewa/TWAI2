@@ -104,25 +104,28 @@
 
         .image-text-container {
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .responsive-image {
             height: auto;
-            width: 50%;
+            width: 100%;
+            max-width: 900px;
             object-fit: contain;
         }
 
         .responsive-frame {
-            width: 60%;
-            min-height: 520px;
+            width: 100%;
             border: 1px solid #ccc;
             border-radius: 8px;
+            transition: height 0.3s;
         }
 
         .image-description {
-            flex: 1;
+            order: -1; /* Move text above the plot */
+            font-size: 1.05em;
+            margin-bottom: 10px;
         }
 
         .plot-carousel {
@@ -461,12 +464,12 @@
 <div class="plot-carousel-card">
 <h5>PCA</h5>
 <img alt="PCA" src="{{ media_base }}/_PCA.png"/>
-<a class="btn no-preloader" href="{{ media_base }}/_PCA.png" target="_blank">View Details</a>
+<a class="btn no-preloader" href="{{ media_base }}/pca_plot.html" target="_blank">View Details</a>
 </div>
 <div class="plot-carousel-card">
 <h5>PLS</h5>
 <img alt="PLS" src="{{ media_base }}/_PLS.png"/>
-<a class="btn no-preloader" href="{{ media_base }}/_PLS.png" target="_blank">View Details</a>
+<a class="btn no-preloader" href="{{ media_base }}/pls_plot.html" target="_blank">View Details</a>
 </div>
 {% if task_type == 'classification' %}
 <div class="plot-carousel-card">
@@ -478,17 +481,8 @@
 <div class="plot-carousel-card">
 <h5>UMAP</h5>
 <img alt="UMAP" src="{{ media_base }}/_UMAP.png"/>
-<a class="btn no-preloader" href="{{ media_base }}/_UMAP.png" target="_blank">View Details</a>
+<a class="btn no-preloader" href="{{ media_base }}/umap_plot.html" target="_blank">View Details</a>
 </div>
-<div class="plot-carousel-card">
-<h5>Feature Importance</h5>
-<iframe frameborder="0" src="{{ media_base }}/feature_importance.html"></iframe>
-<a class="btn no-preloader" href="{{ media_base }}/feature_importance.html" target="_blank">View Details</a>
-</div>
-<div class="plot-carousel-card">
-<h5>SHAP Plot</h5>
-<iframe frameborder="0" src="{{ media_base }}/shap_plot.html"></iframe>
-<a class="btn no-preloader" href="{{ media_base }}/shap_plot.html" target="_blank">View Details</a>
 </div>
 </div>
 </section>
@@ -510,9 +504,9 @@
 <div style="margin-bottom: 20px; margin-top: 20px;">
 <br/><h5 style="margin-bottom: 10px;">Feature Importance</h5>
 <div class="image-text-container">
-<iframe class="responsive-frame" frameborder="0" src="{{ media_base }}/feature_importance.html">
+<iframe class="responsive-frame" style="min-height: 600px;" onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" frameborder="0" src="{{ media_base }}/feature_importance.html">
 </iframe>
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 Feature importance ranks the variables that contributed most strongly to the model predictions.
 Higher-ranked features usually had a larger impact on the selected model, so this plot helps identify which biological or clinical measurements were most influential.
 </div>
@@ -525,9 +519,9 @@ Higher-ranked features usually had a larger impact on the selected model, so thi
 <div style="margin-bottom: 20px; margin-top: 20px;">
 <br/><h5 style="margin-bottom: 10px;">SHAP Plot</h5>
 <div class="image-text-container">
-<iframe class="responsive-frame" frameborder="0" src="{{ media_base }}/shap_plot.html">
+<iframe class="responsive-frame" style="min-height: 600px;" onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" frameborder="0" src="{{ media_base }}/shap_plot.html">
 </iframe>
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 The SHAP plot explains how individual features push predictions higher or lower for each sample.
 Features near the top are typically the most influential, while the spread of points shows how consistently each feature affects the model output across the dataset.
 </div>
@@ -547,7 +541,7 @@ Features near the top are typically the most influential, while the spread of po
 <!-- 圖片部分 -->
 <img alt="Image" class="responsive-image" src="{{ media_base }}/_Confusion Matrix.png"/>
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
                                                                 
 ● A higher number of true positive and true negative results is better.
 ● <strong>True positive result:</strong> the actual classification is positive and the predicted classification is positive.<br/>
@@ -565,7 +559,7 @@ Features near the top are typically the most influential, while the spread of po
 <!-- 圖片部分 -->
 <img alt="Image" class="responsive-image" src="{{ media_base }}/_ROC Curve.png"/>
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
                                                                 
 A ROC curve that is closer to the upper-left corner and has a larger area under the curve (AUC) indicates better model performance.
 
@@ -578,7 +572,7 @@ A ROC curve that is closer to the upper-left corner and has a larger area under 
 <h5 style="margin-bottom: 10px;">True vs Predicted</h5>
 <div class="image-text-container">
 <img alt="Image" class="responsive-image" src="{{ media_base }}/_True vs Predicted.png"/>
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 A scatter plot showing actual values vs predicted values. Points closer to the diagonal line indicate better model predictions.
 </div>
 </div>
@@ -588,7 +582,7 @@ A scatter plot showing actual values vs predicted values. Points closer to the d
 <h5 style="margin-bottom: 10px;">Residuals</h5>
 <div class="image-text-container">
 <img alt="Image" class="responsive-image" src="{{ media_base }}/_Residuals.png"/>
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 A plot of residuals (errors) vs predicted values. Ideally, residuals should be randomly scattered around zero.
 </div>
 </div>
@@ -765,11 +759,11 @@ This file contains detailed performance metrics for all models.<br/>
 <!-- 圖片部分 -->
 <img alt="Image" class="responsive-image" src="{{ media_base }}/_Correlation Heatmap.png"/>
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 <p>
 The correlation heatmap visualizes correlation coefficients, which measure the linear relationship between two variables. The range of correlation coefficients is from -1 to 1:<br/>
-● <strong>Closer to 1:</strong> Indicates a strong positive correlation.
-● <strong>Closer to 0:</strong> Indicates no linear relationship.
+● <strong>Closer to 1:</strong> Indicates a strong positive correlation.<br/>
+● <strong>Closer to 0:</strong> Indicates no linear relationship.<br/>
 ● <strong>Closer to -1:</strong> Indicates a strong negative correlation.
 </p>
 </div>
@@ -782,33 +776,33 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 <br/>
 <div id="/media/{{ uuid }}/output/ PCA.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
 <div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">PCA</h5>
+<h5 style="margin-bottom: 1px;">PCA</h5>
 <div class="image-text-container">
 <!-- 圖片部分已移除以使用下方互動圖表 -->
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 <p>
-● pc_1, pc_2, pc_3, pc_4 represent different principal components.
-● The diagonal plots show the distribution of data for individual components.
+● pc_1, pc_2, pc_3, pc_4 represent different principal components.<br/>
+● The diagonal plots show the distribution of data for individual components.<br/>
 ● Scatter plots display the relationships between two components (e.g., the top-left plot shows the relationship between pc_1 and pc_2).<br/>
-● More concentrated distributions indicate components with lower variance.
+● More concentrated distributions indicate components with lower variance.<br/>
 ● More dispersed distributions indicate components capturing higher variance.
 </p>
 </div>
 </div>
 </div>
-<iframe height="600" src="{{ media_base }}/pca_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/pca_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
 <a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pca_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
                                                                     View in full screen
                                                                 </a><br/>
 <br/>
 <div id="/media/{{ uuid }}/output/ PLS.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
 <div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">PLS</h5>
+<h5 style="margin-bottom: 1px;">PLS</h5>
 <div class="image-text-container">
 <!-- 圖片部分已移除以使用下方互動圖表 -->
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 <p>
 ● PLS component 1 and PLS component 2 are the primary components derived from PLS (Partial Least Squares) analysis.<br/>
 ● PLS component 1 captures the most critical variance for classification, while PLS component 2 provides supplementary information to enhance classification.
@@ -816,18 +810,18 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 </div>
 </div>
 </div>
-<iframe height="600" src="{{ media_base }}/pls_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/pls_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
 <a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pls_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
                                                                     View in full screen
                                                                 </a><br/>
 <br/>
 <div id="/media/{{ uuid }}/output/ UMAP.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
 <div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">UMAP</h5>
+<h5 style="margin-bottom: 1px;">UMAP</h5>
 <div class="image-text-container">
 <!-- 圖片部分已移除以使用下方互動圖表 -->
 <!-- 描述文字部分 -->
-<div class="image-description" style="white-space: pre-wrap;">
+<div class="image-description">
 <p>
 ● If the colored clusters are distinct and well-separated (e.g., forming clearly defined blocks), it indicates that UMAP has successfully preserved the high-dimensional clustering structure in the lower-dimensional space.<br/>
 ● UMAP prioritizes preserving local proximity in the data. Points that are close in the plot are likely to share similar features in the high-dimensional space.<br/>
@@ -836,7 +830,7 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
 </div>
 </div>
 </div>
-<iframe height="600" src="{{ media_base }}/umap_plot.html" style="border:1px solid #ccc; border-radius: 8px;" width="100%"></iframe>
+<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/umap_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
 <a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/umap_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
                                                                     View in full screen
                                                                 </a><br/>

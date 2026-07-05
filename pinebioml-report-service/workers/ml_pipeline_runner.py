@@ -196,7 +196,7 @@ def run_dynamic_pipeline(
         fig.savefig(os.path.join(output_dir, "_PCA.png"), bbox_inches='tight', dpi=160)
         plt.close(fig)
         
-        fig_pca = px.scatter(x=pcs[:,0], y=pcs[:,1], color=train_y_orig.astype(str), title="PCA Plot")
+        fig_pca = px.scatter(x=pcs[:,0], y=pcs[:,1], color=train_y_orig.astype(str), title="PCA Plot", height=600)
         fig_pca.write_html(os.path.join(output_dir, "pca_plot.html"))
         
         # UMAP
@@ -217,7 +217,7 @@ def run_dynamic_pipeline(
         fig.savefig(os.path.join(output_dir, "_UMAP.png"), bbox_inches='tight', dpi=160)
         plt.close(fig)
         
-        fig_umap = px.scatter(x=umap_emb[:,0], y=umap_emb[:,1], color=train_y_orig.astype(str), title="UMAP Plot")
+        fig_umap = px.scatter(x=umap_emb[:,0], y=umap_emb[:,1], color=train_y_orig.astype(str), title="UMAP Plot", height=600)
         fig_umap.write_html(os.path.join(output_dir, "umap_plot.html"))
         
         # PLS
@@ -239,7 +239,7 @@ def run_dynamic_pipeline(
         fig.savefig(os.path.join(output_dir, "_PLS.png"), bbox_inches='tight', dpi=160)
         plt.close(fig)
         
-        fig_pls = px.scatter(x=pls_emb[:,0], y=pls_emb[:,1], color=train_y_orig.astype(str), title="PLS Plot")
+        fig_pls = px.scatter(x=pls_emb[:,0], y=pls_emb[:,1], color=train_y_orig.astype(str), title="PLS Plot", height=600)
         fig_pls.write_html(os.path.join(output_dir, "pls_plot.html"))
         
     except Exception as e:
@@ -980,7 +980,77 @@ def run_dynamic_pipeline(
                 import io, base64, copy
                 import matplotlib.pyplot as plt
 
-                def _write_shap_html(fig, note: str = ""):
+                def _write_shap_html(vals, sample_x, note: str = ""):
+                    try:
+                        import plotly.express as px
+                        
+                        mean_abs_shap = np.mean(np.abs(vals), axis=0)
+                        sorted_idx = np.argsort(mean_abs_shap)
+                        
+                        data = []
+                        for i in sorted_idx:
+                            fname = sample_x.columns[i]
+                            f_vals = sample_x.iloc[:, i]
+                            s_vals = vals[:, i]
+                            f_min, f_max = np.min(f_vals), np.max(f_vals)
+                            if f_max > f_min:
+                                f_norm = (f_vals - f_min) / (f_max - f_min)
+                            else:
+                                f_norm = np.zeros_like(f_vals)
+                                
+                            for j in range(len(s_vals)):
+                                data.append({
+                                    "Feature": fname,
+                                    "SHAP Value": float(s_vals[j]),
+                                    "Feature Value (Norm)": float(f_norm.iloc[j] if hasattr(f_norm, 'iloc') else f_norm[j]),
+                                    "Original Value": float(f_vals.iloc[j] if hasattr(f_vals, 'iloc') else f_vals[j])
+                                })
+                        df_plot = pd.DataFrame(data)
+                        
+                        # Use normal distribution for jitter to create a violin-like shape
+                        df_plot['Feature_Y'] = pd.Categorical(df_plot['Feature'], categories=sample_x.columns[sorted_idx]).codes
+                        df_plot['Jittered_Y'] = df_plot['Feature_Y'] + np.random.normal(0, 0.08, len(df_plot))
+                        
+                        # SHAP style custom colorscale
+                        shap_colors = [(0.0, '#008bfb'), (1.0, '#ff0052')]
+                        
+                        fig = px.scatter(df_plot, x='SHAP Value', y='Jittered_Y', color='Feature Value (Norm)', 
+                                       hover_data={'Original Value': True, 'Feature Value (Norm)': False, 'Jittered_Y': False, 'Feature': True},
+                                       color_continuous_scale=shap_colors)
+                        
+                        fig.update_traces(marker=dict(size=4, opacity=0.7, line=dict(width=0)))
+                        fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="rgba(0,0,0,0.3)")
+                        
+                        fig.update_layout(
+                            template="plotly_white",
+                            title='SHAP Summary Plot',
+                            height=max(600, 30 * len(sorted_idx)),
+                            coloraxis_colorbar=dict(
+                                title="Feature Value",
+                                tickvals=[0, 1],
+                                ticktext=["Low", "High"],
+                                ticks="outside"
+                            ),
+                            yaxis=dict(
+                                tickmode='array',
+                                tickvals=list(range(len(sorted_idx))),
+                                ticktext=sample_x.columns[sorted_idx],
+                                title="Feature"
+                            )
+                        )
+                        html = fig.to_html(full_html=True, include_plotlyjs='cdn')
+                        
+                        if note:
+                            html = html.replace('<body>', f'<body><div style="max-width:900px;margin:10px auto;text-align:center;color:#555;">{note}</div>')
+                        
+                        with open(os.path.join(output_dir, "shap_plot.html"), "w", encoding="utf-8") as f:
+                            f.write(html)
+                    except Exception as e:
+                        logger.warning(f"Plotly SHAP failed: {e}. Falling back to Matplotlib.")
+                        _write_feature_contribution_fallback("Plotly generation failed")
+
+                def _write_shap_png_html(fig, note: str = ""):
+                    import io, base64
                     buf = io.BytesIO()
                     fig.savefig(buf, format="png", bbox_inches='tight', dpi=160)
                     buf.seek(0)
@@ -991,32 +1061,10 @@ def run_dynamic_pipeline(
 <head>
 <meta charset="utf-8">
 <style>
-html, body {{
-    margin: 0;
-    padding: 0;
-    background: #fff;
-    font-family: Arial, sans-serif;
-}}
-.wrap {{
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    text-align: center;
-}}
-img {{
-    display: block;
-    width: 100%;
-    max-width: 1100px;
-    height: auto;
-    margin: 0 auto;
-}}
-.note {{
-    max-width: 900px;
-    margin: 10px auto 0;
-    color: #555;
-    font-size: 13px;
-    line-height: 1.45;
-}}
+html, body {{ margin: 0; padding: 0; background: #fff; font-family: Arial, sans-serif; }}
+.wrap {{ width: 100%; box-sizing: border-box; padding: 12px; text-align: center; }}
+img {{ display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 auto; }}
+.note {{ max-width: 900px; margin: 10px auto 0; color: #555; font-size: 13px; line-height: 1.45; }}
 </style>
 </head>
 <body>
@@ -1071,7 +1119,7 @@ img {{
                     ax.set_xlabel("Relative contribution")
                     ax.grid(axis="x", linestyle="--", alpha=0.25)
                     fig.tight_layout()
-                    _write_shap_html(
+                    _write_shap_png_html(
                         fig,
                         "SHAP values were not visually informative for this run, so this fallback ranks features by model importance or prediction sensitivity."
                     )
@@ -1107,23 +1155,24 @@ img {{
                 shap_kernel = copy.deepcopy(best_wrapper)
                 shap_kernel.fit(processed_x, train_y)
 
-                # Sample in the transformed space; SHAP perturbs these columns directly.
-                # Keep this bounded because Kernel/Permutation SHAP can become slow
-                # during the interactive training flow.
-                sample_x = processed_x.sample(min(40, len(processed_x)), random_state=42)
+                # Sample in the ORIGINAL space; SHAP perturbs original features,
+                # which then pass through the preprocessing chain to the kernel.
+                sample_x = numeric_x.sample(min(40, len(numeric_x)), random_state=42)
 
-                # Use is_regression() rather than hasattr(predict_proba): the wrapper
-                # always defines predict_proba (it raises NotImplementedError for
-                # regression kernels), so hasattr would mis-route regressors.
+                def _transform_for_shap(x_arr):
+                    xdf = pd.DataFrame(x_arr, columns=sample_x.columns)
+                    curr_x = xdf
+                    for t in fitted_transformers:
+                        curr_x = t.transform(curr_x)
+                    return curr_x
+
                 if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression():
                     def _predict(x_arr):
-                        xdf = pd.DataFrame(x_arr, columns=sample_x.columns)
-                        return np.asarray(shap_kernel.predict(xdf)).ravel()
+                        return np.asarray(shap_kernel.predict(_transform_for_shap(x_arr))).ravel()
                     explainer = shap.Explainer(_predict, sample_x)
                 else:
                     def _proba1(x_arr):
-                        xdf = pd.DataFrame(x_arr, columns=sample_x.columns)
-                        return np.asarray(shap_kernel.predict_proba(xdf))[:, 1]
+                        return np.asarray(shap_kernel.predict_proba(_transform_for_shap(x_arr)))[:, 1]
                     explainer = shap.Explainer(_proba1, sample_x)
 
                 shap_values = explainer(sample_x)
@@ -1152,9 +1201,22 @@ img {{
                     plt.close("all")
                     n_features = len(sample_x.columns)
                     fig_height = max(4.5, 0.35 * n_features + 1.5)
-                    fig = plt.figure(figsize=(10, fig_height))
+                    fig = plt.figure(figsize=(14, fig_height))
                     shap.summary_plot(vals, sample_x, show=False, max_display=n_features)
-                    _write_shap_html(plt.gcf())
+                    plt.tight_layout()
+                    plt.subplots_adjust(left=0.35)
+                    
+                    try:
+                        png_path = os.path.join(output_dir, "shap_plot.png")
+                        fig.savefig(png_path, format="png", bbox_inches='tight', dpi=160)
+                    except Exception as e:
+                        logger.warning(f"Error saving SHAP PNG: {e}")
+                        
+                    try:
+                        # Write the interactive Plotly HTML
+                        _write_shap_html(vals, sample_x, note="")
+                    except Exception as e:
+                        logger.warning(f"Error generating Plotly SHAP plot: {e}")
                         
             except Exception as e:
                 logger.warning(f"Error generating SHAP plot: {e}")

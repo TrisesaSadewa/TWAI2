@@ -781,13 +781,21 @@ def ui_upload_page(request: Request):
 
 @app.api_route("/Statistical_Analysis/upload/check/{uuid}/", methods=["GET", "POST"])
 @app.api_route("/Statistical_Analysis/upload/check_test/{uuid}/", methods=["GET", "POST"])
-def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None), dataset: str = Form(None)):
+async def ui_check_page(request: Request, uuid: str):
     from core.config import settings as app_settings
     import pandas as pd
     import glob
     import os
     import shutil
     
+    form_data = await request.form()
+    from core.security import validate_csrf_from_form
+    if request.method == "POST":
+        validate_csrf_from_form(request, form_data)
+        
+    data_file = form_data.get("data_file")
+    dataset = form_data.get("dataset")
+        
     uuid = validate_uuid_param(uuid)
     dataset_path = os.path.join(app_settings.STORAGE_DIR, "datasets")
     os.makedirs(dataset_path, exist_ok=True)
@@ -802,13 +810,15 @@ def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None
                     pass
 
     # Handle direct file upload
-    if data_file and data_file.filename:
-        safe_filename = f"{uuid}_{data_file.filename}"
+    if data_file and getattr(data_file, 'filename', None):
+        from core.security import sanitize_filename
+        await data_file.seek(0)
+        clean_filename = sanitize_filename(data_file.filename)
+        safe_filename = f"{uuid}_{clean_filename}"
         file_path = os.path.join(dataset_path, safe_filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(data_file.file, buffer)
-            
-    # Handle test dataset selection
+        with open("debug_log.txt", "a") as f: f.write(f"Copied uploaded file to {file_path}\n")
     elif dataset:
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         static_examples = os.path.join(base_dir, "static", "examples")
@@ -828,9 +838,12 @@ def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None
             source_file = os.path.join(static_examples, "diabetes_disease_progression.xlsx")
             target_name = f"{uuid}_diabetes_disease_progression.xlsx"
             
+        with open("debug_log.txt", "a") as f: f.write(f"source_file={source_file}, exists={os.path.exists(source_file) if source_file else False}\n")
+        
         if source_file and os.path.exists(source_file):
             file_path = os.path.join(dataset_path, target_name)
             shutil.copy(source_file, file_path)
+            with open("debug_log.txt", "a") as f: f.write(f"Copied {source_file} to {file_path}\n")
     
     actual_file = None
     original_filename = "Unknown Dataset"
@@ -840,12 +853,14 @@ def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None
     if os.path.exists(dataset_path):
         # Find the latest file starting with the uuid
         matching_files = [f for f in os.listdir(dataset_path) if f.startswith(uuid)]
+        print(f"DEBUG: matching_files for uuid {uuid} = {matching_files}")
         if matching_files:
             # Sort by modification time descending
             matching_files.sort(key=lambda x: os.path.getmtime(os.path.join(dataset_path, x)), reverse=True)
             f = matching_files[0]
             actual_file = os.path.join(dataset_path, f)
             original_filename = f[len(uuid)+1:] # remove uuid_
+            print(f"DEBUG: actual_file selected = {actual_file}")
                 
     if actual_file:
         try:
@@ -860,6 +875,9 @@ def ui_check_page(request: Request, uuid: str, data_file: UploadFile = File(None
             columns = df.columns.tolist()
             rows = df.values.tolist()
         except Exception as e:
+            print(f"ERROR reading file {actual_file}: {e}")
+            import traceback
+            traceback.print_exc()
             pass
 
     return templates.TemplateResponse(
@@ -955,8 +973,10 @@ def ui_actual_result_page(request: Request, uuid: str):
 async def ui_setting_page(request: Request, uuid: str):
     uuid = validate_uuid_param(uuid)
     target_column = ""
+    form_data = await request.form()
+    from core.security import validate_csrf_from_form
     if request.method == "POST":
-        form_data = await request.form()
+        validate_csrf_from_form(request, form_data)
         target_column = form_data.get("target_column", "")
     return templates.TemplateResponse(name="setting.html", request=request, context={"request": request, "uuid": uuid, "target_column": target_column})
 
@@ -964,7 +984,10 @@ async def ui_setting_page(request: Request, uuid: str):
 async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_db)):
     uuid = validate_uuid_param(uuid)
     form_data = await request.form()
-    
+    from core.security import validate_csrf_from_form
+    if request.method == "POST":
+        validate_csrf_from_form(request, form_data)
+        
     missing_methods = form_data.getlist("missing_value_methods")
     norm_methods = form_data.getlist("normalization_methods")
     feature_methods = form_data.getlist("feature_selection_methods")

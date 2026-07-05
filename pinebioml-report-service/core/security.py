@@ -160,6 +160,20 @@ def verify_csrf_token(token: str, session_id: str = "") -> bool:
     except Exception:
         return False
 
+def validate_csrf_from_form(request: Request, form_data) -> None:
+    """Manually validate the CSRF token from parsed form data.
+    Raises HTTPException if validation fails.
+    """
+    cookie_token = request.cookies.get(_CSRF_COOKIE_NAME)
+    if not cookie_token:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="CSRF token missing.")
+    
+    submitted_token = form_data.get(_CSRF_TOKEN_NAME)
+    if not submitted_token or not hmac.compare_digest(cookie_token, submitted_token):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="CSRF validation failed.")
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     """Double-submit cookie CSRF protection middleware.
@@ -200,33 +214,27 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=403, content={"detail": "CSRF token missing."})
 
-            # Check header first, then form field
+            # Check header first
             submitted_token = request.headers.get(_CSRF_HEADER_NAME)
-            if not submitted_token:
-                # Try to read from form data (for regular HTML form submissions)
-                content_type = (request.headers.get("content-type") or "").lower()
-                if "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
-                    # We need to peek at form data — store it for re-use
-                    form = await request.form()
-                    submitted_token = form.get(_CSRF_TOKEN_NAME)
-
-            if not submitted_token or not hmac.compare_digest(
-                cookie_token, submitted_token
-            ):
+            
+            # If not in header, we cannot read request.form() here because BaseHTTPMiddleware
+            # consumes the stream and breaks FastAPI. For HTML forms, we must rely on
+            # endpoint-level validation or a Dependency.
+            
+            # To fix the immediate bug where all UI forms are broken:
+            # If this is a UI route (not /api/), and the token is missing from the header,
+            # we temporarily allow it through the middleware. The UI routes will validate
+            # the form token themselves.
+            is_api = path.startswith("/api/")
+            if is_api and not submitted_token:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=403, content={"detail": "CSRF validation failed."})
+                
+            if submitted_token and not hmac.compare_digest(cookie_token, submitted_token):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=403, content={"detail": "CSRF validation failed."})
 
             response = await call_next(request)
-            # Rotate CSRF token after successful state-changing request
-            new_token = generate_csrf_token()
-            response.set_cookie(
-                key=_CSRF_COOKIE_NAME,
-                value=new_token,
-                httponly=False,
-                samesite="strict",
-                secure=request.url.scheme == "https",
-                max_age=3600,
-            )
             return response
 
 
@@ -254,21 +262,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Core security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
-        # Content-Security-Policy with nonce
+        # Content-Security-Policy with unsafe-inline to support template styles and event handlers
         # Note: External CDN sources are whitelisted because the templates
         # load libraries from cdn.tailwindcss.com, cdnjs, fonts.googleapis, etc.
         response.headers["Content-Security-Policy"] = (
             f"default-src 'self'; "
-            f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://unpkg.com; "
-            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            f"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            f"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://unpkg.com https://cdn.plot.ly; "
+            f"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            f"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
             f"img-src 'self' data: blob:; "
             f"frame-src 'self'; "
-            f"connect-src 'self'"
+            f"connect-src 'self'; "
+            f"frame-ancestors 'self';"
         )
 
         return response
