@@ -1804,7 +1804,13 @@
                 const media = container.querySelector('.plot-img');
                 if (media) {
                     const key = media.getAttribute('alt') || media.getAttribute('title') || '';
-                    const src = media.getAttribute('src') || '';
+                    let src = media.getAttribute('src') || '';
+                    
+                    // Rewrite legacy /api/artifacts/ paths to use the public /media/ mount to avoid 401s
+                    if (src.includes('/api/artifacts/')) {
+                        src = src.replace('/api/artifacts/', '/media/').replace(reportId + '/', reportId + '/output/');
+                    }
+                    
                     if (key && src) {
                         const cleanKey = key.toLowerCase().replace(/_png/g, '').replace(/_html/g, '').replace(/_/g, '').replace(/\.png/g, '').replace(/\.html/g, '').trim();
                         visualPlots[cleanKey] = src;

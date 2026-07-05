@@ -247,48 +247,7 @@ class NarrativeGenerator:
                 "  - If discussing class balance, use only PER-CLASS PERFORMANCE support counts when available; otherwise say that class-distribution metadata were not available."
             )
 
-        # Add hyperparameter tuning results for reproducibility
-        if all_models:
-            params_key = None
-            model_key = None
-            for k in (list(all_models[0].keys()) if all_models else []):
-                kl = k.lower()
-                if kl in ('best_params', 'params', 'hyperparameters'):
-                    params_key = k
-                if kl in ('model', 'classifier', 'model_name', 'algorithm'):
-                    model_key = k
-            if not model_key and all_models:
-                # Fallback: first string-valued key
-                model_key = next((k for k in all_models[0].keys() if isinstance(all_models[0].get(k), str)), None)
-            if params_key and model_key:
-                hp_lines = []
-                for m in all_models:
-                    model_name = m.get(model_key, 'Unknown')
-                    raw_params = m.get(params_key)
-                    if not raw_params:
-                        continue
-                    # Parse params — could be a dict or a string representation
-                    if isinstance(raw_params, dict):
-                        # Strip pipeline prefixes like clf__ and selector__
-                        cleaned = {k.replace('clf__', '').replace('selector__', ''): v for k, v in raw_params.items()}
-                        params_str = ", ".join(f"{k}={v}" for k, v in cleaned.items())
-                    elif isinstance(raw_params, str):
-                        # Strip pipeline prefixes from string representation
-                        params_str = raw_params.replace("clf__", "").replace("selector__", "")
-                        # Remove surrounding braces for cleaner display
-                        if params_str.startswith('{') and params_str.endswith('}'):
-                            params_str = params_str[1:-1].strip()
-                    else:
-                        params_str = str(raw_params)
-                    hp_lines.append(f"  - {model_name}: {params_str}")
-                if hp_lines:
-                    sections.append(
-                        "HYPERPARAMETER TUNING RESULTS (per model):\n"
-                        "These are the best hyperparameters found during tuning for each model. "
-                        "Include them in the report so users can replicate the experiment.\n"
-                        + "\n".join(hp_lines)
-                    )
-
+        # Hyperparameter tuning results have been removed per user request (unsupported tables)
         return "\n\n".join(sections)
 
     def _build_visual_descriptions(self, metrics, shap_features, visuals_summary, task_type: str = "") -> dict:
@@ -422,7 +381,7 @@ RULES:
 1. Use ONLY the metric values from the DATA section. Do not invent numbers.
 2. The expert findings MUST reference specific values (e.g., "Precision of 77.31%").
 3. If per-class data is provided, include a per-class breakdown table.
-    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a standard Markdown table with EXACTLY two columns: Metric and Value. DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. 2) If HYPERPARAMETER TUNING RESULTS are provided in DATA, include a Markdown table titled '### Hyperparameter Tuning Results' with columns: Model, Hyperparameters. List each model and its best hyperparameters so readers can replicate the experiment. 3) Put [PLOT: roc_curve]. 4) Write a 3-5 sentence explanation of the ROC curve. 5) Put [PLOT: pr_curve]. 6) Write a 3-5 sentence explanation of the PR curve. 7) Put [PLOT: confusion_matrix]. 8) Write a 3-5 sentence explanation of the Confusion Matrix. 9) Put [PLOT: correlation_heatmap]. 10) Write a 3-5 sentence explanation of the Correlation Heatmap (top 5-10 features). 11) Put [PLOT: feature_importance]. 12) Write a 3-5 sentence explanation of Feature Importance (top 5-10 features). 13) Put [PLOT: shap_summary]. 14) Write a 3-5 sentence explanation of SHAP (top 5-10 features). 15) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each if present.{' 16) Add Overfitting analysis.' if has_overfit_data else ''}",
+    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a standard Markdown table with EXACTLY two columns: Metric and Value. DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. 2) Put [PLOT: roc_curve]. 3) Write a 3-5 sentence explanation of the ROC curve. 4) Put [PLOT: pr_curve]. 5) Write a 3-5 sentence explanation of the PR curve. 6) Put [PLOT: confusion_matrix]. 7) Write a 3-5 sentence explanation of the Confusion Matrix. 8) Put [PLOT: correlation_heatmap]. 9) Write a 3-5 sentence explanation of the Correlation Heatmap (top 5-10 features). 10) Put [PLOT: feature_importance]. 11) Write a 3-5 sentence explanation of Feature Importance (top 5-10 features). 12) Put [PLOT: shap_summary]. 13) Write a 3-5 sentence explanation of SHAP (top 5-10 features). 14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each if present.{' 15) Add Overfitting analysis.' if has_overfit_data else ''}",
     "visuals_analysis": "Explain each available plot as a SINGLE MARKDOWN STRING. Put the relevant [PLOT: plot_name] placeholder directly above each explanation. Explain how to read the axes, colors, bars, clusters. Do not invent metrics or repeat unsupported performance claims.",
     "conclusion": "Conclusion of the model. MUST BE A SINGLE STRING of at least 5-10 sentences.",
     "recommendations": "1) Dataset fix / how to improve data quality. 2) Recommendations on model usage. 3) Other tips. MUST BE A SINGLE STRING of at least 5-10 sentences."
@@ -444,8 +403,7 @@ RULES:
 6. Write at least 150 words per section.
 7. Do NOT claim 100%, perfect, flawless, or error-free performance unless that exact value is present in the DATA.
 8. For class balance and imbalance correction, use only DATA QUALITY & PREPROCESSING facts. If imbalance metadata says "not recorded", write that it was not recorded; do NOT infer the data are balanced or that no correction was used.
-9. Do NOT repeat these instructions in your output.
-10. If HYPERPARAMETER TUNING RESULTS are provided in DATA, you MUST include a Markdown table in findings listing each model's best hyperparameters for reproducibility."""
+9. Do NOT repeat these instructions in your output."""
 
         return [
             {"role": "system", "content": system},
@@ -485,7 +443,6 @@ EXPERT REPORT (Follow these EXACT sections and instructions. All section values 
    **MUST BE A SINGLE MARKDOWN STRING OF AT LEAST 10 SENTENCES. DO NOT OUTPUT AS NESTED JSON OBJECTS.**
    **Quantitative Analysis & Findings**
    1) Render the Overall Performance Metrics (Accuracy, ROC-AUC, Precision, Recall/Sensitivity, Specificity, F1-Score, MCC) as a standard Markdown table with EXACTLY two columns: "Metric" and "Value". DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. **CRITICAL RULE: YOU MUST USE THE EXACT NUMBERS PROVIDED IN THE `PRE-COMPUTED METRICS` SECTION. DO NOT INVENT OR HALLUCINATE NUMBERS. If Accuracy is 99.12%, you must write 99.12%.**
-   1b) If HYPERPARAMETER TUNING RESULTS are provided in DATA, include a subsection titled '### Hyperparameter Tuning Results' with a Markdown table (columns: Model, Best Hyperparameters). List each model and its best hyperparameters from the DATA. This enables readers to replicate the exact experiment configuration.
    2) Put [PLOT: roc_curve] directly below the metrics table.
    3) Write a 3-5 sentence explanation of the ROC curve and its implications.
    4) Put [PLOT: pr_curve] directly below the ROC curve explanation.
