@@ -1841,8 +1841,7 @@
         function parseMarkdown(markdown) {
             if (!markdown) return '';
             let src = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            src = src.replace(/([^\n])(\|[^\n]*\|\s*\n\s*\|[\s:|-]+\|)/g, '$1\n$2');
-
+            // Removed brittle regex replacement that corrupted table strings
             const codeBlocks = [];
             src = src.replace(/```([\s\S]*?)```/g, (match, code) => {
                 codeBlocks.push(code.trim());
@@ -1912,25 +1911,42 @@
                     continue;
                 }
 
-                // Table parsing
-                const isPipeTableLine = trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.split('|').length > 2;
-                if (isPipeTableLine) {
+                // Robust table parsing
+                // A line is part of a table if it contains at least one pipe (excluding trailing/leading)
+                // or if it's the separator line.
+                const hasPipe = trimmed.indexOf('|') !== -1;
+                
+                // Helper to check if a line is a valid markdown separator (e.g. |---|---| or ---|---)
+                function isSeparator(str) {
+                    const clean = str.replace(/[|\s-:]/g, '');
+                    return clean === '' && str.indexOf('-') !== -1 && str.indexOf('|') !== -1;
+                }
+
+                if (hasPipe) {
                     if (inList) {
                         html += `</${inList}>\n`;
                         inList = null;
                     }
                     if (!inTable) {
-                        // Peek at next line to see if it's separator
+                        // Check if the next line is a separator to start a new table
                         let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
-                        if (nextLine.startsWith('|') && nextLine.endsWith('|') && nextLine.split('|').length > 2 && nextLine.replace(/[|:\s\-]/g, '') === '') {
+                        if (isSeparator(nextLine)) {
                             inTable = true;
                             tableRows = [];
-                            tableRows.push(trimmed); // Header row
-                            i++; // Skip separator
+                            // Ensure the header is properly formatted with outer pipes for the renderer
+                            let header = trimmed;
+                            if (!header.startsWith('|')) header = '| ' + header;
+                            if (!header.endsWith('|')) header = header + ' |';
+                            tableRows.push(header);
+                            i++; // Skip the separator
                             continue;
                         }
                     } else {
-                        tableRows.push(trimmed);
+                        // We are already in a table
+                        let row = trimmed;
+                        if (!row.startsWith('|')) row = '| ' + row;
+                        if (!row.endsWith('|')) row = row + ' |';
+                        tableRows.push(row);
                         continue;
                     }
                 } else {
@@ -1938,6 +1954,9 @@
                         html += renderTableHtml(tableRows);
                         inTable = false;
                     }
+                    // Only add to html if it's not handled by the next if blocks
+                    // (we will skip adding here because the end of the loop does it for non-tables if needed?
+                    // Wait, original code didn't add it here for non-table lines, it let them fall through to header/list parsing)
                 }
 
                 const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);

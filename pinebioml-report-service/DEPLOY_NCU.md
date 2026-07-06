@@ -22,11 +22,9 @@ The NCU server must have:
 ## 1. Clone The Repository
 
 ```bash
-git clone https://github.com/<your-org>/pinebioml-report-service.git /opt/pinebioml
+git clone https://github.com/TrisesaSadewa/TWAI2.git /opt/pinebioml
 cd /opt/pinebioml
 ```
-
-> Replace `<your-org>` with the actual GitHub org or user.
 
 The relevant layout after cloning:
 

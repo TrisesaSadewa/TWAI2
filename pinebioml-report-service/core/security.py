@@ -194,10 +194,18 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         method = request.method.upper()
 
         if method in _CSRF_SAFE_METHODS:
-            # Set CSRF cookie on GET responses so forms can read it
-            response = await call_next(request)
-            if not request.cookies.get(_CSRF_COOKIE_NAME):
+            # Check if cookie exists. If not, generate it before calling next
+            token = request.cookies.get(_CSRF_COOKIE_NAME)
+            should_set_cookie = False
+            if not token:
                 token = generate_csrf_token()
+                should_set_cookie = True
+            
+            request.state.csrf_token = token
+            
+            response = await call_next(request)
+            
+            if should_set_cookie:
                 response.set_cookie(
                     key=_CSRF_COOKIE_NAME,
                     value=token,
@@ -234,6 +242,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=403, content={"detail": "CSRF validation failed."})
 
+            request.state.csrf_token = cookie_token
             response = await call_next(request)
             return response
 

@@ -492,9 +492,9 @@
 <div class="row">
 <div class="col-lg-12 col-md-12 col-12">
 <form action="/Statistical_Analysis/download/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
 <!-- <form class="form" action="/Statistical_Analysis/result/{{ uuid }}/" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}"></form> -->
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"></form> -->
 <input name="csrfmiddlewaretoken" type="hidden" value="cr4HyGgAdpa9w5Ez2VEYDeuKhCJM5LrU6s2Jj09m4DnPCJepyFGAK62Jwt8225Ma"/>
 <div class="results-layout">
 <div class="plot-detail-section">

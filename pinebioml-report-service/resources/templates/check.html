@@ -404,7 +404,7 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-12">
                             <form class="form no-preloader" action="/Statistical_Analysis/setting/{{ uuid }}/" method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <input type="hidden" name="csrfmiddlewaretoken" value="WVhzherblSiukHzvZPxLuEboFRA52nj7QWfB2ykXc6vaql9lvzznBwJnUIZlZHEn">
                                 <div class="file-name-container" style="margin-bottom: 10px;">
                                     <p id="file-name-display" style="font-weight: bold;">

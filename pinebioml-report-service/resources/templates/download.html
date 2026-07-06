@@ -281,7 +281,7 @@
 <div class="row">
 <div class="col-lg-12 col-md-12 col-12">
 <form action="/Statistical_Analysis/download/download_selected_files/{{ uuid }}/" class="form" enctype="multipart/form-data" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
 <input name="csrfmiddlewaretoken" type="hidden" value="bbX3k9ipNbKGLUdMx2AeJqwQk39Oy9km5cV55tbbEpXmRyNC3MCQQi4PzUy4vtFC"/>
 <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
 <input checked="" id="select-all" onclick="toggleAll(this)" style="margin-right: 10px; width: 15px;" type="checkbox" title="input" aria-label="input"/>

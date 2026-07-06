@@ -424,22 +424,22 @@ class ReportEngine:
             # Find accuracy row
             acc_row = df[df[col_name].astype(str).str.lower().str.strip() == "accuracy"]
             if not acc_row.empty:
-                metrics["accuracy"] = f"{float(acc_row.iloc[0]['f1-score'])*100:.2f}%"
+                metrics["accuracy"] = f"{float(acc_row.iloc[0]['f1-score']):.4f}"
             
             # Find weighted avg row
             w_avg_row = df[df[col_name].astype(str).str.lower().str.strip() == "weighted avg"]
             if not w_avg_row.empty:
-                metrics["precision"] = f"{float(w_avg_row.iloc[0]['precision'])*100:.2f}%"
-                metrics["recall"] = f"{float(w_avg_row.iloc[0]['recall'])*100:.2f}%"
+                metrics["precision"] = f"{float(w_avg_row.iloc[0]['precision']):.4f}"
+                metrics["recall"] = f"{float(w_avg_row.iloc[0]['recall']):.4f}"
                 metrics["F1-Score"] = f"{float(w_avg_row.iloc[0]['f1-score']):.4f}"
             
             # Find sensitivity and specificity rows (PineBioML generates these for binary tasks)
             sens_row = df[df[col_name].astype(str).str.lower().str.strip() == "sensitivity"]
             if not sens_row.empty:
-                metrics["sensitivity"] = f"{float(sens_row.iloc[0]['f1-score'])*100:.2f}%"
+                metrics["sensitivity"] = f"{float(sens_row.iloc[0]['f1-score']):.4f}"
             spec_row = df[df[col_name].astype(str).str.lower().str.strip() == "specificity"]
             if not spec_row.empty:
-                metrics["specificity"] = f"{float(spec_row.iloc[0]['f1-score'])*100:.2f}%"
+                metrics["specificity"] = f"{float(spec_row.iloc[0]['f1-score']):.4f}"
             
             mcc_row = df[df[col_name].astype(str).str.lower().str.strip() == "mcc"]
             if not mcc_row.empty:
@@ -508,17 +508,17 @@ class ReportEngine:
         # Only fill metrics that are still N/A    
         if metrics.get("accuracy") == "N/A":
             acc_val = _get_val("accuracy")
-            if acc_val is not None: metrics["accuracy"] = f"{float(acc_val)*100:.2f}%"
+            if acc_val is not None: metrics["accuracy"] = f"{float(acc_val):.4f}"
         
         if metrics.get("recall") == "N/A":
             sens_val = _get_val("sensitivity") or _get_val("recall")
             if sens_val is not None:
-                metrics["recall"] = f"{float(sens_val)*100:.2f}%"
-                metrics["sensitivity"] = f"{float(sens_val)*100:.2f}%"
+                metrics["recall"] = f"{float(sens_val):.4f}"
+                metrics["sensitivity"] = f"{float(sens_val):.4f}"
             
         if metrics.get("specificity") == "N/A":
             spec_val = _get_val("specificity")
-            if spec_val is not None: metrics["specificity"] = f"{float(spec_val)*100:.2f}%"
+            if spec_val is not None: metrics["specificity"] = f"{float(spec_val):.4f}"
         
         if metrics.get("F1-Score") == "N/A":
             f1_val = _get_val("f1")
@@ -530,7 +530,7 @@ class ReportEngine:
         
         if metrics.get("precision") == "N/A":
             prec_val = _get_val("precision")
-            if prec_val is not None: metrics["precision"] = f"{float(prec_val)*100:.2f}%"
+            if prec_val is not None: metrics["precision"] = f"{float(prec_val):.4f}"
     
     def _parse_per_class_metrics(self, csv_path: str) -> list:
         """Parse top 5 per-class metrics from scores CSV (best + worst performing classes)."""
@@ -1175,6 +1175,293 @@ class ReportEngine:
         
         html += "</tbody></table></div>"
         return html
+
+    def _render_html_report(self, data: dict) -> str:
+        """Render the HTML report using the report_viewer.html template."""
+        template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "resources", "templates", "report_viewer.html")
+        if not os.path.exists(template_path):
+            raise FileNotFoundError(f"Template not found at {template_path}")
+            
+        with open(template_path, "r", encoding="utf-8") as f:
+            template = f.read()
+            
+        # Replace template placeholders
+        # Meta info
+        html = template.replace("{{ report_id }}", html_lib.escape(data["report_id"]))
+        html = html.replace("{{ job_id }}", html_lib.escape(data["job_id"]))
+        html = html.replace("{{ dataset_name }}", html_lib.escape(data["dataset_name"]))
+        html = html.replace("{{ task_type }}", html_lib.escape(data["task_type"].replace("_", " ").title()))
+        html = html.replace("{{ generated_at }}", html_lib.escape(data["created_at"]))
+        html = html.replace("{{ model_name }}", html_lib.escape(data.get("model_name", "PineBioML Default")))
+        
+        # Diagnostic metrics
+        metrics = data["metrics"]
+        html = html.replace("{{ accuracy }}", html_lib.escape(str(metrics.get("accuracy", "N/A"))))
+        html = html.replace("{{ roc_auc }}", html_lib.escape(str(metrics.get("ROC-AUC", "N/A"))))
+        html = html.replace("{{ precision }}", html_lib.escape(str(metrics.get("precision", "N/A"))))
+        html = html.replace("{{ recall }}", html_lib.escape(str(metrics.get("recall", "N/A"))))
+        html = html.replace("{{ f1_score }}", html_lib.escape(str(metrics.get("F1-Score", "N/A"))))
+        html = html.replace("{{ specificity }}", html_lib.escape(str(metrics.get("specificity", "N/A"))))
+        html = html.replace("{{ mcc }}", html_lib.escape(str(metrics.get("MCC", "N/A"))))
+        html = html.replace("{{ r2 }}", html_lib.escape(str(metrics.get("R2", "N/A"))))
+        html = html.replace("{{ rmse }}", html_lib.escape(str(metrics.get("RMSE", "N/A"))))
+        html = html.replace("{{ mae }}", html_lib.escape(str(metrics.get("MAE", "N/A"))))
+        html = html.replace("{{ mse }}", html_lib.escape(str(metrics.get("MSE", "N/A"))))
+
+        imbalance_warning = data.get("imbalance_warning") or {}
+        if imbalance_warning:
+            warning_title = html_lib.escape(str(imbalance_warning.get("title", "Accuracy may be misleading")))
+            warning_message = html_lib.escape(str(imbalance_warning.get("message", "")))
+            warning_html = (
+                '<div class="report-warning" role="note">'
+                f'<div class="report-warning-title">{warning_title}</div>'
+                f'<div class="report-warning-body">{warning_message}</div>'
+                '</div>'
+            )
+        else:
+            warning_html = ""
+        html = html.replace("{{ imbalance_warning_html }}", warning_html)
+
+        narrative_source = data.get("narrative_source", "llm")
+        if narrative_source != "llm":
+            notice_reason = html_lib.escape(str(data.get("narrative_notice") or "llm_unavailable_or_failed_validation"))
+            if narrative_source == "llm_partial_with_unavailable_sections":
+                notice_title = "LLM narrative partially unavailable"
+                notice_body = (
+                    "Some written sections were generated by the LLM, but one or more sections were replaced with an explicit unavailable notice. "
+                    "The deterministic ML metrics, plots, and model tables remain available."
+                )
+            else:
+                notice_title = "LLM narrative unavailable"
+                notice_body = (
+                    "This report still includes deterministic ML metrics, plots, and model tables, "
+                    "but the written narrative was not generated by an LLM."
+                )
+            narrative_notice_html = (
+                '<div class="report-notice" role="status">'
+                f'<div class="report-notice-title">{notice_title}</div>'
+                '<div class="report-notice-body">'
+                f'{html_lib.escape(notice_body)} '
+                f'Reason: {notice_reason}.'
+                '</div>'
+                '</div>'
+            )
+        else:
+            narrative_notice_html = ""
+        html = html.replace("{{ narrative_notice_html }}", narrative_notice_html)
+        
+        # Narratives for expert (rendered as direct strings for JS block)
+        expert = data["narrative"]["expert"]
+        
+        # Load external glossary
+        glossary_path = os.path.join(os.path.dirname(__file__), "glossaries", "default.json")
+        try:
+            with open(glossary_path, "r", encoding="utf-8") as f:
+                glossary = json.load(f)
+        except Exception:
+            glossary = data["narrative"].get("glossary", {})
+        
+        # Escape quotes/newlines for Javascript
+        def js_escape(text) -> str:
+            if isinstance(text, list):
+                text = "\n".join([str(item) for item in text])
+            elif not isinstance(text, str):
+                text = str(text) if text is not None else ""
+            return text.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
+            
+        html = html.replace("{{ expert_executive_summary }}", js_escape(expert["executive_summary"]))
+        html = html.replace("{{ expert_preprocessing_and_data_quality }}", js_escape(expert.get("preprocessing_and_data_quality", "")))
+        html = html.replace("{{ expert_findings }}", js_escape(expert["findings"]))
+        html = html.replace("{{ expert_conclusion }}", js_escape(expert.get("conclusion", "")))
+        html = html.replace("{{ expert_recommendations }}", js_escape(expert.get("recommendations", "")))
+
+        # Inject JSON configs
+        import json
+        html = html.replace("{{ glossary_json }}", json.dumps(glossary))
+        html = html.replace("{{ all_models_json }}", json.dumps(data.get("all_models", [])))
+        html = html.replace("{{ overfit_json }}", json.dumps(data.get("overfit_analysis", {})))
+        
+        # Markdown replacement deferred until formatted_visuals is computed
+        
+        # Server-side pre-render Model Performance table
+        all_models = data.get("all_models", [])
+        model_perf_html = self._render_model_performance_table(all_models, metrics, data.get("task_type", ""))
+        html = html.replace("{{ model_performance_table }}", model_perf_html)
+        
+        # Server-side pre-render of Clinical Insights Report Card for static viewers (like PDF)
+        all_models = data.get("all_models", [])
+        report_card_bars_html = ""
+        stars_html = ""
+        quality_label = "Overall Clarity & Resolution: Pending"
+        
+        if all_models:
+            keys = list(all_models[0].keys())
+            # Prefer test_accuracy, then exact 'accuracy'/'acc', then any key containing 'accuracy'
+            acc_key = next((k for k in keys if k.lower() == "test_accuracy"), None)
+            if not acc_key:
+                acc_key = next((k for k in keys if k.lower() in ("accuracy", "acc")), None)
+            if not acc_key:
+                acc_key = next((k for k in keys if "accuracy" in k.lower()), None)
+            if not acc_key:
+                # Fall back to first numeric key
+                acc_key = next((k for k in keys if isinstance(all_models[0].get(k), (int, float))), None)
+            if not acc_key:
+                acc_key = keys[1] if len(keys) > 1 else keys[0]
+                
+            # Prefer exact match 'Modeling'/'model_name', then any key containing 'model'
+            model_key = next((k for k in keys if k.lower() in ("modeling", "model", "model_name")), None)
+            if not model_key:
+                model_key = next((k for k in keys if "model" in k.lower()), None)
+            if not model_key:
+                # Fall back to first string key
+                model_key = next((k for k in keys if isinstance(all_models[0].get(k), str)), None)
+            if not model_key:
+                model_key = keys[0]
+                
+            try:
+                sorted_models = sorted(all_models, key=lambda x: float(x.get(acc_key, 0) or 0), reverse=True)
+            except Exception:
+                sorted_models = all_models
+                
+            top3 = sorted_models[:3]
+            
+            report_card_bars_html = '<div class="bar-chart-container" style="margin-top: 0;">'
+            for m in top3:
+                model_name = m.get(model_key, "N/A")
+                try:
+                    val = float(m.get(acc_key, 0) or 0)
+                    val_pct = val * 100.0 if val <= 1.0 else val
+                    val_pct = min(max(val_pct, 0.0), 100.0)
+                    pct_str = f"{val_pct:.1f}"
+                except Exception:
+                    pct_str = "0.0"
+                
+                esc_name = html_lib.escape(str(model_name))
+                report_card_bars_html += f"""
+                <div class="bar-row">
+                    <div class="bar-label" title="{esc_name}">{esc_name}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: {pct_str}%;">{pct_str}%</div>
+                    </div>
+                </div>"""
+            report_card_bars_html += '</div>'
+            
+            # Calculate star rating
+            total_score = 0.0
+            count = 0
+            for key in ["accuracy", "precision", "recall", "ROC-AUC"]:
+                val_str = metrics.get(key, "0")
+                if not val_str or val_str == "N/A":
+                    continue
+                try:
+                    val_clean = val_str.replace("%", "").strip()
+                    val = float(val_clean)
+                    if "%" in val_str or val > 1.0:
+                        val = val / 100.0
+                    total_score += val
+                    count += 1
+                except Exception:
+                    pass
+                    
+            if count > 0:
+                avg_score = total_score / count
+                if avg_score >= 0.90:
+                    stars = 5
+                    quality_label = "Overall Quality: Excellent"
+                elif avg_score >= 0.80:
+                    stars = 4
+                    quality_label = "Overall Quality: Strong"
+                elif avg_score >= 0.70:
+                    stars = 3
+                    quality_label = "Overall Quality: Moderate"
+                elif avg_score >= 0.60:
+                    stars = 2
+                    quality_label = "Overall Quality: Weak"
+                else:
+                    stars = 1
+                    quality_label = "Overall Quality: Poor"
+            else:
+                stars = 3
+                quality_label = "Overall Quality: Moderate"
+
+            if imbalance_warning:
+                stars = min(stars, 3)
+                quality_label = "Overall Quality: Needs Balanced-Metric Review"
+                
+            for i in range(5):
+                if i < stars:
+                    stars_html += '<span class="star filled">★</span>'
+                else:
+                    stars_html += '<span class="star">☆</span>'
+        else:
+            report_card_bars_html = self._render_fallback_metrics_table(metrics)
+            stars_html = '<span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span>'
+            quality_label = "Overall Quality: Pending"
+            
+        # Replace placeholders in template HTML
+        html = html.replace('<div id="report-card-bars"></div>', f'<div id="report-card-bars">{report_card_bars_html}</div>')
+        html = html.replace(
+            '<span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>',
+            stars_html
+        )
+        html = html.replace(
+            '<div class="rating-label" id="rating-label">Overall Clarity & Resolution: Pending</div>',
+            f'<div class="rating-label" id="rating-label">{quality_label}</div>'
+        )
+        
+        # Embed visuals
+        visuals_dict = data["visuals"]
+        formatted_visuals = {}
+        for key, val in visuals_dict.items():
+            if not val:
+                formatted_visuals[key] = ""
+                continue
+            if str(val).lower().endswith(".html"):
+                formatted_visuals[key] = self._artifact_url(data["report_id"], val)
+                continue
+            b64_str = VisualAnalyzer.encode_image_to_base64(val)
+            formatted_visuals[key] = f"data:image/png;base64,{b64_str}" if b64_str else ""
+                
+        # Embed visuals section
+        plots_grid_html = ""
+        for key, visual_src in formatted_visuals.items():
+            if visual_src:
+                title = key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
+                if str(visual_src).lower().endswith(".html"):
+                    plots_grid_html += f"""
+                    <div class="plot-container">
+                        <iframe class="plot-img" src="{visual_src}" title="{key}" style="border:0;"></iframe>
+                        <div class="plot-title">{title}</div>
+                    </div>
+                    """
+                else:
+                    plots_grid_html += f"""
+                    <div class="plot-container" onclick="zoomPlot('{visual_src}')">
+                        <img class="plot-img" src="{visual_src}" alt="{key}">
+                        <div class="plot-title">{title}</div>
+                    </div>
+                    """
+        # Inject custom plots grid html using a robust regex that replaces the entire template plots-grid
+        import re
+        pattern = r'<div class="plots-grid"[^>]*>.*?{% endfor %}\s*</div>'
+        replacement = f'<div class="plots-grid" style="display:none;">{plots_grid_html}</div>'
+        html = re.sub(pattern, lambda _: replacement, html, flags=re.DOTALL)
+
+        # Embed visuals placeholders in body and pre-render them
+        exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), formatted_visuals)
+        preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), formatted_visuals)
+        findings_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("findings", "")), formatted_visuals)
+        conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), formatted_visuals)
+        recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), formatted_visuals)
+
+        html = html.replace("{{ executive_summary }}", exec_summary_html)
+        html = html.replace("{{ preprocessing_and_data_quality }}", preprocessing_html)
+        html = html.replace("{{ findings }}", findings_html)
+        html = html.replace("{{ conclusion }}", conclusion_html)
+        html = html.replace("{{ recommendations }}", recs_html)
+        
+        return html
+
 
     def _markdown_to_html(self, text) -> str:
         """Converts basic markdown to HTML for server-side rendering (e.g. for PDF export)."""

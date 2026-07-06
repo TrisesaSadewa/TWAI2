@@ -382,7 +382,7 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-12">
                             <form class="form no-preloader" action="/Statistical_Analysis/upload/check/{{ uuid }}/" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <input type="hidden" name="csrfmiddlewaretoken" value="3VF7qkt6Uw5tJIle20o7tFQxLzbW2WgAXWD9bEmSLKi9PmV4yKqJAxow0qAcZgBQ">
                                 <table style="vertical-align: middle">
                                     <tr>
@@ -447,7 +447,7 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-12">
                             <form class="form" action="/Statistical_Analysis/upload/check_test/{{ uuid }}/" method="POST" enctype="multipart/form-data" onsubmit="showLoadingForForm(event)">
-    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('pinebioml_csrf') }}">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <input type="hidden" name="csrfmiddlewaretoken" value="3VF7qkt6Uw5tJIle20o7tFQxLzbW2WgAXWD9bEmSLKi9PmV4yKqJAxow0qAcZgBQ">
                                 <table>
                                     <tr>
