@@ -1,4 +1,0 @@
-CONTAINER ID   IMAGE                          COMMAND                  CREATED       STATUS                          PORTS       NAMES
-6a63f571ec5d   pinebioml-report-service-api   "uvicorn core.main:a…"   8 days ago    Restarting (1) 13 seconds ago               pinebioml-report-service-api-1
-77697cad73d6   postgres:15-alpine             "docker-entrypoint.s…"   10 days ago   Up 2 hours                      5432/tcp    pinebioml-report-service-db-1
-0f18634e57f4   ollama/ollama:latest           "/bin/ollama serve"      10 days ago   Up 2 hours                      11434/tcp   pinebioml-report-service-ollama-1

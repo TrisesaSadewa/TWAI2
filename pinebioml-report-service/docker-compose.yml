@@ -17,13 +17,13 @@ services:
     # CPU-only deployment (NCU server, 300GB RAM, no GPU).
     # Ollama auto-uses CPU when no GPU is present; no extra config needed.
     # Uncomment the following to enable GPU support on the server
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   # One-shot init container that pre-pulls the required models into the shared
   # ollama_data volume on first boot. Runs once, then exits 0; on subsequent
@@ -68,7 +68,7 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       - LLM_API_BASE_URL=http://ollama:11434/v1
       - LLM_MODEL=deepseek-r1:14b
-      - WRITER_DEPLOYMENT=cpu
+      - WRITER_DEPLOYMENT=gpu
       - CPU_DEPLOYMENT_WRITER_MODEL=deepseek-r1:14b
       - VERIFIER_MODEL=qwen2.5-coder:14b
       - LLM_REQUEST_TIMEOUT_SECONDS=900
