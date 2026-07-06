@@ -104,7 +104,11 @@ class sklearn_esitimator_wrapper(BaseEstimator):
                     self.kernel.__str__()))
 
     def is_regression(self) -> bool:
-        return is_regressor(self.kernel)
+        try:
+            return is_regressor(self.kernel)
+        except AttributeError:
+            # Fallback for third-party estimators like CatBoost on scikit-learn >= 1.6
+            return getattr(self.kernel, "_estimator_type", None) == "regressor"
 
     def detail(self):
         return None

@@ -563,9 +563,14 @@ def run_dynamic_pipeline(
     
     pine_model = Pine(experiment=experiment, target_label=target_label, cv_result=True, evaluate_ncv=evaluate_ncv)
     
+    total_models = max(1, len(missing_dict)) * max(1, len(norm_dict)) * max(1, len(fs_dict)) * len(model_dict)
+    models_completed = 0
+    from core.queue_manager import update_job_state
+    
     # Intercept the results list to extract best_params_ dynamically during the loop
     class TrackingList(list):
         def append(self, item):
+            nonlocal models_completed
             model_name = item.get('model')
             if model_name and model_name in model_dict:
                 kernel = model_dict[model_name].kernel
@@ -576,6 +581,21 @@ def run_dynamic_pipeline(
                 else:
                     item['best_params'] = "Default (No Tuning)"
             super().append(item)
+            
+            models_completed += 1
+            pct = 30 + int(40 * (models_completed / total_models))
+            
+            msg = json.dumps({
+                "message": f"Evaluating models...",
+                "granular": {
+                    "completed": models_completed,
+                    "total": total_models
+                }
+            })
+            try:
+                update_job_state(report_id, "TRAINING", pct, msg)
+            except Exception as e:
+                logger.error(f"Failed to update granular progress: {e}")
             
     pine_model.result = TrackingList()
     

@@ -438,18 +438,22 @@
                         learning models on your dataset.</p>
                 </div>
 
+                <div style="text-align: center; margin-top: 10px; font-size: 1.2rem; font-family: monospace; color: #555;">
+                    <i class="fa fa-clock-o"></i> Overall Elapsed: <span id="overall-stopwatch">00:00</span>
+                </div>
+
                 <div id="loading-checklist"
-                    style="margin-top: 30px; font-size: 1.2rem; text-align: left; max-width: 450px; margin-left: auto; margin-right: auto; line-height: 2; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #f9f9f9;">
+                    style="margin-top: 20px; font-size: 1.2rem; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 2; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #f9f9f9;">
                     <div id="step-missing"><i class="fa fa-circle-o" style="color: gray;"></i> Processing missing value
-                        method (<span id="c-missing">0</span>/{{ missing_count|default(1) }})</div>
+                        method (<span id="c-missing">0</span>/{{ missing_count|default(1) }}) <span id="timer-missing" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span></div>
                     <div id="step-norm"><i class="fa fa-circle-o" style="color: gray;"></i> Normalizing data (<span
-                            id="c-norm">0</span>/{{ norm_count|default(1) }})</div>
+                            id="c-norm">0</span>/{{ norm_count|default(1) }}) <span id="timer-norm" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span></div>
                     <div id="step-feature"><i class="fa fa-circle-o" style="color: gray;"></i> Selecting features (<span
-                            id="c-feature">0</span>/{{ feature_count|default(1) }})</div>
-                    <div id="step-model"><i class="fa fa-circle-o" style="color: gray;"></i> Training models (<span
-                            id="c-model">0</span>/{{ modeling_count|default(1) }})</div>
-                    <div id="step-report" style="display: none;"><i class="fa fa-circle-o" style="color: gray;"></i>
-                        Generating AI Report...</div>
+                            id="c-feature">0</span>/{{ feature_count|default(1) }}) <span id="timer-feature" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span></div>
+                    <div id="step-model"><i class="fa fa-circle-o" style="color: gray;"></i> Evaluating pipelines (<span
+                            id="c-model">0</span>/{{ modeling_count|default(1) }}) <span id="timer-model" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span></div>
+                    <div id="step-report"><i class="fa fa-circle-o" style="color: gray;"></i>
+                        Generating AI Report... <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">Waiting for data</span></div>
                 </div>
 
                 <div class="text-center" style="margin-top: 30px;">
@@ -472,12 +476,13 @@
         function markStepComplete(stepId, countKey) {
             const el = document.getElementById(stepId);
             if (el && !el.innerHTML.includes('fa-check-circle')) {
-                let baseText = el.innerText.trim();
-                // Replace the fraction (e.g. 0/1) with the full count (1/1)
-                if (countKey) {
-                    baseText = baseText.replace(/0\//, counts[countKey] + '/');
+                if (countKey && counts[countKey] !== undefined) {
+                    const spanEl = document.getElementById('c-' + countKey);
+                    if (spanEl) {
+                        spanEl.innerText = counts[countKey];
+                    }
                 }
-                el.innerHTML = '<i class="fa fa-check-circle" style="color: green;"></i> ' + baseText;
+                el.innerHTML = '<i class="fa fa-check-circle" style="color: green;"></i> ' + el.innerHTML.substring(el.innerHTML.indexOf('</i>') + 4).trim();
             }
         }
 
@@ -485,6 +490,45 @@
             document.getElementById('progress-bar-fill').style.width = pct + '%';
             document.getElementById('progress-bar-text').innerText = pct + '%';
         }
+
+        // Stopwatch logic
+        let startTime = Date.now();
+        let pipelineFinished = false;
+        let aiReportStartedTime = 0;
+        
+        function formatTime(ms) {
+            if (ms < 0) return "00:00";
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+        
+        setInterval(() => {
+            if (pipelineFinished) return;
+            const now = Date.now();
+            const elapsed = now - startTime;
+            document.getElementById('overall-stopwatch').innerText = formatTime(elapsed);
+            
+            // All ML steps run concurrently
+            const mlElapsed = formatTime(elapsed);
+            if (!document.getElementById('step-missing').innerHTML.includes('fa-check-circle')) {
+                document.getElementById('timer-missing').innerText = mlElapsed;
+            }
+            if (!document.getElementById('step-norm').innerHTML.includes('fa-check-circle')) {
+                document.getElementById('timer-norm').innerText = mlElapsed;
+            }
+            if (!document.getElementById('step-feature').innerHTML.includes('fa-check-circle')) {
+                document.getElementById('timer-feature').innerText = mlElapsed;
+            }
+            if (!document.getElementById('step-model').innerHTML.includes('fa-check-circle')) {
+                document.getElementById('timer-model').innerText = mlElapsed;
+            }
+            
+            if (aiReportStartedTime > 0 && !document.getElementById('step-report').innerHTML.includes('fa-check-circle')) {
+                document.getElementById('timer-report').innerText = formatTime(now - aiReportStartedTime);
+            }
+        }, 1000);
 
         function goToResult() {
             const currentUrl = window.location.href;
@@ -518,25 +562,52 @@
                 .then(data => {
                     pollRetries = 0; // reset retries on successful fetch
                     let pct = data.progress_pct || 0;
+                    
+                    // Parse granular message if it's JSON
+                    let statusMessage = data.message;
+                    let granularComplete = false;
+                    try {
+                        if (statusMessage && statusMessage.startsWith("{")) {
+                            const parsed = JSON.parse(statusMessage);
+                            if (parsed.granular) {
+                                isGranular = true;
+                                statusMessage = parsed.message || "Evaluating pipelines...";
+                                document.getElementById('c-model').innerText = parsed.granular.completed;
+                                // Update total count dynamically in case the template was wrong
+                                document.getElementById('step-model').innerHTML = document.getElementById('step-model').innerHTML.replace(/\/\d+\)/, `/${parsed.granular.total})`);
+                                if (parsed.granular.completed >= parsed.granular.total) {
+                                    granularComplete = true;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing granular progress", e);
+                    }
+                    
                     updateProgressBar(pct);
 
-                    if (pct >= 10) {
+                    if (pct >= 10 || granularComplete) {
                         markStepComplete('step-missing', 'missing');
                         markStepComplete('step-norm', 'norm');
                     }
-                    if (pct >= 30) {
+                    if (pct >= 30 || granularComplete) {
                         markStepComplete('step-feature', 'feature');
                     }
-                    if (pct >= 70) {
+                    if (pct >= 70 || granularComplete) {
                         markStepComplete('step-model', 'model');
                     }
 
                     if (data.status === "SUCCESS") {
+                        pipelineFinished = true;
                         updateProgressBar(100);
                         const reportStep = document.getElementById('step-report');
                         if (reportStep) {
-                            reportStep.style.display = 'block';
-                            reportStep.innerHTML = '<i class="fa fa-check-circle" style="color: green;"></i> Generating AI Report...';
+                            markStepComplete('step-report', null);
+                            if (aiReportStartedTime > 0) {
+                                document.getElementById('timer-report').innerText = formatTime(Date.now() - aiReportStartedTime);
+                            } else {
+                                document.getElementById('timer-report').innerText = "00:00"; // fallback if it was instantly ready
+                            }
                         }
                         document.getElementById('main-spinner').className = "icofont-check-circled";
                         document.getElementById('main-spinner').style.color = "green";
@@ -544,17 +615,22 @@
                         document.getElementById('main-status-desc').innerText = "Your analysis results are ready to be viewed.";
                         document.getElementById('see-result-btn').style.display = 'inline-block';
                     } else if (data.status === "FAILED") {
-                        alert("Machine learning task failed: " + data.message);
+                        pipelineFinished = true;
+                        alert("Machine learning task failed: " + statusMessage);
                     } else if (data.status === "GENERATING") {
+                        if (aiReportStartedTime === 0) aiReportStartedTime = Date.now();
                         markStepComplete('step-missing', 'missing');
                         markStepComplete('step-norm', 'norm');
                         markStepComplete('step-feature', 'feature');
                         markStepComplete('step-model', 'model');
 
                         const reportStep = document.getElementById('step-report');
-                        if (reportStep) {
-                            reportStep.style.display = 'block';
-                            reportStep.innerHTML = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '%';
+                        if (reportStep && !reportStep.innerHTML.includes('fa-spinner')) {
+                            let reportTextHtml = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span>';
+                            reportStep.innerHTML = reportTextHtml;
+                        } else if (reportStep && reportStep.innerHTML.includes('fa-spinner')) {
+                            // Only update percentage
+                            reportStep.innerHTML = reportStep.innerHTML.replace(/\d+%/, pct + '%');
                         }
 
                         document.getElementById('main-spinner').className = "icofont-check-circled";
@@ -1014,5 +1090,6 @@ document.addEventListener("DOMContentLoaded", function() {
             window.addEventListener('scroll', updateProgress, { passive: true });
             document.addEventListener('DOMContentLoaded', updateProgress);
         })();
-
-</html >
+    </script>
+</body>
+</html>

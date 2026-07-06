@@ -918,11 +918,16 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                 const safePct = Math.max(0, Math.min(100, Math.round(pct || 0)));
                 aiStatus.style.display = 'block';
                 aiProgressFill.style.width = safePct + '%';
-                aiStatusText.innerText = message || `AI report generation: ${safePct}%`;
+                aiStatusText.innerHTML = message || `AI report generation: ${safePct}%`;
 
                 if (isDone) {
                     aiProgressFill.style.width = '100%';
-                    aiStatusText.innerText = 'AI report is ready.';
+                    if (aiStatusText.innerHTML.includes('timer-report')) {
+                        const existingTimer = document.getElementById('timer-report').innerText;
+                        aiStatusText.innerHTML = `AI report is ready. <span style="float: right; font-family: monospace; font-size: 1rem; color: #888;">${existingTimer}</span>`;
+                    } else {
+                        aiStatusText.innerHTML = 'AI report is ready.';
+                    }
                     if (aiReportBtn) {
                         aiReportBtn.innerText = 'View AI Report';
                         aiReportBtn.style.backgroundColor = '#4CAF50';
@@ -930,6 +935,25 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                     }
                 }
             }
+
+            let aiReportStartedTime = 0;
+            let aiReportFinished = false;
+
+            function formatTime(ms) {
+                if (ms < 0) return "00:00";
+                const totalSeconds = Math.floor(ms / 1000);
+                const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+                return `${minutes}:${seconds}`;
+            }
+
+            setInterval(() => {
+                if (aiReportFinished || aiReportStartedTime === 0) return;
+                const timerEl = document.getElementById('timer-report');
+                if (timerEl) {
+                    timerEl.innerText = formatTime(Date.now() - aiReportStartedTime);
+                }
+            }, 1000);
 
             let aiPollRetries = 0;
             const MAX_AI_POLL_RETRIES = 10;
@@ -959,11 +983,13 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                         const pct = data.progress_pct || 0;
 
                         if (status === 'SUCCESS') {
+                            aiReportFinished = true;
                             setAIReportProgress(100, 'AI report is ready.', true);
                             return;
                         }
 
                         if (status === 'FAILED') {
+                            aiReportFinished = true;
                             setAIReportProgress(100, data.message || 'AI report generation failed.', false);
                             if (aiProgressFill) aiProgressFill.style.background = '#dc3545';
                             if (aiReportBtn) {
@@ -975,14 +1001,25 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                         }
 
                         if (status === 'GENERATING') {
-                            setAIReportProgress(pct, `AI report is still generating... ${Math.round(pct)}%`, false);
+                            if (aiReportStartedTime === 0) {
+                                // Prefer server updated_at, fallback to Date.now()
+                                if (data.updated_at) {
+                                    // Parse ISO string and cap it at Date.now() to prevent negative timers from slight clock skew
+                                    const serverTime = new Date(data.updated_at).getTime();
+                                    aiReportStartedTime = Math.min(serverTime, Date.now());
+                                } else {
+                                    aiReportStartedTime = Date.now();
+                                }
+                            }
+                            const currentTimer = formatTime(Date.now() - aiReportStartedTime);
+                            setAIReportProgress(pct, `AI report is still generating... ${Math.round(pct)}% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">${currentTimer}</span>`, false);
                             if (aiReportBtn) {
                                 aiReportBtn.innerText = 'View AI Report (Generating)';
                                 aiReportBtn.style.backgroundColor = '#2f80ed';
                                 aiReportBtn.style.borderColor = '#2f80ed';
                             }
                         } else {
-                            setAIReportProgress(pct, 'AI report is queued...', false);
+                            setAIReportProgress(pct, `AI report is queued... <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">Waiting for data</span>`, false);
                         }
 
                         setTimeout(pollAIReportStatus, 2500);
