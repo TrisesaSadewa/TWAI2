@@ -40,6 +40,27 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 You can access the interactive Swagger API documentation at: **`http://localhost:8000/docs`**
 
+### 4. GPU Acceleration Setup (CUDA)
+
+If you plan to run Ollama and LLMs using Docker, you need to wire CUDA into your Docker runtime to utilize GPU acceleration.
+
+**For Linux Servers (Ubuntu/Debian):**
+1. Install NVIDIA drivers: `sudo apt update && sudo ubuntu-drivers autoinstall` (reboot required).
+2. Install the NVIDIA Container Toolkit to allow Docker to access the GPU:
+   ```bash
+   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+   curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+   sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+   ```
+3. Configure Docker runtime:
+   ```bash
+   sudo nvidia-ctk runtime configure --runtime=docker
+   sudo systemctl restart docker
+   ```
+
+**For Windows:**
+Docker Desktop automatically passes your GPU to the container if you are using the WSL2 backend. Ensure you have the latest NVIDIA drivers installed.
+
 ---
 
 ## 📖 API Documentation

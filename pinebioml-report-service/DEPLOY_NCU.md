@@ -249,9 +249,50 @@ Only the `api` image rebuilds if Postgres/Ollama images are unchanged.
 
 ## 10. LLM / Ollama Settings / GPU Acceleration
 
-To ensure the LLM generation uses the GPU and avoids massive CPU spikes:
-1. **Linux Servers:** You must install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
-2. **Windows Laptops:** Docker Desktop with the WSL2 backend automatically passes the GPU to Docker, no extra drivers needed.
+To ensure the LLM generation uses the GPU and avoids massive CPU spikes, you need to properly wire CUDA into the server.
+
+### 10.1 Wiring CUDA on Linux Servers (Ubuntu/Debian)
+
+If the NCU server does not have GPU pass-through configured for Docker yet, follow these steps:
+
+1. **Install NVIDIA Drivers (if not already installed):**
+   ```bash
+   sudo apt update
+   sudo apt install -y ubuntu-drivers-common
+   sudo ubuntu-drivers autoinstall
+   sudo reboot
+   ```
+   *After rebooting, verify your GPU is detected by running `nvidia-smi`.*
+
+2. **Install NVIDIA Container Toolkit:**
+   This bridges the host's CUDA drivers with Docker containers.
+   ```bash
+   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+   
+   curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+   
+   sudo apt-get update
+   sudo apt-get install -y nvidia-container-toolkit
+   ```
+
+3. **Configure Docker to use NVIDIA runtime:**
+   ```bash
+   sudo nvidia-ctk runtime configure --runtime=docker
+   sudo systemctl restart docker
+   ```
+
+4. **Verify GPU Passthrough:**
+   ```bash
+   docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+   ```
+
+### 10.2 Wiring CUDA on Windows Laptops
+
+Docker Desktop with the WSL2 backend automatically passes the GPU to Docker, so no extra drivers or toolkits are needed. Just ensure you have the latest NVIDIA Game Ready or Studio drivers installed.
+
+---
 
 Production `.env.production` configuration for GPU usage:
 
