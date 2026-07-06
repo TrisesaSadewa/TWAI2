@@ -18,6 +18,7 @@ The server must have:
 - Git
 - Docker Engine 20.10+
 - Docker Compose plugin (`docker compose`, not legacy `docker-compose`)
+- NVIDIA Container Toolkit (required for Docker GPU passthrough on Linux)
 - At least 50 GB free disk space (Ollama models are large)
 - Outbound internet access (to pull Docker images and Ollama models on first boot)
 

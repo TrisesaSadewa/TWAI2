@@ -545,7 +545,7 @@ class Pine():
             resp = requests.post(
                 os.environ.get("FASTAPI_EXPORT_URL", "http://127.0.0.1:8001/report/generate"),
                 json=export_payload,
-                headers={"X-API-Key": os.environ.get("PINEBIOML_API_KEY", "pinebioml_default_key_change_me")},
+                headers={"X-API-Key": os.environ.get("SERVICE_API_KEY", os.environ.get("PINEBIOML_API_KEY", "pinebioml_default_key_change_me"))},
                 timeout=5
             )
             if resp.ok:

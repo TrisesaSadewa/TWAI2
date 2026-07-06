@@ -14,6 +14,7 @@ The NCU server must have:
 - Git
 - Docker Engine (20.10+)
 - Docker Compose plugin (`docker compose`, not the legacy `docker-compose`)
+- NVIDIA Container Toolkit (required for Docker GPU passthrough on Linux)
 - At least 50 GB free disk space (Ollama models are large)
 - Outbound internet access (to pull Docker images and Ollama models on first boot)
 
@@ -246,13 +247,17 @@ Only the `api` image rebuilds if Postgres/Ollama images are unchanged.
 
 ---
 
-## 10. LLM / Ollama Settings
+## 10. LLM / Ollama Settings / GPU Acceleration
 
-Production defaults in `.env.production.example`:
+To ensure the LLM generation uses the GPU and avoids massive CPU spikes:
+1. **Linux Servers:** You must install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+2. **Windows Laptops:** Docker Desktop with the WSL2 backend automatically passes the GPU to Docker, no extra drivers needed.
+
+Production `.env.production` configuration for GPU usage:
 
 ```env
 LLM_MODEL=deepseek-r1:14b
-WRITER_DEPLOYMENT=cpu
+WRITER_DEPLOYMENT=gpu
 CPU_DEPLOYMENT_WRITER_MODEL=deepseek-r1:14b
 VERIFIER_MODEL=qwen2.5-coder:14b
 EMBEDDING_MODEL=nomic-embed-text
@@ -262,7 +267,6 @@ LLM_REQUEST_TIMEOUT_SECONDS=900
 ```
 
 - Keep `ENABLE_VISION_ANALYSIS=false` unless a fast vision model is confirmed working.
-- If the server has a GPU with Docker GPU runtime configured, set `WRITER_DEPLOYMENT=gpu`.
 - Disk usage: plan for 30+ GB for `ollama_data` volume.
 
 ---
