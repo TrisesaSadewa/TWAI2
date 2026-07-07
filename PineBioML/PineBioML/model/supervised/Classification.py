@@ -12,7 +12,11 @@ from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from lightgbm import early_stopping as lgbm_early_stopping
-from catboost import CatBoostClassifier, Pool
+from catboost import CatBoostClassifier as _CatBoostClassifier, Pool
+
+# Monkey patch for scikit-learn >= 1.6 compatibility where estimator tags are required
+class CatBoostClassifier(_CatBoostClassifier, ClassifierMixin, BaseEstimator):
+    pass
 
 import shap
 

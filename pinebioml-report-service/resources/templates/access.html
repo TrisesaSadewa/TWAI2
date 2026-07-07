@@ -722,17 +722,39 @@
             });
         });
 
-        // 綁定所有表單提交事件
+        // 綁定所有表單提交事件並在提交前更新 CSRF token
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
-            form.addEventListener('submit', function (event) {
-                // 如果表單具有 'no-preloader' class，則跳過
-                if (form.classList.contains('no-preloader')) {
-                    return; // 不顯示 preloader，直接返回
-                }
+            form.addEventListener('submit', async function (event) {
+                // 如果已經在處理提交中，直接返回
+                if (form.dataset.isSubmitting) return;
+                
+                // 暫停預設提交，等我們更新完 token 後再手動提交
+                event.preventDefault();
+                form.dataset.isSubmitting = "true";
 
                 // 顯示 preloader
-                showLoadingForForm(event);
+                if (!form.classList.contains('no-preloader')) {
+                    showLoadingForForm(event);
+                }
+
+                try {
+                    // 獲取新的 CSRF token
+                    const response = await fetch('/api/csrf-token');
+                    if (response.ok) {
+                        const data = await response.json();
+                        // 更新 form 內的 hidden inputs
+                        const csrfInputs = form.querySelectorAll('input[name="csrf_token"], input[name="csrfmiddlewaretoken"]');
+                        csrfInputs.forEach(input => {
+                            input.value = data.csrf_token;
+                        });
+                    }
+                } catch (err) {
+                    console.error("Failed to refresh CSRF token", err);
+                }
+
+                // 手動提交表單 (這會繞過 submit event listener)
+                form.submit();
             });
         });
     });
@@ -778,5 +800,6 @@
         window.addEventListener('scroll', updateProgress, { passive: true });
         document.addEventListener('DOMContentLoaded', updateProgress);
     })();
-
+</script>
+</body>
 </html>

@@ -45,7 +45,13 @@ from sklearn.preprocessing import (
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-from catboost import CatBoostClassifier, CatBoostRegressor
+from catboost import CatBoostClassifier as _CatBoostClassifier, CatBoostRegressor as _CatBoostRegressor
+from sklearn.base import ClassifierMixin, RegressorMixin, BaseEstimator
+
+# Monkey patch for scikit-learn >= 1.6 compatibility where estimator tags are required
+class CatBoostClassifier(_CatBoostClassifier, ClassifierMixin, BaseEstimator): pass
+class CatBoostRegressor(_CatBoostRegressor, RegressorMixin, BaseEstimator): pass
+
 from PineBioML.selection.classification import ensemble_selector as cls_ensemble_selector
 from PineBioML.selection.regression import ensemble_selector as reg_ensemble_selector
 from sklearn.feature_selection import (

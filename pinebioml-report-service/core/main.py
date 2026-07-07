@@ -730,7 +730,20 @@ def get_prometheus_metrics(api_key: str = Depends(verify_metrics_access)):
     """Export Prometheus format metrics."""
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
-
+@app.get("/api/csrf-token")
+def refresh_csrf_token(request: Request, response: Response):
+    """Generate a new CSRF token and set it in the cookie."""
+    from core.security import generate_csrf_token, _CSRF_COOKIE_NAME
+    token = generate_csrf_token()
+    response.set_cookie(
+        key=_CSRF_COOKIE_NAME,
+        value=token,
+        httponly=False,
+        samesite="strict",
+        secure=request.url.scheme in ("https", "wss"),
+        max_age=3600,
+    )
+    return {"csrf_token": token}
 
 @app.get("/models")
 def list_available_models():

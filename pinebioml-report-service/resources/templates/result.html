@@ -995,19 +995,36 @@
             return isValid;
         }
 
-        // 綁定表單提交
+        // 綁定表單提交並在提交前更新 CSRF token
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', async function (event) {
                 if (form.classList.contains('no-preloader')) return;
 
                 const isValid = validateCheckboxSelection_preloader();
                 if (!isValid) {
                     event.preventDefault(); // 擋住表單，不讓它送出
                     return; 
-                } else {
-                    showLoadingForForm(event); // 通過驗證才顯示讀取圈圈
+                } 
+
+                if (form.dataset.isSubmitting) return;
+
+                event.preventDefault();
+                form.dataset.isSubmitting = "true";
+                showLoadingForForm(event); // 通過驗證才顯示讀取圈圈
+
+                try {
+                    const response = await fetch('/api/csrf-token');
+                    if (response.ok) {
+                        const data = await response.json();
+                        const csrfInputs = form.querySelectorAll('input[name="csrf_token"], input[name="csrfmiddlewaretoken"]');
+                        csrfInputs.forEach(input => input.value = data.csrf_token);
+                    }
+                } catch (err) {
+                    console.error("Failed to refresh CSRF token", err);
                 }
+
+                form.submit();
             });
         });
 
