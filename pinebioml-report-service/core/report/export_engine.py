@@ -62,6 +62,16 @@ class ExportEngine:
             sec_name = sec_key.replace("_", " ").replace("And", "&").title()
             md.append(f"## {sec_name}\n\n")
             content = narrative.get("expert", {}).get(sec_key, "N/A")
+            
+            if isinstance(content, list):
+                content = "\n\n".join([str(item) for item in content])
+            elif not isinstance(content, str):
+                import json
+                try:
+                    content = json.dumps(content, indent=2)
+                except Exception:
+                    content = str(content) if content is not None else ""
+                    
             md.append(f"{replace_plots_with_markdown_images(content)}\n\n")
             
         md.append("\\pagebreak\n\n") # Page break for PDF
