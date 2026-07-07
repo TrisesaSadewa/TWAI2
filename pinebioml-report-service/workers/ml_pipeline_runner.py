@@ -301,16 +301,16 @@ def run_dynamic_pipeline(
         cv_folds = evaluate_ncv if evaluate_ncv != -1 else 3 # Fallback to 3 if LOOCV is selected to prevent freezing
         
         if tuning_strategy == "GridSearchCV":
-            search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=-1)
+            search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=None, verbose=1)
         elif tuning_strategy == "BayesianOptimization":
             from skopt import BayesSearchCV
             # Convert list to tuple to ensure skopt treats it as categorical choices rather than trying to infer mixed numerical ranges
             skopt_grid = {k: tuple(v) if isinstance(v, list) else v for k, v in param_grid.items()}
-            search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=-1, random_state=42)
+            search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=None, random_state=42, verbose=1)
         else: # RandomizedSearchCV
             grid_size = len(list(ParameterGrid(param_grid)))
             n_iter = min(tuning_n_iter, grid_size)
-            search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=-1, random_state=42)
+            search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=None, random_state=42, verbose=1)
         
         return sklearn_esitimator_wrapper(search)
 
