@@ -143,6 +143,11 @@ def fetch_next_job():
     (None, None).
     """
     from sqlalchemy import text
+    import threading
+    
+    # Global lock for SQLite to prevent race conditions during job claiming
+    _sqlite_claim_lock = threading.Lock()
+    
     with SessionLocal() as db:
         try:
             is_pg = engine.dialect.name == "postgresql"
@@ -157,26 +162,38 @@ def fetch_next_job():
                         FOR UPDATE SKIP LOCKED
                     """)
                 ).first()
+                if row:
+                    report_id, manifest_json = row[0], row[1]
+                    db.query(JobRecord).filter(JobRecord.report_id == report_id).update(
+                        {JobRecord.status: "STARTING",
+                         JobRecord.updated_at: datetime.utcnow()},
+                        synchronize_session=False,
+                    )
+                    db.commit()
             else:
                 # SQLite (dev) — plain select; the subsequent UPDATE + commit
-                # within this transaction claims it.
-                row = db.execute(
-                    text("""
-                        SELECT report_id, manifest_json
-                        FROM job_records
-                        WHERE status = 'QUEUED'
-                        ORDER BY created_at ASC
-                        LIMIT 1
-                    """)
-                ).first()
+                # within this transaction claims it. Requires a thread lock to prevent
+                # multiple workers from claiming the same job simultaneously.
+                with _sqlite_claim_lock:
+                    row = db.execute(
+                        text("""
+                            SELECT report_id, manifest_json
+                            FROM job_records
+                            WHERE status = 'QUEUED'
+                            ORDER BY created_at ASC
+                            LIMIT 1
+                        """)
+                    ).first()
+                    if row:
+                        report_id, manifest_json = row[0], row[1]
+                        db.query(JobRecord).filter(JobRecord.report_id == report_id).update(
+                            {JobRecord.status: "STARTING",
+                             JobRecord.updated_at: datetime.utcnow()},
+                            synchronize_session=False,
+                        )
+                        db.commit()
+
             if row:
-                report_id, manifest_json = row[0], row[1]
-                db.query(JobRecord).filter(JobRecord.report_id == report_id).update(
-                    {JobRecord.status: "STARTING",
-                     JobRecord.updated_at: datetime.utcnow()},
-                    synchronize_session=False,
-                )
-                db.commit()
                 try:
                     manifest = json.loads(manifest_json) if manifest_json else {}
                 except Exception:
