@@ -535,143 +535,130 @@
             const newUrl = currentUrl.replace('result_example', 'result');
             window.location.href = newUrl;
         }
+        const uuid = "{{ uuid }}";
+        let fallbackTimer = null;
+        let sseConnected = false;
 
-        let pollRetries = 0;
-        const MAX_POLL_RETRIES = 10;
+        // --- Core status handler (reused by SSE + fallback) ---
+        function handleStatusData(data) {
+            if (pipelineFinished) return;
+            let pct = data.progress_pct || 0;
 
-        function pollMLTask() {
-            const uuid = "{{ uuid }}";
-            fetch(`/report/status/${uuid}?token=ui_token`)
-                .then(async res => {
-                    const contentType = res.headers.get('content-type') || '';
-                    if (!res.ok) {
-                        let message = `Status unavailable (${res.status}).`;
-                        if (contentType.includes('application/json')) {
-                            const errorData = await res.json();
-                            message = errorData.detail || message;
+            // Parse granular message if it's JSON
+            let statusMessage = data.message;
+            let granularComplete = false;
+            try {
+                if (statusMessage && statusMessage.startsWith("{")) {
+                    const parsed = JSON.parse(statusMessage);
+                    if (parsed.granular) {
+                        isGranular = true;
+                        statusMessage = parsed.message || "Evaluating pipelines...";
+                        document.getElementById('c-model').innerText = parsed.granular.completed;
+                        document.getElementById('step-model').innerHTML = document.getElementById('step-model').innerHTML.replace(/\/\d+\)/, `/${parsed.granular.total})`);
+                        if (parsed.granular.completed >= parsed.granular.total) {
+                            granularComplete = true;
                         }
-                        const error = new Error(message);
-                        error.status = res.status;
-                        throw error;
                     }
-                    if (!contentType.includes('application/json')) {
-                        throw new Error('Status endpoint returned an unexpected response.');
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    pollRetries = 0; // reset retries on successful fetch
-                    let pct = data.progress_pct || 0;
-                    
-                    // Parse granular message if it's JSON
-                    let statusMessage = data.message;
-                    let granularComplete = false;
-                    try {
-                        if (statusMessage && statusMessage.startsWith("{")) {
-                            const parsed = JSON.parse(statusMessage);
-                            if (parsed.granular) {
-                                isGranular = true;
-                                statusMessage = parsed.message || "Evaluating pipelines...";
-                                document.getElementById('c-model').innerText = parsed.granular.completed;
-                                // Update total count dynamically in case the template was wrong
-                                document.getElementById('step-model').innerHTML = document.getElementById('step-model').innerHTML.replace(/\/\d+\)/, `/${parsed.granular.total})`);
-                                if (parsed.granular.completed >= parsed.granular.total) {
-                                    granularComplete = true;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error parsing granular progress", e);
-                    }
-                    
-                    updateProgressBar(pct);
+                }
+            } catch (e) {
+                console.error("Error parsing granular progress", e);
+            }
 
-                    if (pct >= 10 || granularComplete) {
-                        markStepComplete('step-missing', 'missing');
-                        markStepComplete('step-norm', 'norm');
-                    }
-                    if (pct >= 30 || granularComplete) {
-                        markStepComplete('step-feature', 'feature');
-                    }
-                    if (pct >= 70 || granularComplete) {
-                        markStepComplete('step-model', 'model');
-                    }
+            updateProgressBar(pct);
 
-                    if (data.status === "SUCCESS") {
-                        pipelineFinished = true;
-                        updateProgressBar(100);
-                        const reportStep = document.getElementById('step-report');
-                        if (reportStep) {
-                            markStepComplete('step-report', null);
-                            if (aiReportStartedTime > 0) {
-                                document.getElementById('timer-report').innerText = formatTime(Date.now() - aiReportStartedTime);
-                            } else {
-                                document.getElementById('timer-report').innerText = "00:00"; // fallback if it was instantly ready
-                            }
-                        }
-                        document.getElementById('main-spinner').className = "icofont-check-circled";
-                        document.getElementById('main-spinner').style.color = "green";
-                        document.getElementById('main-status-title').innerText = "Processing Complete";
-                        document.getElementById('main-status-desc').innerText = "Your analysis results are ready to be viewed.";
-                        document.getElementById('see-result-btn').style.display = 'inline-block';
-                    } else if (data.status === "FAILED") {
-                        pipelineFinished = true;
-                        alert("Machine learning task failed: " + statusMessage);
-                    } else if (data.status === "GENERATING") {
-                        if (aiReportStartedTime === 0) aiReportStartedTime = Date.now();
-                        markStepComplete('step-missing', 'missing');
-                        markStepComplete('step-norm', 'norm');
-                        markStepComplete('step-feature', 'feature');
-                        markStepComplete('step-model', 'model');
+            if (pct >= 10 || granularComplete) {
+                markStepComplete('step-missing', 'missing');
+                markStepComplete('step-norm', 'norm');
+            }
+            if (pct >= 30 || granularComplete) {
+                markStepComplete('step-feature', 'feature');
+            }
+            if (pct >= 70 || granularComplete) {
+                markStepComplete('step-model', 'model');
+            }
 
-                        const reportStep = document.getElementById('step-report');
-                        if (reportStep && !reportStep.innerHTML.includes('fa-spinner')) {
-                            let reportTextHtml = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span>';
-                            reportStep.innerHTML = reportTextHtml;
-                        } else if (reportStep && reportStep.innerHTML.includes('fa-spinner')) {
-                            // Only update percentage
-                            reportStep.innerHTML = reportStep.innerHTML.replace(/\d+%/, pct + '%');
-                        }
-
-                        document.getElementById('main-spinner').className = "icofont-check-circled";
-                        document.getElementById('main-spinner').style.color = "green";
-                        document.getElementById('main-status-title').innerText = "ML Training Results Are Ready";
-                        document.getElementById('main-status-desc').innerText = "You can view the machine learning results now. The AI report is still generating in the background.";
-                        document.getElementById('see-result-btn').style.display = 'inline-block';
-
-                        setTimeout(pollMLTask, 2000);
+            if (data.status === "SUCCESS") {
+                pipelineFinished = true;
+                updateProgressBar(100);
+                const reportStep = document.getElementById('step-report');
+                if (reportStep) {
+                    markStepComplete('step-report', null);
+                    if (aiReportStartedTime > 0) {
+                        document.getElementById('timer-report').innerText = formatTime(Date.now() - aiReportStartedTime);
                     } else {
-                        setTimeout(pollMLTask, 2000);
+                        document.getElementById('timer-report').innerText = "00:00";
                     }
-                })
-                .catch(err => {
-                    console.error("Polling error:", err.message);
-                    const desc = document.getElementById('main-status-desc');
-                    if (desc) {
-                        desc.innerText = err.message || "Waiting for status update...";
-                    }
+                }
+                document.getElementById('main-spinner').className = "icofont-check-circled";
+                document.getElementById('main-spinner').style.color = "green";
+                document.getElementById('main-status-title').innerText = "Processing Complete";
+                document.getElementById('main-status-desc').innerText = "Your analysis results are ready to be viewed.";
+                document.getElementById('see-result-btn').style.display = 'inline-block';
+            } else if (data.status === "FAILED") {
+                pipelineFinished = true;
+                alert("Machine learning task failed: " + statusMessage);
+            } else if (data.status === "GENERATING") {
+                if (aiReportStartedTime === 0) aiReportStartedTime = Date.now();
+                markStepComplete('step-missing', 'missing');
+                markStepComplete('step-norm', 'norm');
+                markStepComplete('step-feature', 'feature');
+                markStepComplete('step-model', 'model');
 
-                    if (err.status === 404 || err.status === 403) {
-                        console.error("Stopping poll: Non-retriable error.", err.status);
-                        return;
-                    }
+                const reportStep = document.getElementById('step-report');
+                if (reportStep && !reportStep.innerHTML.includes('fa-spinner')) {
+                    let reportTextHtml = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span>';
+                    reportStep.innerHTML = reportTextHtml;
+                } else if (reportStep && reportStep.innerHTML.includes('fa-spinner')) {
+                    reportStep.innerHTML = reportStep.innerHTML.replace(/\d+%/, pct + '%');
+                }
 
-                    pollRetries++;
-                    if (pollRetries > MAX_POLL_RETRIES) {
-                        console.error("Stopping poll: Max retries exceeded.");
-                        if (desc) {
-                            desc.innerText = "Stopping poll: Max retries exceeded. Please refresh or contact support.";
-                            desc.style.color = "red";
-                        }
-                        return;
-                    }
-
-                    setTimeout(pollMLTask, 3000);
-                });
+                document.getElementById('main-spinner').className = "icofont-check-circled";
+                document.getElementById('main-spinner').style.color = "green";
+                document.getElementById('main-status-title').innerText = "ML Training Results Are Ready";
+                document.getElementById('main-status-desc').innerText = "You can view the machine learning results now. The AI report is still generating in the background.";
+                document.getElementById('see-result-btn').style.display = 'inline-block';
+            }
         }
 
-        // start polling immediately
-        pollMLTask();
+        // --- Single initial fetch to hydrate (catches already-done jobs) ---
+        fetch(`/report/status/${uuid}?token=ui_token`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => { if (data) handleStatusData(data); })
+            .catch(err => console.warn("Initial status fetch failed:", err));
+
+        // --- SSE: primary real-time channel ---
+        const evtSource = new EventSource(`/report/stream/${uuid}?token=ui_token`);
+
+        evtSource.onmessage = function(event) {
+            if (event.data === "[DONE]") { evtSource.close(); return; }
+            try {
+                const payload = JSON.parse(event.data);
+                if (payload.connected) {
+                    sseConnected = true;
+                    if (fallbackTimer) { clearInterval(fallbackTimer); fallbackTimer = null; }
+                    return;
+                }
+                if (payload.type === "status") {
+                    handleStatusData(payload);
+                }
+                // Narrative events are not used on this page
+            } catch (e) {}
+        };
+
+        // --- Fallback: low-frequency polling if SSE fails ---
+        evtSource.onerror = function() {
+            if (pipelineFinished) { evtSource.close(); return; }
+            if (!sseConnected && !fallbackTimer) {
+                console.warn("SSE connection failed — falling back to polling (10s)");
+                fallbackTimer = setInterval(() => {
+                    if (pipelineFinished) { clearInterval(fallbackTimer); return; }
+                    fetch(`/report/status/${uuid}?token=ui_token`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => { if (data) handleStatusData(data); })
+                        .catch(() => {});
+                }, 10000);
+            }
+        };
     </script>
     <!-- Footer Area -->
     <!-- <footer id="footer" class="footer ">

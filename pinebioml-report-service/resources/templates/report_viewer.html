@@ -1365,6 +1365,66 @@
             updateSection('conclusion');
             updateSection('recommendations');
         }
+        // Global sort state for model performance table
+        let _sortCol = -1;
+        let _sortAsc = false;
+        function sortModelTable(thEl, colIdx) {
+            const table = thEl.closest('table');
+            if (!table) return;
+            
+            // Toggle sort direction
+            if (_sortCol === colIdx) {
+                _sortAsc = !_sortAsc;
+            } else {
+                _sortCol = colIdx;
+                _sortAsc = true; // ascending on first click
+            }
+            
+            // Collect all tbody elements (each is one model group)
+            const tbodies = Array.from(table.querySelectorAll('tbody'));
+            if (tbodies.length === 0) return;
+            
+            tbodies.sort((a, b) => {
+                const aRow = a.querySelector('tr');
+                const bRow = b.querySelector('tr');
+                if (!aRow || !bRow) return 0;
+                
+                const aCells = aRow.querySelectorAll('td');
+                const bCells = bRow.querySelectorAll('td');
+                if (colIdx >= aCells.length || colIdx >= bCells.length) return 0;
+                
+                const aVal = aCells[colIdx].getAttribute('data-val') || aCells[colIdx].textContent.trim();
+                const bVal = bCells[colIdx].getAttribute('data-val') || bCells[colIdx].textContent.trim();
+                
+                // Try numeric comparison first
+                const aNum = Number.parseFloat(aVal);
+                const bNum = Number.parseFloat(bVal);
+                if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+                    return _sortAsc ? aNum - bNum : bNum - aNum;
+                }
+                
+                // Fallback to string comparison
+                const cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+                return _sortAsc ? cmp : -cmp;
+            });
+            
+            // Re-append sorted tbodies
+            tbodies.forEach(tb => table.appendChild(tb));
+            
+            // Update sort indicators on all th elements
+            table.querySelectorAll('thead th').forEach((th, i) => {
+                const iconSpan = th.querySelector('span');
+                if (iconSpan) {
+                    if (i === colIdx) {
+                        iconSpan.innerHTML = _sortAsc ? '&#x25B2;' : '&#x25BC;';
+                        iconSpan.style.opacity = '1';
+                    } else {
+                        iconSpan.innerHTML = '&#x25B2;&#x25BC;';
+                        iconSpan.style.opacity = '0.4';
+                    }
+                }
+            });
+        }
 
         function renderModelPerformance() {
             const bodyEl = document.getElementById('body-model_performance');
@@ -1392,19 +1452,26 @@
                 }) || keys.find(k => typeof allModels[0][k] === 'string') || keys[0];
 
                 const findMetricKey = (candidates) => {
-                    return candidates
-                        .map(name => keys.find(k => k.toLowerCase() === name))
-                        .find(Boolean);
+                    // Exact match first, then substring match — same logic as backend
+                    for (const name of candidates) {
+                        const exact = keys.find(k => k.toLowerCase() === name);
+                        if (exact) return exact;
+                    }
+                    for (const name of candidates) {
+                        const sub = keys.find(k => k.toLowerCase().includes(name));
+                        if (sub) return sub;
+                    }
+                    return undefined;
                 };
 
                 // Priority columns to display (prefer test_ over cv_ over train_)
                 const preferredCols = [
                     { label: 'Model', key: modelKey },
                     { label: 'Test Accuracy', key: findMetricKey(['test_accuracy', 'test_acc', 'cv_accuracy', 'accuracy', 'acc']) },
-                    { label: 'Test AUC', key: keys.find(k => k.toLowerCase() === 'test_auc') || keys.find(k => k.toLowerCase() === 'cv_auc') || keys.find(k => k.toLowerCase().includes('auc')) },
-                    { label: 'Test F1', key: keys.find(k => k.toLowerCase() === 'test_f1') || keys.find(k => k.toLowerCase() === 'cv_f1') || keys.find(k => k.toLowerCase().includes('f1')) },
-                    { label: 'Test Specificity', key: keys.find(k => k.toLowerCase() === 'test_specificity') || keys.find(k => k.toLowerCase() === 'cv_specificity') || keys.find(k => k.toLowerCase().includes('specificity')) },
-                    { label: 'Test MCC', key: keys.find(k => k.toLowerCase() === 'test_mcc') || keys.find(k => k.toLowerCase() === 'cv_mcc') || keys.find(k => k.toLowerCase().includes('mcc')) },
+                    { label: 'Test AUC', key: findMetricKey(['test_auc', 'cv_auc', 'auc', 'roc_auc']) },
+                    { label: 'Test F1', key: findMetricKey(['test_f1', 'cv_f1', 'f1', 'f1_score']) },
+                    { label: 'Test Specificity', key: findMetricKey(['test_specificity', 'cv_specificity', 'specificity']) },
+                    { label: 'Test MCC', key: findMetricKey(['test_mcc', 'cv_mcc', 'mcc']) },
                 ].filter(c => c.key);
 
                 // Find best model (highest test_accuracy)
@@ -1417,6 +1484,14 @@
                         if (Number.isFinite(v) && v > bestVal) { bestVal = v; bestIdx = i; }
                     });
                 }
+
+                // Sort models by accuracy descending for numbering
+                const indexedModels = allModels.map((m, i) => ({ model: m, origIdx: i }));
+                indexedModels.sort((a, b) => {
+                    const aV = accKey ? (Number.parseFloat(a.model[accKey]) || 0) : 0;
+                    const bV = accKey ? (Number.parseFloat(b.model[accKey]) || 0) : 0;
+                    return bV - aV;
+                });
 
                 // Add a best model callout at the top
                 const bestModel = allModels[bestIdx][modelKey] || 'Unknown';
@@ -1433,49 +1508,56 @@
                     <span style="color:var(--text-secondary);">Test Accuracy:</span> <strong style="color:var(--accent-teal);font-size:1.05rem;">${bestAcc}</strong>
                 </div>`;
 
-                let tableHtml = calloutHtml + '<div style="overflow-x:auto;"><table class="model-table"><thead><tr>';
-                preferredCols.forEach(c => tableHtml += `<th>${c.label}</th>`);
-                tableHtml += '</tr></thead><tbody>';
+                // Config key lookups (once, outside the loop)
+                const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
+                const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+                const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+                const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
 
-                allModels.forEach((row, rowIdx) => {
-                    const isB = rowIdx === bestIdx;
+                // Build sortable headers
+                let tableHtml = calloutHtml + '<div style="overflow-x:auto; max-height:500px; overflow-y:auto; border-radius:12px; border:1px solid var(--border-color);"><table class="model-table" id="model-perf-table-js" style="position:relative;"><thead style="position:sticky; top:0; z-index:2; background:var(--bg-secondary);"><tr>';
+                preferredCols.forEach((c, colIdx) => {
+                    const sortIcon = ' <span style="opacity:0.4;font-size:0.75em;cursor:pointer;">&#x25B2;&#x25BC;</span>';
+                    tableHtml += `<th data-col-idx="${colIdx}" style="cursor:pointer;user-select:none;" onclick="sortModelTable(this, ${colIdx})">${c.label}${sortIcon}</th>`;
+                });
+                tableHtml += '</tr></thead>';
+
+                // Build per-model tbody groups
+                indexedModels.forEach(({ model: row, origIdx }, rank) => {
+                    const isB = origIdx === bestIdx;
+                    const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
+
+                    // tbody with data-sort-val for JS sorting
+                    const sortVal = accKey ? (Number.parseFloat(row[accKey]) || 0) : 0;
+                    tableHtml += `<tbody data-sort-val="${sortVal}">`;
                     tableHtml += `<tr style="${isB ? 'background:rgba(16,185,129,0.12);border-left:3px solid var(--accent-teal);' : ''}">`;
-                    preferredCols.forEach(c => {
+                    preferredCols.forEach((c, colIdx) => {
                         let val = row[c.key];
+                        const rawVal = val;
                         if (typeof val === 'number') {
-                            // Format as percentage if it looks like a 0-1 probability
                             const isProb = c.label !== 'Test MCC' && val >= 0 && val <= 1;
                             val = isProb ? `${(val * 100).toFixed(1)}%` : val.toFixed(4);
                         }
+                        let cellContent = val ?? 'N/A';
+                        if (c.label === 'Model') cellContent = `#${rank+1} ${cellContent}`;
                         const bold = isB && c.label !== 'Model' ? 'font-weight:700;color:var(--accent-teal);' : '';
-                        // Remove bottom border from main row if we have config/params to show, so they look joined
-                        const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
-                        const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
-                        const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
-                        const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
-                        const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
                         const borderStyle = hasConfig ? 'border-bottom:none;' : '';
-                        tableHtml += `<td style="${bold} ${borderStyle}">${val ?? 'N/A'}</td>`;
+                        const dataVal = typeof rawVal === 'number' ? String(rawVal) : (typeof rawVal === 'string' ? rawVal : '');
+                        tableHtml += `<td style="${bold} ${borderStyle}" data-val="${dataVal}">${cellContent}</td>`;
                     });
                     tableHtml += '</tr>';
 
                     // Sub-row for configurations and hyperparameters
-                    const missingKey = keys.find(k => k.toLowerCase() === 'missing' || k.toLowerCase() === 'missingvalueprocessing');
-                    const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
-                    const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
-                    const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
-                    const hasConfig = (missingKey && row[missingKey]) || (normKey && row[normKey]) || (fsKey && row[fsKey]) || (paramsKey && row[paramsKey]);
-
                     if (hasConfig) {
                         let configChunks = [];
                         if (missingKey && row[missingKey] && row[missingKey] !== 'None' && row[missingKey] !== 'N/A') {
-                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[missingKey]}</span></span>`);
+                            configChunks.push(`<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[missingKey]}</span></span>`);
                         }
                         if (normKey && row[normKey] && row[normKey] !== 'None' && row[normKey] !== 'N/A') {
-                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[normKey]}</span></span>`);
+                            configChunks.push(`<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[normKey]}</span></span>`);
                         }
                         if (fsKey && row[fsKey] && row[fsKey] !== 'None' && row[fsKey] !== 'N/A') {
-                            configChunks.push(`<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[fsKey]}</span></span>`);
+                            configChunks.push(`<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${row[fsKey]}</span></span>`);
                         }
 
                         let pValHtml = '';
@@ -1491,35 +1573,36 @@
                                         if (parts.length >= 2) {
                                             const k = parts[0].trim().replace(/^['"]|['"]$/g, '');
                                             const v = parts.slice(1).join(':').trim();
-                                            return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                            return `<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
                                         }
                                         return chunk;
                                     }).join('');
                                 } else {
                                     if (pVal !== 'Default (No Tuning)') {
-                                        pValHtml = `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--text-primary); font-family:monospace;">${pVal}</span></span>`;
+                                        pValHtml = `<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--text-primary); font-family:monospace;">${pVal}</span></span>`;
                                     }
                                 }
                             } else if (typeof pVal === 'object' && pVal !== null) {
                                 pValHtml = Object.entries(pVal).map(([k, v]) => {
                                     k = k.replace('clf__', '').replace('selector__', '');
-                                    return `<span style="background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
+                                    return `<span style="background:var(--bg-secondary); padding:2px 8px; border-radius:6px; border:1px solid var(--border-color);"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">${k}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 2px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary);">${v}</span></span>`;
                                 }).join('');
                             }
                         }
 
                         let allChunksStr = configChunks.join('');
                         if (pValHtml) {
-                            allChunksStr += (configChunks.length > 0 ? '<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid rgba(255,255,255,0.1); height: 16px;"></span>' : '') + pValHtml;
+                            allChunksStr += (configChunks.length > 0 ? '<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid var(--border-color); height: 16px;"></span>' : '') + pValHtml;
                         }
                         const pValDiv = `<div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:0;">${allChunksStr}</div>`;
 
                         // Render full width row underneath
-                        const bgCol = isB ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:rgba(255,255,255,0.015);';
+                        const bgCol = isB ? 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' : 'background:var(--bg-secondary);';
                         tableHtml += `<tr style="${bgCol}"><td colspan="${preferredCols.length}" style="padding-top:6px; padding-bottom:12px; font-size:0.85em; color:var(--text-secondary); border-top:none; text-align:center;">${pValDiv}</td></tr>`;
                     }
+                    tableHtml += '</tbody>';
                 });
-                tableHtml += '</tbody></table></div>';
+                tableHtml += '</table></div>';
 
                 bodyEl.innerHTML = tableHtml;
             }
@@ -1538,27 +1621,10 @@
                 ['Recall / Sensitivity', fallbackMetrics.recall],
                 ['F1-Score', fallbackMetrics.f1Score],
                 ['ROC-AUC', fallbackMetrics.rocAuc],
-                ['MCC', fallbackMetrics.mcc]
-            ];
-            const sourceRows = String('{{ task_type }}').toLowerCase().includes('regression') ? regressionRows : classificationRows;
-            const rows = sourceRows.filter(([, value]) => {
-                const clean = String(value ?? '').trim();
-                return clean && clean !== 'N/A' && clean !== 'undefined' && !clean.startsWith('{{');
-            });
-
-            if (!rows.length) {
-                return '<p>No model performance data available yet.</p>';
-            }
-
             let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;box-shadow:0 4px 12px rgba(16,185,129,0.05);">
-                <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Optimal Model Summary</span>
-                <span style="color:var(--text-secondary);">Showing the selected PineBioML model metrics from the final training result.</span>
+                <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Model Comparison Unavailable</span>
+                <span style="color:var(--text-secondary);">Detailed cross-model metrics were not captured in this run. See overall performance metrics above.</span>
             </div>`;
-            html += '<div style="overflow-x:auto;"><table class="model-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
-            rows.forEach(([label, value]) => {
-                html += `<tr><td><strong>${label}</strong></td><td>${value}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
             return html;
         }
 
@@ -1696,17 +1762,24 @@
                 return;
             }
 
-            // Find accuracy key - try multiple patterns
-            let accKey = Object.keys(allModels[0]).find(k => {
-                const kl = k.toLowerCase();
-                return kl === 'test_accuracy' || kl === 'accuracy' || kl === 'acc' ||
-                    kl.includes('test_accuracy') || kl.includes('accuracy');
-            });
+            // Find accuracy key - use same logic as renderModelPerformance for consistency
+            const rcKeys = Object.keys(allModels[0]);
+            const rcFindKey = (candidates) => {
+                for (const name of candidates) {
+                    const exact = rcKeys.find(k => k.toLowerCase() === name);
+                    if (exact) return exact;
+                }
+                for (const name of candidates) {
+                    const sub = rcKeys.find(k => k.toLowerCase().includes(name));
+                    if (sub) return sub;
+                }
+                return undefined;
+            };
+            let accKey = rcFindKey(['test_accuracy', 'test_acc', 'cv_accuracy', 'accuracy', 'acc']);
             if (!accKey) {
-                // Fall back to first numeric-valued key that's not a name/string key
-                accKey = Object.keys(allModels[0]).find(k => typeof allModels[0][k] === 'number');
+                accKey = rcKeys.find(k => typeof allModels[0][k] === 'number');
             }
-            if (!accKey) accKey = Object.keys(allModels[0])[1];
+            if (!accKey) accKey = rcKeys[1];
 
             // Find model name key - try multiple patterns
             let modelKey = Object.keys(allModels[0]).find(k => {
@@ -1724,26 +1797,40 @@
                 const aVal = parseFloat(a[accKey]) || 0;
                 return bVal - aVal;
             });
-            let top3 = sorted.slice(0, 3);
+            let topModels = sorted.slice(0, 3);
 
-            let html = '<div class="bar-chart-container" style="margin-top: 0;">';
-            top3.forEach(m => {
-                const rawVal = parseFloat(m[accKey]) || 0;
-                let val = rawVal <= 1.0 ? rawVal * 100 : rawVal;
-                let pct = Math.min(Math.max(val, 0), 100).toFixed(1);
+            let barsHtml = '<div class="bar-chart-container" style="margin-top: 0;">';
+            const keys = Object.keys(allModels[0] || {});
+            
+            const paramsKey = keys.find(k => k.toLowerCase() === 'best_params' || k.toLowerCase() === 'params' || k.toLowerCase() === 'hyperparameters');
+            const fsKey = keys.find(k => k.toLowerCase() === 'selection' || k.toLowerCase() === 'feature_selection');
+            const normKey = keys.find(k => k.toLowerCase() === 'normalization' || k.toLowerCase() === 'standarization' || k.toLowerCase() === 'standardization');
+
+            topModels.forEach((m, i) => {
+                let val = Number.parseFloat(m[accKey]);
+                if (Number.isNaN(val)) val = 0;
+                const pct = val <= 1 ? val * 100 : val;
                 const modelName = m[modelKey] || 'Unknown';
-                html += `
+                
+                let configStr = "";
+                if (paramsKey && m[paramsKey] && m[paramsKey] !== 'Default (No Tuning)' && m[paramsKey] !== 'None') configStr = " (Tuned)";
+                else if (fsKey && m[fsKey] && m[fsKey] !== 'None') configStr = " (w/ FS)";
+                else if (normKey && m[normKey] && m[normKey] !== 'None') configStr = " (w/ Norm)";
+                
+                const modelLabel = `#${i + 1} ${modelName}${configStr}`;
+
+                barsHtml += `
                 <div class="bar-row">
-                    <div class="bar-label" title="${modelName}">${modelName}</div>
+                    <div class="bar-label" title="${modelLabel}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${modelLabel}</div>
                     <div class="bar-track">
-                        <div class="bar-fill" style="width: ${pct}%;">${pct}%</div>
+                        <div class="bar-fill" style="width: ${pct}%;">${pct.toFixed(1)}%</div>
                     </div>
                 </div>`;
             });
-            html += '</div>';
+            barsHtml += '</div>';
 
             const barsContainer = document.getElementById('report-card-bars');
-            if (barsContainer) barsContainer.innerHTML = html;
+            if (barsContainer) barsContainer.innerHTML = barsHtml;
 
             calculateStarRating();
         }

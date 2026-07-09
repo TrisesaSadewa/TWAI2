@@ -98,9 +98,22 @@ def update_job_state(report_id: str, status: str, progress_pct: int,
                     rec.model_name = model_name
                 rec.updated_at = datetime.utcnow()
                 db.commit()
+
+                # Push status update to any connected SSE clients so browsers
+                # don't need to poll /report/status/{id} repeatedly.
+                from core.streaming import publish
+                status_event = json.dumps({
+                    "type": "status",
+                    "status": status,
+                    "progress_pct": progress_pct,
+                    "message": message,
+                    "model_name": model_name or rec.model_name,
+                })
+                publish(report_id, status_event)
         except Exception as e:
             logger.error(f"update_job_state failed for {report_id}: {e}")
             db.rollback()
+
 
 
 def get_job_status(report_id: str):

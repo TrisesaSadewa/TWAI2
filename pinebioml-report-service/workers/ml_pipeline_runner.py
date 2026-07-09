@@ -307,16 +307,16 @@ def run_dynamic_pipeline(
         cv_folds = evaluate_ncv if evaluate_ncv != -1 else 3 # Fallback to 3 if LOOCV is selected to prevent freezing
         
         if tuning_strategy == "GridSearchCV":
-            search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=None, verbose=1)
+            search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=-1, verbose=1)
         elif tuning_strategy == "BayesianOptimization":
             from skopt import BayesSearchCV
             # Convert list to tuple to ensure skopt treats it as categorical choices rather than trying to infer mixed numerical ranges
             skopt_grid = {k: tuple(v) if isinstance(v, list) else v for k, v in param_grid.items()}
-            search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=None, random_state=42, verbose=1)
+            search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
         else: # RandomizedSearchCV
             grid_size = len(list(ParameterGrid(param_grid)))
             n_iter = min(tuning_n_iter, grid_size)
-            search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=None, random_state=42, verbose=1)
+            search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
         
         return sklearn_esitimator_wrapper(search)
 
@@ -328,7 +328,7 @@ def run_dynamic_pipeline(
         if has("ElasticLogit"):
             model_dict["ElasticLogit"] = tune_model(ElasticNet(max_iter=5000), {"alpha": [0.001, 0.01, 0.1], "l1_ratio": [0.2, 0.5, 0.8]})
         if has("Support Vector Machine(SVM)"):
-            model_dict["Support Vector Machine(SVM)"] = tune_model(SVR(), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
+            model_dict["Support Vector Machine(SVM)"] = tune_model(SVR(max_iter=5000), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
         if has("KNN"):
             model_dict["KNN"] = tune_model(KNeighborsRegressor(), {"n_neighbors": [3, 5, 7, 9]})
         if has("MLP"):
@@ -354,7 +354,7 @@ def run_dynamic_pipeline(
         if has("ElasticLogit"):
             model_dict["ElasticLogit"] = tune_model(SGDClassifier(loss="log_loss", penalty="elasticnet", max_iter=1000, class_weight=cw), {"alpha": [0.0001, 0.001, 0.01], "l1_ratio": [0.2, 0.5, 0.8]})
         if has("Support Vector Machine(SVM)"):
-            model_dict["Support Vector Machine(SVM)"] = tune_model(SVC(probability=True, class_weight=cw), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
+            model_dict["Support Vector Machine(SVM)"] = tune_model(SVC(probability=True, class_weight=cw, max_iter=5000), {"C": [0.1, 1, 10], "kernel": ["linear", "rbf"]})
         if has("KNN"):
             model_dict["KNN"] = tune_model(KNeighborsClassifier(), {"n_neighbors": [3, 5, 7, 9]})
         if has("MLP"):

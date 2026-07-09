@@ -921,7 +921,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
         min_length = 80  # characters
         for mode in ("expert",):
             mode_data = narrative.get(mode, {})
-            required_sections = ["executive_summary", "findings", "visuals_analysis", "recommendations"]
+            required_sections = ["executive_summary", "findings", "recommendations"]
             if mode == "expert":
                 required_sections.insert(1, "preprocessing_and_data_quality")
             for section in required_sections:

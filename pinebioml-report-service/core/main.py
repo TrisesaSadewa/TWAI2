@@ -538,9 +538,15 @@ def get_html_viewer(request: Request, report_id: str = Path(...), token: str = Q
     raise HTTPException(status_code=404, detail="HTML report not found and not processing")
 
 @app.get("/report/stream/{report_id}")
-@limiter.limit("30/minute")
+@limiter.limit("1000/minute")
 async def stream_report(request: Request, report_id: str = Path(...), token: str = Query(None), db: Session = Depends(get_db)):
-    """SSE endpoint for streaming the LLM JSON narrative chunks."""
+    """SSE endpoint for streaming job status updates and LLM narrative chunks.
+
+    Events are typed:
+      - {"type": "status", "status": ..., "progress_pct": ..., "message": ..., "model_name": ...}
+      - {"type": "narrative", "content": ...}
+    Clients use the `type` field to route each event to the correct handler.
+    """
     report_id = sanitize_report_id(report_id)
     job_record = db.query(JobRecord).filter(JobRecord.report_id == report_id).first()
     if job_record and job_record.access_token and job_record.access_token != token:
@@ -558,7 +564,20 @@ async def stream_report(request: Request, report_id: str = Path(...), token: str
                     if data == "[DONE]":
                         yield "data: [DONE]\n\n"
                         return
-                    yield f"data: {json.dumps({'content': data})}\n\n"
+
+                    # Distinguish status events (from update_job_state) from
+                    # narrative content (from narrative_generator).
+                    try:
+                        parsed = json.loads(data)
+                        if isinstance(parsed, dict) and parsed.get("type") == "status":
+                            # Status event — forward as-is
+                            yield f"data: {data}\n\n"
+                        else:
+                            # Structured narrative chunk (e.g. the full JSON blob)
+                            yield f"data: {json.dumps({'type': 'narrative', 'content': data})}\n\n"
+                    except (json.JSONDecodeError, TypeError):
+                        # Plain text narrative token
+                        yield f"data: {json.dumps({'type': 'narrative', 'content': data})}\n\n"
                 except Exception:
                     status_dict = get_job_status(report_id)
                     if status_dict and status_dict["status"] in ["SUCCESS", "FAILED"]:
@@ -570,6 +589,7 @@ async def stream_report(request: Request, report_id: str = Path(...), token: str
             unsubscribe_stream(report_id, stream_queue)
             
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 
 @app.get("/report/{report_id}/download/{fmt}")
 @limiter.limit("15/minute")

@@ -950,14 +950,10 @@ class ReportEngine:
             'box-shadow:0 4px 12px rgba(16,185,129,0.05);">'
             '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;'
             'font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">'
-            'Optimal Model Summary</span>'
-            '<span style="color:#94a3b8;">Showing the selected PineBioML model metrics from the final training result.</span>'
+            'Model Comparison Unavailable</span>'
+            '<span style="color:#94a3b8;">Detailed cross-model metrics were not captured in this run. See overall performance metrics above.</span>'
             '</div>'
-            '<div style="overflow-x:auto;"><table class="model-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>'
         )
-        for label, value in rows:
-            html += f"<tr><td><strong>{html_lib.escape(label)}</strong></td><td>{html_lib.escape(value)}</td></tr>"
-        html += "</tbody></table></div>"
         return html
 
     def _render_regression_model_performance_table(self, all_models: list, metrics: dict = None) -> str:
@@ -1081,9 +1077,11 @@ class ReportEngine:
             ("TEST AUC",          [find_metric_key(("test_auc", "auc", "roc_auc", "roc-auc"))]),
             ("TEST F1",           [find_metric_key(("test_f1", "f1", "f1_score", "f1-score"))]),
         ]
-        
         # Pipeline components
         params_key = next((k for k in keys if k.lower() in ("best_params", "params", "hyperparameters")), None)
+        missing_key = next((k for k in keys if k.lower() in ("missing", "missingvalueprocessing")), None)
+        norm_key = next((k for k in keys if k.lower() in ("normalization", "standarization", "standardization")), None)
+        fs_key = next((k for k in keys if k.lower() in ("selection", "feature_selection")), None)
 
         cols = [(label, key_list[0]) for label, key_list in col_specs if key_list and key_list[0]]
         
@@ -1121,16 +1119,33 @@ class ReportEngine:
             elif isinstance(p_val, dict):
                 p_dict = p_val
                 
+            p_chunks = []
+            
+            if missing_key and row.get(missing_key) and str(row.get(missing_key)) not in ('None', 'N/A', ''):
+                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[missing_key]))}</span></span>')
+            
+            if norm_key and row.get(norm_key) and str(row.get(norm_key)) not in ('None', 'N/A', ''):
+                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[norm_key]))}</span></span>')
+                
+            if fs_key and row.get(fs_key) and str(row.get(fs_key)) not in ('None', 'N/A', ''):
+                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[fs_key]))}</span></span>')
+
             if p_dict:
-                p_chunks = []
+                if p_chunks:
+                    p_chunks.append('<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid var(--border-color); height: 16px;"></span>')
                 for k, v in p_dict.items():
                     clean_k = str(k).replace("clf__", "").replace("selector__", "")
-                    p_chunks.append(f'<span style="background:rgba(255,255,255,0.04); padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.85em;"><span style="color:#10b981;font-family:monospace;font-weight:600;">{html_lib.escape(str(clean_k))}</span> <span style="color:#94a3b8; font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:#f8fafc; font-weight:600;">{html_lib.escape(str(v))}</span></span>')
+                    p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">{html_lib.escape(str(clean_k))}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(v))}</span></span>')
+            elif p_val and str(p_val) not in ('None', 'N/A', 'Default (No Tuning)'):
+                if p_chunks:
+                    p_chunks.append('<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid var(--border-color); height: 16px;"></span>')
+                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--text-primary); font-family:monospace; font-weight:600;">{html_lib.escape(str(p_val))}</span></span>')
+                
+            if p_chunks:
                 margin_top = "0px" if not is_callout else "6px"
-                return f'<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:{margin_top};">{"".join(p_chunks)}</div>'
-            else:
-                margin_top = "0px" if not is_callout else "6px"
-                return f'<div style="margin-top:{margin_top};">{html_lib.escape(str(p_val))}</div>' if p_val else ''
+                return f'<div style="display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin-top:{margin_top};">{"".join(p_chunks)}</div>'
+            
+            return ''
 
         best = all_models[best_idx]
         best_name = best.get(model_key, "Unknown")
@@ -1140,40 +1155,67 @@ class ReportEngine:
             f'<div style="margin-bottom:1.25rem;padding:1rem 1.5rem;background:rgba(16,185,129,0.08);'
             f'border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;'
             f'box-shadow: 0 4px 12px rgba(16,185,129,0.05);">'
-            f'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;margin-right:12px;">BEST MODEL</span>'
-            f'<strong style="color:#f8fafc;font-size:1.1rem;font-weight:700;">{html_lib.escape(str(best_name))}</strong>'
-            f'<span style="color:#94a3b8;margin:0 12px;font-size:1.2rem;vertical-align:middle;">&bull;</span>'
-            f'<span style="color:#94a3b8;">Test Accuracy:</span> <strong style="color:#10b981;font-size:1.1rem;margin-left:4px;">{best_acc}</strong>'
+            f'<span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;margin-right:12px;">BEST MODEL</span>'
+            f'<strong style="color:var(--text-primary);font-size:1.1rem;font-weight:700;">{html_lib.escape(str(best_name))}</strong>'
+            f'<span style="color:var(--text-secondary);margin:0 12px;font-size:1.2rem;vertical-align:middle;">&bull;</span>'
+            f'<span style="color:var(--text-secondary);">Test Accuracy:</span> <strong style="color:var(--accent-teal);font-size:1.1rem;margin-left:4px;">{best_acc}</strong>'
             f'</div>'
         )
 
-        html = callout_html + '<div style="overflow-x:auto;"><table class="model-table"><thead><tr>'
-        for label, _ in cols:
-            html += f"<th>{html_lib.escape(str(label))}</th>"
-        html += "</tr></thead><tbody>"
+        # Build the table with scrollable container, numbered rows, sortable headers, and per-model tbody groups
+        html = callout_html + '<div style="overflow-x:auto; max-height:500px; overflow-y:auto; border-radius:12px; border:1px solid var(--border-color);"><table class="model-table" id="model-perf-table" style="position:relative;"><thead style="position:sticky; top:0; z-index:2; background:var(--bg-secondary);"><tr>'
+        for col_idx, (label, _) in enumerate(cols):
+            sort_icon = ' <span style="opacity:0.4;font-size:0.75em;cursor:pointer;">&#x25B2;&#x25BC;</span>'
+            html += f'<th data-col-idx="{col_idx}" style="cursor:pointer;user-select:none;" onclick="sortModelTable(this, {col_idx})">{html_lib.escape(str(label))}{sort_icon}</th>'
+        html += "</tr></thead>"
         
-        for i, row in enumerate(all_models):
-            is_best = (i == best_idx)
-            row_style = 'background:rgba(16,185,129,0.12);border-left:3px solid #10b981;' if is_best else ''
+        # Sort models by accuracy descending for numbering
+        indexed_models = list(enumerate(all_models))
+        try:
+            indexed_models.sort(key=lambda x: float(x[1].get(acc_col_key, 0) or 0), reverse=True)
+        except Exception:
+            pass
+        
+        for rank, (orig_idx, row) in enumerate(indexed_models):
+            is_best = (orig_idx == best_idx)
+            row_style = 'background:rgba(16,185,129,0.12);border-left:3px solid var(--accent-teal);' if is_best else ''
             
             pipeline_html = get_pipeline_html(row, is_callout=False)
             has_pipeline = bool(pipeline_html)
             
+            # Each model gets its own tbody so sorting can move them as a block
+            sort_val = ''
+            if acc_col_key:
+                try:
+                    sort_val = str(float(row.get(acc_col_key, 0) or 0))
+                except Exception:
+                    sort_val = '0'
+            html += f'<tbody data-sort-val="{sort_val}">'
             html += f'<tr style="{row_style}">'
             for label, key in cols:
                 val = row.get(key)
                 cell_val = fmt_val(label, val)
-                cell_style = "font-weight:700;color:#10b981;" if is_best and label != "MODEL" else ""
+                if label == "MODEL":
+                    cell_val = f"#{rank+1} {cell_val}"
+                cell_style = "font-weight:700;color:var(--accent-teal);" if is_best and label != "MODEL" else ""
                 if has_pipeline:
                     cell_style += " border-bottom:none;"
-                html += f'<td style="{cell_style}">{html_lib.escape(str(cell_val))}</td>'
+                # Add data-val for JS sorting
+                raw_val = row.get(key)
+                data_val = ''
+                if isinstance(raw_val, (int, float)):
+                    data_val = str(raw_val)
+                elif isinstance(raw_val, str):
+                    data_val = raw_val
+                html += f'<td style="{cell_style}" data-val="{html_lib.escape(str(data_val))}">{html_lib.escape(str(cell_val))}</td>'
             html += "</tr>"
             
             if has_pipeline:
-                bg_col = 'background:rgba(16,185,129,0.05);border-left:3px solid #10b981;' if is_best else 'background:rgba(255,255,255,0.015);'
-                html += f'<tr style="{bg_col}"><td colspan="{len(cols)}" style="padding-top:8px; padding-bottom:16px; font-size:0.9em; color:#94a3b8; border-top:none; text-align:center;">{pipeline_html}</td></tr>'
+                bg_col = 'background:rgba(16,185,129,0.05);border-left:3px solid var(--accent-teal);' if is_best else 'background:var(--bg-secondary);'
+                html += f'<tr style="{bg_col}"><td colspan="{len(cols)}" style="padding-top:8px; padding-bottom:16px; font-size:0.9em; color:var(--text-secondary); border-top:none; text-align:center;">{pipeline_html}</td></tr>'
+            html += '</tbody>'
         
-        html += "</tbody></table></div>"
+        html += "</table></div>"
         return html
 
     def _render_html_report(self, data: dict) -> str:
@@ -1296,14 +1338,21 @@ class ReportEngine:
         
         if all_models:
             keys = list(all_models[0].keys())
-            # Prefer test_accuracy, then exact 'accuracy'/'acc', then any key containing 'accuracy'
-            acc_key = next((k for k in keys if k.lower() == "test_accuracy"), None)
+            
+            # Use the same robust find_metric_key logic as _render_model_performance_table
+            def _find_report_card_key(candidates):
+                lowered = {k.lower(): k for k in keys}
+                for c in candidates:
+                    if c in lowered:
+                        return lowered[c]
+                for c in candidates:
+                    for k_low, k_orig in lowered.items():
+                        if c in k_low:
+                            return k_orig
+                return None
+            
+            acc_key = _find_report_card_key(("test_accuracy", "test_acc", "cv_accuracy", "accuracy", "acc"))
             if not acc_key:
-                acc_key = next((k for k in keys if k.lower() in ("accuracy", "acc")), None)
-            if not acc_key:
-                acc_key = next((k for k in keys if "accuracy" in k.lower()), None)
-            if not acc_key:
-                # Fall back to first numeric key
                 acc_key = next((k for k in keys if isinstance(all_models[0].get(k), (int, float))), None)
             if not acc_key:
                 acc_key = keys[1] if len(keys) > 1 else keys[0]
@@ -1313,7 +1362,6 @@ class ReportEngine:
             if not model_key:
                 model_key = next((k for k in keys if "model" in k.lower()), None)
             if not model_key:
-                # Fall back to first string key
                 model_key = next((k for k in keys if isinstance(all_models[0].get(k), str)), None)
             if not model_key:
                 model_key = keys[0]
@@ -1326,8 +1374,22 @@ class ReportEngine:
             top3 = sorted_models[:3]
             
             report_card_bars_html = '<div class="bar-chart-container" style="margin-top: 0;">'
-            for m in top3:
+            for i, m in enumerate(top3):
                 model_name = m.get(model_key, "N/A")
+                
+                # Check for config to append to label
+                params_key = next((k for k in keys if k.lower() in ("best_params", "params", "hyperparameters")), None)
+                fs_key = next((k for k in keys if k.lower() in ("selection", "feature_selection")), None)
+                norm_key = next((k for k in keys if k.lower() in ("normalization", "standarization", "standardization")), None)
+                
+                config_str = ""
+                if params_key and m.get(params_key) and m.get(params_key) != 'Default (No Tuning)' and m.get(params_key) != 'None':
+                    config_str = " (Tuned)"
+                elif fs_key and m.get(fs_key) and m.get(fs_key) != 'None':
+                    config_str = " (w/ FS)"
+                elif norm_key and m.get(norm_key) and m.get(norm_key) != 'None':
+                    config_str = " (w/ Norm)"
+                    
                 try:
                     val = float(m.get(acc_key, 0) or 0)
                     val_pct = val * 100.0 if val <= 1.0 else val
@@ -1336,10 +1398,11 @@ class ReportEngine:
                 except Exception:
                     pct_str = "0.0"
                 
-                esc_name = html_lib.escape(str(model_name))
+                model_label = f"#{i+1} {model_name}{config_str}"
+                esc_name = html_lib.escape(model_label)
                 report_card_bars_html += f"""
                 <div class="bar-row">
-                    <div class="bar-label" title="{esc_name}">{esc_name}</div>
+                    <div class="bar-label" title="{esc_name}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">{esc_name}</div>
                     <div class="bar-track">
                         <div class="bar-fill" style="width: {pct_str}%;">{pct_str}%</div>
                     </div>

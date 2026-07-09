@@ -97,7 +97,8 @@ class basic_plot(ABC):
         if self.save_fig:
             plt.savefig(self.save_path + self.save_name(), bbox_inches='tight')
         if self.show_fig:
-            plt.show()
+            if plt.get_backend().lower() != 'agg':
+                plt.show()
         else:
             plt.clf()
 

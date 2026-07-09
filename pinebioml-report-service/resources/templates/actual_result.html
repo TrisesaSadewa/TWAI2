@@ -955,93 +955,94 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                 }
             }, 1000);
 
-            let aiPollRetries = 0;
-            const MAX_AI_POLL_RETRIES = 10;
+            let fallbackTimer = null;
+            let sseConnected = false;
 
-            function pollAIReportStatus() {
-                fetch(`/report/status/${reportId}?token=ui_token`)
-                    .then(async res => {
-                        const contentType = res.headers.get('content-type') || '';
-                        if (!res.ok) {
-                            let message = `AI report status unavailable (${res.status}).`;
-                            if (contentType.includes('application/json')) {
-                                const errorData = await res.json();
-                                message = errorData.detail || message;
-                            }
-                            const error = new Error(message);
-                            error.status = res.status;
-                            throw error;
-                        }
-                        if (!contentType.includes('application/json')) {
-                            throw new Error('AI report status returned an unexpected response.');
-                        }
-                        return res.json();
-                    })
-                    .then(data => {
-                        aiPollRetries = 0; // reset on success
-                        const status = data.status || '';
-                        const pct = data.progress_pct || 0;
+            // --- Core status handler (reused by SSE + fallback) ---
+            function handleStatusData(data) {
+                if (aiReportFinished) return;
+                const status = data.status || '';
+                const pct = data.progress_pct || 0;
 
-                        if (status === 'SUCCESS') {
-                            aiReportFinished = true;
-                            setAIReportProgress(100, 'AI report is ready.', true);
-                            return;
-                        }
+                if (status === 'SUCCESS') {
+                    aiReportFinished = true;
+                    setAIReportProgress(100, 'AI report is ready.', true);
+                    return;
+                }
 
-                        if (status === 'FAILED') {
-                            aiReportFinished = true;
-                            setAIReportProgress(100, data.message || 'AI report generation failed.', false);
-                            if (aiProgressFill) aiProgressFill.style.background = '#dc3545';
-                            if (aiReportBtn) {
-                                aiReportBtn.innerText = 'AI Report Failed';
-                                aiReportBtn.style.backgroundColor = '#6c757d';
-                                aiReportBtn.style.borderColor = '#6c757d';
-                            }
-                            return;
-                        }
+                if (status === 'FAILED') {
+                    aiReportFinished = true;
+                    setAIReportProgress(100, data.message || 'AI report generation failed.', false);
+                    if (aiProgressFill) aiProgressFill.style.background = '#dc3545';
+                    if (aiReportBtn) {
+                        aiReportBtn.innerText = 'AI Report Failed';
+                        aiReportBtn.style.backgroundColor = '#6c757d';
+                        aiReportBtn.style.borderColor = '#6c757d';
+                    }
+                    return;
+                }
 
-                        if (status === 'GENERATING') {
-                            if (aiReportStartedTime === 0) {
-                                // Prefer server updated_at, fallback to Date.now()
-                                if (data.updated_at) {
-                                    // Parse ISO string and cap it at Date.now() to prevent negative timers from slight clock skew
-                                    const serverTime = new Date(data.updated_at).getTime();
-                                    aiReportStartedTime = Math.min(serverTime, Date.now());
-                                } else {
-                                    aiReportStartedTime = Date.now();
-                                }
-                            }
-                            const currentTimer = formatTime(Date.now() - aiReportStartedTime);
-                            setAIReportProgress(pct, `AI report is still generating... ${Math.round(pct)}% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">${currentTimer}</span>`, false);
-                            if (aiReportBtn) {
-                                aiReportBtn.innerText = 'View AI Report (Generating)';
-                                aiReportBtn.style.backgroundColor = '#2f80ed';
-                                aiReportBtn.style.borderColor = '#2f80ed';
-                            }
+                if (status === 'GENERATING') {
+                    if (aiReportStartedTime === 0) {
+                        // Prefer server updated_at, fallback to Date.now()
+                        if (data.updated_at) {
+                            const serverTime = new Date(data.updated_at).getTime();
+                            aiReportStartedTime = Math.min(serverTime, Date.now());
                         } else {
-                            setAIReportProgress(pct, `AI report is queued... <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">Waiting for data</span>`, false);
+                            aiReportStartedTime = Date.now();
                         }
-
-                        setTimeout(pollAIReportStatus, 2500);
-                    })
-                    .catch(error => {
-                        if (error.status === 404 || error.status === 403) {
-                            setAIReportProgress(0, `Status unavailable (${error.status}). Stopping poll.`, false);
-                            return;
-                        }
-
-                        aiPollRetries++;
-                        if (aiPollRetries > MAX_AI_POLL_RETRIES) {
-                            setAIReportProgress(0, "Stopping poll: Max retries exceeded. Please refresh.", false);
-                            return;
-                        }
-
-                        setAIReportProgress(0, error.message || 'Checking AI report status...', false);
-                        setTimeout(pollAIReportStatus, 5000);
-                    });
+                    }
+                    const currentTimer = formatTime(Date.now() - aiReportStartedTime);
+                    setAIReportProgress(pct, `AI report is still generating... ${Math.round(pct)}% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">${currentTimer}</span>`, false);
+                    if (aiReportBtn) {
+                        aiReportBtn.innerText = 'View AI Report (Generating)';
+                        aiReportBtn.style.backgroundColor = '#2f80ed';
+                        aiReportBtn.style.borderColor = '#2f80ed';
+                    }
+                } else {
+                    setAIReportProgress(pct, `AI report is queued... <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">Waiting for data</span>`, false);
+                }
             }
 
-            pollAIReportStatus();
+            // --- Single initial fetch to hydrate ---
+            fetch(`/report/status/${reportId}?token=ui_token`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => { if (data) handleStatusData(data); })
+                .catch(err => console.warn("Initial status fetch failed:", err));
+
+            // --- SSE: primary real-time channel ---
+            const evtSource = new EventSource(`/report/stream/${reportId}?token=ui_token`);
+
+            evtSource.onmessage = function(event) {
+                if (event.data === "[DONE]") { evtSource.close(); return; }
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.connected) {
+                        sseConnected = true;
+                        if (fallbackTimer) { clearInterval(fallbackTimer); fallbackTimer = null; }
+                        return;
+                    }
+                    if (payload.type === "status") {
+                        handleStatusData(payload);
+                    }
+                    // Narrative events are not used on this page
+                } catch (e) {}
+            };
+
+            // --- Fallback: low-frequency polling if SSE fails ---
+            evtSource.onerror = function() {
+                if (aiReportFinished) { evtSource.close(); return; }
+                if (!sseConnected && !fallbackTimer) {
+                    console.warn("SSE connection failed — falling back to polling (10s)");
+                    fallbackTimer = setInterval(() => {
+                        if (aiReportFinished) { clearInterval(fallbackTimer); return; }
+                        fetch(`/report/status/${reportId}?token=ui_token`)
+                            .then(res => res.ok ? res.json() : null)
+                            .then(data => { if (data) handleStatusData(data); })
+                            .catch(() => {});
+                    }, 10000);
+                }
+            };
         });
 </script>
 <script nonce="{{ request.state.csp_nonce }}">
