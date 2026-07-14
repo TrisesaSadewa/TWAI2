@@ -50,8 +50,8 @@ _COMMON_CLINICAL_FEATURE_RE = {
 
 def _is_negated_match(content: str, match: re.Match) -> bool:
     """Return True for phrases like "not perfect" that are cautions, not claims."""
-    prefix = content[max(0, match.start() - 12):match.start()].lower()
-    return bool(re.search(r"\b(not|isn't|is not|wasn't|was not|cannot be|not yet)\s*$", prefix))
+    prefix = content[max(0, match.start() - 24):match.start()].lower()
+    return bool(re.search(r"\b(not|isn't|is not|wasn't|was not|cannot be|not yet|far from|less than|never|no model is|almost|although not|while not)\s*$", prefix))
 
 
 def _feature_allowed(feature_label: str, allowed_features: set[str]) -> bool:
@@ -584,9 +584,12 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 def _flatten_to_markdown(val):
                     if isinstance(val, str): return val
                     if isinstance(val, list):
-                        # If list of lists (e.g., table rows), format as table-ish or bullet points
-                        if all(isinstance(i, list) for i in val):
-                            return "\n".join("- " + ": ".join(str(x) for x in row) for row in val)
+                        # If list of lists (e.g., table rows), render as a proper markdown table
+                        if all(isinstance(i, list) for i in val) and len(val) >= 2:
+                            header = "| " + " | ".join(str(x) for x in val[0]) + " |"
+                            sep = "| " + " | ".join("---" for _ in val[0]) + " |"
+                            rows = "\n".join("| " + " | ".join(str(x) for x in row) + " |" for row in val[1:])
+                            return f"{header}\n{sep}\n{rows}"
                         return "\n\n".join(str(i) for i in val)
                     if isinstance(val, dict):
                         parts = []
@@ -603,6 +606,14 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                             if section in parsed_json[mode]:
                                 if isinstance(parsed_json[mode][section], (dict, list)):
                                     parsed_json[mode][section] = _flatten_to_markdown(parsed_json[mode][section])
+
+                # ── Deterministic Plot Injection ─────────────────────────────────
+                # Ensure all available plots are referenced even if the LLM
+                # forgot to emit the corresponding [PLOT: ...] tags.
+                if visuals_summary:
+                    parsed_json = self._inject_missing_plot_tags(
+                        parsed_json, visuals_summary, task_type
+                    )
 
                 # ── Quality Gates ────────────────────────────────────────────────
                 try:
@@ -706,6 +717,142 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
         if report_id:
             publish_stream(report_id, json.dumps(parsed_json))
             publish_stream(report_id, "[DONE]")
+
+        return parsed_json
+
+    # ── Deterministic Plot Injection ────────────────────────────────────────
+
+    # Canonical plot order and the keywords the LLM typically uses when
+    # discussing them.  Used by _inject_missing_plot_tags to decide *where*
+    # to place a tag the LLM omitted.
+    _CLASSIFICATION_PLOT_ORDER = [
+        ("roc_curve",           ["roc curve", "roc-auc", "auc", "receiver operating"]),
+        ("pr_curve",            ["precision-recall", "pr curve", "precision recall", "auc-pr"]),
+        ("confusion_matrix",    ["confusion matrix", "true positive", "false positive", "tn", "tp", "fn", "fp"]),
+        ("corr_heatmap",        ["correlation heatmap", "correlation matrix", "heatmap", "correlated"]),
+        ("feature_importance",  ["feature importance", "important feature", "predictive feature"]),
+        ("shap",                ["shap", "shapley"]),
+        ("pca",                 ["pca", "principal component"]),
+        ("pls",                 ["pls", "partial least"]),
+        ("umap",                ["umap", "uniform manifold"]),
+    ]
+
+    _REGRESSION_PLOT_ORDER = [
+        ("true_vs_predicted",   ["true vs predicted", "true-vs-predicted", "actual vs predicted", "predicted vs actual"]),
+        ("residuals",           ["residual", "residuals"]),
+        ("corr_heatmap",        ["correlation heatmap", "correlation matrix", "heatmap"]),
+        ("feature_importance",  ["feature importance", "important feature"]),
+        ("shap",                ["shap", "shapley"]),
+        ("pca",                 ["pca", "principal component"]),
+        ("pls",                 ["pls", "partial least"]),
+        ("umap",                ["umap", "uniform manifold"]),
+    ]
+
+    @staticmethod
+    def _normalize_visual_key(key: str) -> str:
+        """Collapse a visuals_summary key to its bare plot concept."""
+        k = key.lower()
+        for suffix in ("_png", "_html", ".png", ".html"):
+            k = k.replace(suffix, "")
+        return re.sub(r"[^a-z0-9]", "", k)
+
+    def _inject_missing_plot_tags(
+        self, parsed_json: dict, visuals_summary: dict, task_type: str
+    ) -> dict:
+        """
+        Ensure all available plots are referenced in the findings section.
+
+        For each plot that exists in *visuals_summary* but whose ``[PLOT: …]``
+        tag is absent from the findings text, this method either:
+        1. inserts the tag directly before the paragraph that first mentions
+           a related keyword, or
+        2. appends it at the end of the findings section.
+
+        This makes plot appearance deterministic and independent of whether
+        the LLM remembered to emit the tag.
+        """
+        findings = parsed_json.get("expert", {}).get("findings", "")
+        if not isinstance(findings, str) or not findings.strip():
+            return parsed_json
+
+        plot_order = (
+            self._REGRESSION_PLOT_ORDER
+            if self._is_regression_task(task_type)
+            else self._CLASSIFICATION_PLOT_ORDER
+        )
+
+        # Build a set of normalised visual keys that are actually available
+        available_normalised = {
+            self._normalize_visual_key(k) for k in visuals_summary
+        }
+
+        findings_lower = findings.lower()
+        injected = 0
+
+        for plot_key, keywords in plot_order:
+            normalised_plot = re.sub(r"[^a-z0-9]", "", plot_key.lower())
+
+            # Is this plot available in the artifacts?
+            has_plot = any(
+                normalised_plot in av or av in normalised_plot
+                for av in available_normalised
+            )
+            if not has_plot:
+                continue
+
+            # Is the tag already present (allow flexible whitespace)?
+            tag_pattern = re.compile(
+                r"\[PLOT:\s*" + re.escape(plot_key).replace(r"\_", r"[_ ]?") + r"\s*\]",
+                re.IGNORECASE,
+            )
+            if tag_pattern.search(findings):
+                continue
+
+            # Also check for aliases the LLM might use
+            alias_variants = [plot_key, plot_key.replace("_", " "), plot_key.replace("_", "")]
+            already_present = any(
+                re.search(r"\[PLOT:\s*" + re.escape(v) + r"\s*\]", findings, re.IGNORECASE)
+                for v in alias_variants
+            )
+            if already_present:
+                continue
+
+            # --- Insert the tag ---
+            tag = f"[PLOT: {plot_key}]"
+
+            # Strategy 1: find the first keyword mention and insert before
+            # the paragraph that contains it.
+            inserted = False
+            for kw in keywords:
+                idx = findings_lower.find(kw)
+                if idx != -1:
+                    # Walk backwards to the start of the paragraph
+                    para_start = findings.rfind("\n\n", 0, idx)
+                    insert_pos = para_start + 2 if para_start != -1 else 0
+                    # Don't insert if there's already a [PLOT:] tag in the
+                    # 40 chars before this position (avoid double-stacking)
+                    preceding = findings[max(0, insert_pos - 60):insert_pos]
+                    if "[PLOT:" in preceding.upper():
+                        continue
+                    findings = (
+                        findings[:insert_pos]
+                        + f"{tag}\n\n"
+                        + findings[insert_pos:]
+                    )
+                    findings_lower = findings.lower()
+                    inserted = True
+                    injected += 1
+                    break
+
+            # Strategy 2: append at the end of findings
+            if not inserted:
+                findings = findings.rstrip() + f"\n\n{tag}\n"
+                findings_lower = findings.lower()
+                injected += 1
+
+        if injected:
+            logger.info(f"Deterministically injected {injected} missing [PLOT:] tag(s) into findings")
+            parsed_json.setdefault("expert", {})["findings"] = findings
 
         return parsed_json
 
@@ -850,7 +997,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                             # Allow common structural percentages that may refer to baselines
                             # or absence of events, but do not blanket-allow 100% because
                             # that can mask invented "perfect model" claims.
-                            if pct_val in (0, 50):
+                            if pct_val in (0, 20, 25, 30, 50, 70, 75, 80):
                                 continue
                             # Allow percentages derived from AUC (e.g., AUC 0.8650 → 86.5%)
                             auc_val = metrics.get("ROC-AUC", "")
@@ -948,6 +1095,24 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
         if anchored_count < required_anchor_count:
             result["data_anchored"] = False
             result["incomplete_sections"].append("expert.findings (not data-anchored)")
+
+        # 4. Plot-tag presence — the findings should reference available plots
+        findings_text = str(expert.get("findings", "")).lower()
+        if self._is_regression_task(task_type):
+            expected_plots = ["true_vs_predicted", "residuals"]
+        else:
+            expected_plots = ["roc_curve", "confusion_matrix", "feature_importance", "shap"]
+        missing_plots = [
+            p for p in expected_plots
+            if f"[plot: {p}" not in findings_text
+            and f"[plot:{p}" not in findings_text
+        ]
+        # Flag only when more than half of expected plots are missing
+        if len(missing_plots) > len(expected_plots) // 2:
+            result["incomplete_sections"].append(
+                f"expert.findings (missing {len(missing_plots)} plot references: {', '.join(missing_plots)})"
+            )
+            logger.warning(f"LLM omitted plot tags: {missing_plots}")
 
         return result
 

@@ -104,14 +104,14 @@
 
         .image-text-container {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 20px;
         }
 
         .responsive-image {
             height: auto;
-            width: 100%;
-            max-width: 900px;
+            width: 50%;
             object-fit: contain;
         }
 
@@ -123,9 +123,10 @@
         }
 
         .image-description {
-            order: -1; /* Move text above the plot */
+            flex: 1;
             font-size: 1.05em;
             margin-bottom: 10px;
+            color: #555;
         }
 
         .plot-carousel {
@@ -160,6 +161,118 @@
             border: 1px solid #eee;
             border-radius: 6px;
             background: #f8fafc;
+        }
+
+        .rich-plot-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .rich-plot-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .rich-plot-top {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .rich-plot-top {
+                flex-direction: column;
+            }
+            .rich-plot-img {
+                max-width: 100% !important;
+            }
+        }
+
+        .rich-plot-img {
+            flex: 0 0 55%;
+            max-width: 55%;
+        }
+
+        .rich-plot-img img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .rich-plot-desc {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .rich-plot-desc ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .rich-plot-desc li {
+            margin-bottom: 12px;
+        }
+        
+        .rich-plot-desc li::marker {
+            color: #94a3b8;
+        }
+
+        .rich-plot-iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .rich-plot-actions {
+            margin-top: 16px;
+        }
+
+        .plots-grid {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .plot-container {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .plot-container:hover {
+            transform: translateY(-2px);
+        }
+
+        .plot-img {
+            width: 100%;
+            height: 250px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .plot-title {
+            margin-top: 10px;
+            font-weight: 500;
+            color: #333;
         }
 
         .results-layout {
@@ -288,14 +401,14 @@
             
             padding-top: 100px;}   
             .image-text-container {
-                display: block; /* 讓圖片和文字分行顯示 */
-                text-align: center; /* 可選：文字和圖片居中對齊 */
+                display: flex;
+                flex-direction: column;
+                text-align: left;
             }
 
             .responsive-image {
-                width: 100%; /* 自適應寬度 */
-                max-width: 300px; /* 限制最大寬度 */
-                margin: 0 auto; /* 水平居中 */
+                width: 100%;
+                margin: 0 auto;
             }
 
             .image-description {
@@ -497,100 +610,6 @@
     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"></form> -->
 <input name="csrfmiddlewaretoken" type="hidden" value="cr4HyGgAdpa9w5Ez2VEYDeuKhCJM5LrU6s2Jj09m4DnPCJepyFGAK62Jwt8225Ma"/>
 <div class="results-layout">
-<div class="plot-detail-section">
-<h3>Model Interpretability</h3><br/>
-<div style="display: block; gap: 10px;">
-<div id="/media/{{ uuid }}/output/feature_importance.html" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<br/><h5 style="margin-bottom: 10px;">Feature Importance</h5>
-<div class="image-text-container">
-<iframe class="responsive-frame" style="min-height: 600px;" onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" frameborder="0" src="{{ media_base }}/feature_importance.html">
-</iframe>
-<div class="image-description">
-Feature importance ranks the variables that contributed most strongly to the model predictions.
-Higher-ranked features usually had a larger impact on the selected model, so this plot helps identify which biological or clinical measurements were most influential.
-</div>
-</div><br/>
-<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/feature_importance.html', '_blank'); return false;" style="margin-top: auto; color:white;">
-                                                                            View in full screen
-                                                                        </a><br/>
-</div>
-<div id="/media/{{ uuid }}/output/shap_plot.html" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<br/><h5 style="margin-bottom: 10px;">SHAP Plot</h5>
-<div class="image-text-container">
-<iframe class="responsive-frame" style="min-height: 600px;" onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" frameborder="0" src="{{ media_base }}/shap_plot.html">
-</iframe>
-<div class="image-description">
-The SHAP plot explains how individual features push predictions higher or lower for each sample.
-Features near the top are typically the most influential, while the spread of points shows how consistently each feature affects the model output across the dataset.
-</div>
-</div><br/>
-<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/shap_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
-                                                                            View in full screen
-                                                                        </a><br/>
-</div>
-</div>
-<div style="height: 1px; background-color: #ccc;"></div>
-<div style="display: block; gap: 10px;">
-{% if task_type == 'classification' %}
-<div id="/media/{{ uuid }}/output/ Confusion Matrix.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">Confusion Matrix</h5>
-<div class="image-text-container">
-<!-- 圖片部分 -->
-<img alt="Image" class="responsive-image" src="{{ media_base }}/_Confusion Matrix.png"/>
-<!-- 描述文字部分 -->
-<div class="image-description">
-                                                                
-● A higher number of true positive and true negative results is better.
-● <strong>True positive result:</strong> the actual classification is positive and the predicted classification is positive.<br/>
-● <strong>False negative result:</strong> the actual classification is positive and the predicted classification is negative.<br/>
-● <strong>False positive result:</strong> the actual classification is negative and the predicted classification is positive.<br/>
-● <strong>True negative result:</strong> the actual classification is negative and the predicted classification is negative.
-
-                                                            </div>
-</div>
-</div>
-<div id="/media/{{ uuid }}/output/ ROC Curve.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">ROC Curve</h5>
-<div class="image-text-container">
-<!-- 圖片部分 -->
-<img alt="Image" class="responsive-image" src="{{ media_base }}/_ROC Curve.png"/>
-<!-- 描述文字部分 -->
-<div class="image-description">
-                                                                
-A ROC curve that is closer to the upper-left corner and has a larger area under the curve (AUC) indicates better model performance.
-
-                                                            </div>
-</div>
-</div>
-{% elif task_type == 'regression' %}
-<div id="/media/{{ uuid }}/output/ True vs Predicted.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">True vs Predicted</h5>
-<div class="image-text-container">
-<img alt="Image" class="responsive-image" src="{{ media_base }}/_True vs Predicted.png"/>
-<div class="image-description">
-A scatter plot showing actual values vs predicted values. Points closer to the diagonal line indicate better model predictions.
-</div>
-</div>
-</div>
-<div id="/media/{{ uuid }}/output/ Residuals.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">Residuals</h5>
-<div class="image-text-container">
-<img alt="Image" class="responsive-image" src="{{ media_base }}/_Residuals.png"/>
-<div class="image-description">
-A plot of residuals (errors) vs predicted values. Ideally, residuals should be randomly scattered around zero.
-</div>
-</div>
-</div>
-{% endif %}
-</div>
-<br/><div style="height: 2px; background-color: #ccc;"></div><br/>
- </div>
 <div class="optimal-section">
 <h3>1. The optimal model</h3><br/>
 <label style="font-size: medium;">To determine the optimal model, the scores for CV (cross-validation) and test sets are ranked in ascending order, with the best score ranked as 1. After ranking, the sum of these ranked values is calculated. The model with the smallest total ranking value is selected as the optimal model.</label>
@@ -750,92 +769,43 @@ This file contains detailed performance metrics for all models.<br/>
 <div style="height:2px; background-color:#000000; margin-bottom: 30px;"></div>
 </div>
 <div class="plot-detail-section">
-<h3>2. Data Overview</h3><br/><br/>
-<div style="display: block; gap: 10px;">
-<div id="/media/{{ uuid }}/output/ Correlation Heatmap.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 10px;">Correlation Heatmap</h5>
-<div class="image-text-container">
-<!-- 圖片部分 -->
-<img alt="Image" class="responsive-image" src="{{ media_base }}/_Correlation Heatmap.png"/>
-<!-- 描述文字部分 -->
-<div class="image-description">
-<p>
-The correlation heatmap visualizes correlation coefficients, which measure the linear relationship between two variables. The range of correlation coefficients is from -1 to 1:<br/>
-● <strong>Closer to 1:</strong> Indicates a strong positive correlation.<br/>
-● <strong>Closer to 0:</strong> Indicates no linear relationship.<br/>
-● <strong>Closer to -1:</strong> Indicates a strong negative correlation.
-</p>
-</div>
-</div>
-</div>
-</div>
-<div style="height:2px; background-color:#000000; margin-bottom: 30px;"></div>
-<h3>3. Dimensionality Reduction</h3><br/>
-<div style="display: block; gap: 10px;">
-<br/>
-<div id="/media/{{ uuid }}/output/ PCA.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 1px;">PCA</h5>
-<div class="image-text-container">
-<!-- 圖片部分已移除以使用下方互動圖表 -->
-<!-- 描述文字部分 -->
-<div class="image-description">
-<p>
-● pc_1, pc_2, pc_3, pc_4 represent different principal components.<br/>
-● The diagonal plots show the distribution of data for individual components.<br/>
-● Scatter plots display the relationships between two components (e.g., the top-left plot shows the relationship between pc_1 and pc_2).<br/>
-● More concentrated distributions indicate components with lower variance.<br/>
-● More dispersed distributions indicate components capturing higher variance.
-</p>
-</div>
-</div>
-</div>
-<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/pca_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
-<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pca_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
-                                                                    View in full screen
-                                                                </a><br/>
-<br/>
-<div id="/media/{{ uuid }}/output/ PLS.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 1px;">PLS</h5>
-<div class="image-text-container">
-<!-- 圖片部分已移除以使用下方互動圖表 -->
-<!-- 描述文字部分 -->
-<div class="image-description">
-<p>
-● PLS component 1 and PLS component 2 are the primary components derived from PLS (Partial Least Squares) analysis.<br/>
-● PLS component 1 captures the most critical variance for classification, while PLS component 2 provides supplementary information to enhance classification.
-</p>
-</div>
-</div>
-</div>
-<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/pls_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
-<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/pls_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
-                                                                    View in full screen
-                                                                </a><br/>
-<br/>
-<div id="/media/{{ uuid }}/output/ UMAP.png" style="height:1px; background-color:#ccc; scroll-margin-top: 160px;"></div>
-<div style="margin-bottom: 20px; margin-top: 20px;">
-<h5 style="margin-bottom: 1px;">UMAP</h5>
-<div class="image-text-container">
-<!-- 圖片部分已移除以使用下方互動圖表 -->
-<!-- 描述文字部分 -->
-<div class="image-description">
-<p>
-● If the colored clusters are distinct and well-separated (e.g., forming clearly defined blocks), it indicates that UMAP has successfully preserved the high-dimensional clustering structure in the lower-dimensional space.<br/>
-● UMAP prioritizes preserving local proximity in the data. Points that are close in the plot are likely to share similar features in the high-dimensional space.<br/>
-● Points that are far apart generally represent significant differences in features.
-</p>
-</div>
-</div>
-</div>
-<iframe onload="this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 30) + 'px';" src="{{ media_base }}/umap_plot.html" style="border:1px solid #ccc; border-radius: 8px; min-height: 600px;" width="100%"></iframe>
-<a class="btn btn-outline-primary btn-sm no-preloader" href="/Statistical_Analysis/result/{{ uuid }}/#" onclick="window.open('/media/{{ uuid }}/output/umap_plot.html', '_blank'); return false;" style="margin-top: auto; color:white;">
-                                                                    View in full screen
-                                                                </a><br/>
-</div>
-<br/><div id="" style="height:1px; background-color:#ccc;"></div>
+    <h3>Generated Plots</h3><br/><br/>
+    <div class="plots-grid">
+        {% for key, group in plot_groups.items() %}
+        <div class="rich-plot-card">
+            <div class="rich-plot-title">{{ key }} Plot</div>
+            
+            {% if group.png or group.description %}
+            <div class="rich-plot-top">
+                {% if group.png %}
+                <div class="rich-plot-img">
+                    <img loading="lazy" src="{{ group.png }}" alt="{{ key }}">
+                </div>
+                {% endif %}
+                
+                {% if group.description %}
+                <div class="rich-plot-desc">
+                    <ul>
+                    {% for desc in group.description %}
+                        <li>{{ desc }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if group.html %}
+            <div class="rich-plot-bottom">
+                <iframe loading="lazy" class="rich-plot-iframe" src="{{ group.html }}" title="{{ key }}"></iframe>
+                <div class="rich-plot-actions">
+                    <a class="btn btn-primary no-preloader" href="{{ group.html }}" target="_blank" style="background-color:#1d4ed8; color:white; padding:8px 16px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:500;">View In Full Screen</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
 </div>
 </div>
 <div class="col-lg-12 col-md-12 col-12 text-center" style="margin-bottom: 20px;">
@@ -967,6 +937,21 @@ The correlation heatmap visualizes correlation coefficients, which measure the l
                 if (status === 'SUCCESS') {
                     aiReportFinished = true;
                     setAIReportProgress(100, 'AI report is ready.', true);
+                    // Dynamically fetch the updated page to load the completed plots into the grid
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, "text/html");
+                            
+                            const newGrid = doc.querySelector('.plots-grid');
+                            const oldGrid = document.querySelector('.plots-grid');
+                            if (newGrid && oldGrid) oldGrid.innerHTML = newGrid.innerHTML;
+                            
+                            const newCarousel = doc.querySelector('.plot-carousel');
+                            const oldCarousel = document.querySelector('.plot-carousel');
+                            if (newCarousel && oldCarousel) oldCarousel.innerHTML = newCarousel.innerHTML;
+                        });
                     return;
                 }
 

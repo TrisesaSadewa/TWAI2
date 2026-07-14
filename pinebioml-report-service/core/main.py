@@ -2,8 +2,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import logging
-logging.getLogger("weasyprint").setLevel(logging.ERROR)
-
 import os
 import json
 import time
@@ -523,13 +521,11 @@ def get_html_viewer(request: Request, report_id: str = Path(...), token: str = Q
     # Check status to serve polling view
     if job_record:
         if job_record.status in ("QUEUED", "ANALYZING", "GENERATING", "PENDING", "PROCESSING"):
-            viewer_template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "templates", "viewer.html")
-            if os.path.exists(viewer_template_path):
-                with open(viewer_template_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    content = content.replace("{{ REPORT_ID }}", report_id)
-                    content = content.replace("{{ TOKEN }}", token if token else "")
-                    return content
+            return templates.TemplateResponse(name="viewer.html", request=request, context={
+                "request": request,
+                "REPORT_ID": report_id,
+                "TOKEN": token if token else ""
+            })
             return f"<html><body><h1>Processing Report {report_id}...</h1></body></html>"
         elif job_record.status == "FAILED":
             return f"<html><body><h1>Report generation failed</h1><p>Check server logs for details.</p></body></html>"
@@ -990,6 +986,88 @@ def ui_actual_result_page(request: Request, uuid: str):
     media_base = f"/media/{uuid}/output"
     all_results, all_results_columns, classification_report, regression_report, task_type, imbalance_metadata = load_ml_metrics(uuid)
 
+    import glob
+    import os
+    from core.config import settings
+
+    output_dir = os.path.join(settings.MEDIA_ROOT, uuid, "output")
+    plot_groups = {}
+    
+    standard_descriptions = {
+        "PLS": [
+            "PLS component 1 and PLS component 2 are the primary components derived from PLS (Partial Least Squares) analysis.",
+            "PLS component 1 captures the most critical variance for classification, while PLS component 2 provides supplementary information to enhance classification."
+        ],
+        "PCA": [
+            "Principal Component Analysis (PCA) reduces the dimensionality of the dataset while preserving as much variance as possible.",
+            "The first two principal components shown here capture the most significant patterns and clustering in the data."
+        ],
+        "UMAP": [
+            "Uniform Manifold Approximation and Projection (UMAP) is a non-linear dimensionality reduction technique.",
+            "It is particularly good at preserving both local and global data structure, making it ideal for visualizing clusters."
+        ],
+        "Confusion Matrix": [
+            "The Confusion Matrix displays the number of true positive, true negative, false positive, and false negative predictions.",
+            "This helps in understanding the types of errors the classification model is making."
+        ],
+        "ROC Curve": [
+            "The Receiver Operating Characteristic (ROC) curve illustrates the diagnostic ability of a binary classifier system.",
+            "The Area Under the Curve (AUC) represents the model's ability to distinguish between classes."
+        ],
+        "Correlation Heatmap": [
+            "The Correlation Heatmap visualizes the pairwise Pearson correlation coefficients between features.",
+            "Highly correlated features (close to 1 or -1) may indicate redundancy."
+        ],
+        "Feature Importance": [
+            "This chart highlights the features that contributed most significantly to the model's predictions.",
+            "Higher values indicate that the feature played a larger role in the decision-making process."
+        ],
+        "SHAP": [
+            "SHAP (SHapley Additive exPlanations) values break down a prediction to show the impact of each feature.",
+            "This provides deep interpretability into how the model arrived at its conclusions."
+        ],
+        "True vs Predicted": [
+            "This scatter plot compares the model's predicted values against the actual true values.",
+            "A perfect model would have all points lying exactly on the diagonal line."
+        ],
+        "Residuals": [
+            "The Residuals plot shows the difference between the true and predicted values (errors) across the dataset.",
+            "Randomly scattered residuals around the zero line indicate a good fit without systematic bias."
+        ]
+    }
+
+    if os.path.exists(output_dir):
+        files = os.listdir(output_dir)
+        
+        def get_base_type(filename):
+            name = filename.lower()
+            if "pls" in name: return "PLS"
+            if "pca" in name: return "PCA"
+            if "umap" in name: return "UMAP"
+            if "confusion" in name: return "Confusion Matrix"
+            if "roc" in name: return "ROC Curve"
+            if "correlation" in name: return "Correlation Heatmap"
+            if "feature" in name: return "Feature Importance"
+            if "shap" in name: return "SHAP"
+            if "true vs" in name: return "True vs Predicted"
+            if "residual" in name: return "Residuals"
+            return os.path.splitext(filename)[0].replace('_', ' ').replace(' png', '').strip().title()
+
+        for f in files:
+            if f.endswith((".png", ".html")) and not f.startswith("report"):
+                ptype = get_base_type(f)
+                if ptype not in plot_groups:
+                    plot_groups[ptype] = {
+                        "png": None,
+                        "html": None,
+                        "description": standard_descriptions.get(ptype, [])
+                    }
+                
+                if f.endswith(".png"):
+                    plot_groups[ptype]["png"] = f"{media_base}/{f}"
+                elif f.endswith(".html"):
+                    plot_groups[ptype]["html"] = f"{media_base}/{f}"
+
     return templates.TemplateResponse(name="actual_result.html", request=request, context={
         "request": request,
         "uuid": uuid,
@@ -999,7 +1077,8 @@ def ui_actual_result_page(request: Request, uuid: str):
         "classification_report": classification_report,
         "regression_report": regression_report,
         "task_type": task_type,
-        "imbalance_metadata": imbalance_metadata or {}
+        "imbalance_metadata": imbalance_metadata or {},
+        "plot_groups": plot_groups
     })
 
 @app.api_route("/Statistical_Analysis/setting/{uuid}/", methods=["GET", "POST"])

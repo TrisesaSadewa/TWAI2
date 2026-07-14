@@ -5,6 +5,9 @@ import structlog
 import json
 import matplotlib
 matplotlib.use('Agg')
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.metrics")
+warnings.filterwarnings("ignore", message="Precision is ill-defined")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -296,27 +299,38 @@ def run_dynamic_pipeline(
         evaluate_ncv = 5
 
     from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, ParameterGrid
+    from sklearn.experimental import enable_halving_search_cv
+    from sklearn.model_selection import HalvingRandomSearchCV, HalvingGridSearchCV
 
-    tuning_strategy = settings.get("tuning_strategy", "RandomizedSearchCV")
+    tuning_strategy = settings.get("tuning_strategy", "HalvingRandomSearchCV")
     tuning_n_iter = settings.get("tuning_n_iter", 10)
     
     def tune_model(estimator, param_grid):
         if not param_grid or tuning_strategy == "None":
             return sklearn_esitimator_wrapper(estimator)
         
-        cv_folds = evaluate_ncv if evaluate_ncv != -1 else 3 # Fallback to 3 if LOOCV is selected to prevent freezing
+        # Hardcode internal tuning folds to 3 (or less if LOOCV) to massively speed up search 
+        # compared to using the full evaluation cv_folds setting.
+        cv_folds = 3 if evaluate_ncv == -1 or evaluate_ncv >= 3 else evaluate_ncv
         
         if tuning_strategy == "GridSearchCV":
             search = GridSearchCV(estimator, param_grid, cv=cv_folds, n_jobs=-1, verbose=1)
+        elif tuning_strategy == "HalvingGridSearchCV":
+            search = HalvingGridSearchCV(estimator, param_grid, factor=3, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
         elif tuning_strategy == "BayesianOptimization":
             from skopt import BayesSearchCV
             # Convert list to tuple to ensure skopt treats it as categorical choices rather than trying to infer mixed numerical ranges
             skopt_grid = {k: tuple(v) if isinstance(v, list) else v for k, v in param_grid.items()}
             search = BayesSearchCV(estimator, skopt_grid, n_iter=tuning_n_iter, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
-        else: # RandomizedSearchCV
+        elif tuning_strategy == "RandomizedSearchCV":
             grid_size = len(list(ParameterGrid(param_grid)))
             n_iter = min(tuning_n_iter, grid_size)
             search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
+        else: # Default to HalvingRandomSearchCV for speed
+            grid_size = len(list(ParameterGrid(param_grid)))
+            n_iter = min(tuning_n_iter, grid_size)
+            # HalvingRandomSearchCV needs to be able to reduce resources; passing n_candidates=n_iter ensures it limits its initial random pool
+            search = HalvingRandomSearchCV(estimator, param_grid, n_candidates=n_iter, factor=3, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
         
         return sklearn_esitimator_wrapper(search)
 
@@ -657,7 +671,7 @@ def run_dynamic_pipeline(
                     train_y_labels = train_y_flat.astype(str)
                 
                 # Save classification report to JSON
-                report_dict = classification_report(train_y_labels, pred_y_labels, output_dict=True)
+                report_dict = classification_report(train_y_labels, pred_y_labels, output_dict=True, zero_division=0)
                 with open(os.path.join(output_dir, "classification_report.json"), "w") as f:
                     json.dump(report_dict, f)
 
@@ -737,7 +751,7 @@ def run_dynamic_pipeline(
                             pred_y_labels = tuned_labels.astype(str)
 
                         # Rewrite classification_report.json with tuned predictions.
-                        report_dict = classification_report(train_y_labels, pred_y_labels, output_dict=True)
+                        report_dict = classification_report(train_y_labels, pred_y_labels, output_dict=True, zero_division=0)
                         with open(os.path.join(output_dir, "classification_report.json"), "w") as f:
                             json.dump(report_dict, f)
 
@@ -1051,6 +1065,7 @@ def run_dynamic_pipeline(
                             template="plotly_white",
                             title='SHAP Summary Plot',
                             height=max(600, 30 * len(sorted_idx)),
+                            width=1000,
                             coloraxis_colorbar=dict(
                                 title="Feature Value",
                                 tickvals=[0, 1],
@@ -1116,12 +1131,16 @@ img {{ display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 a
                         scores = np.mean(np.abs(coef), axis=0) if coef.ndim > 1 else np.abs(coef)
 
                     if scores is None or len(scores) != len(feature_names):
-                        baseline = np.asarray(shap_kernel.predict(sample_x)).ravel() if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression() else np.asarray(shap_kernel.predict_proba(sample_x))[:, -1]
+                        # shap_kernel was fit on processed_x (transformed space),
+                        # so we must transform sample_x before predicting.
+                        fb_x = _transform_for_shap(sample_x)
+                        baseline = np.asarray(shap_kernel.predict(fb_x)).ravel() if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression() else np.asarray(shap_kernel.predict_proba(fb_x))[:, -1]
                         scores = []
                         for col in feature_names:
                             permuted = sample_x.copy()
                             permuted[col] = permuted[col].sample(frac=1.0, random_state=42).to_numpy()
-                            changed = np.asarray(shap_kernel.predict(permuted)).ravel() if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression() else np.asarray(shap_kernel.predict_proba(permuted))[:, -1]
+                            perm_x = _transform_for_shap(permuted)
+                            changed = np.asarray(shap_kernel.predict(perm_x)).ravel() if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression() else np.asarray(shap_kernel.predict_proba(perm_x))[:, -1]
                             scores.append(float(np.mean(np.abs(baseline - changed))))
                         scores = np.asarray(scores, dtype=float)
 
@@ -1197,11 +1216,22 @@ img {{ display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 a
                         return np.asarray(shap_kernel.predict(_transform_for_shap(x_arr))).ravel()
                     explainer = shap.Explainer(_predict, sample_x)
                 else:
-                    def _proba1(x_arr):
-                        return np.asarray(shap_kernel.predict_proba(_transform_for_shap(x_arr)))[:, 1]
-                    explainer = shap.Explainer(_proba1, sample_x)
+                    n_classes = len(np.unique(train_y))
+                    if n_classes <= 2:
+                        # Binary: explain P(class=1)
+                        def _proba1(x_arr):
+                            return np.asarray(shap_kernel.predict_proba(_transform_for_shap(x_arr)))[:, 1]
+                        explainer = shap.Explainer(_proba1, sample_x)
+                    else:
+                        # Multiclass: explain raw predictions; SHAP returns 3D values
+                        # which are reduced to 2D by the handler below.
+                        def _predict_mc(x_arr):
+                            return np.asarray(shap_kernel.predict(_transform_for_shap(x_arr))).ravel()
+                        explainer = shap.Explainer(_predict_mc, sample_x)
 
-                shap_values = explainer(sample_x)
+                n_feats = sample_x.shape[1]
+                shap_max_evals = max(500, 2 * n_feats + 1)
+                shap_values = explainer(sample_x, max_evals=shap_max_evals)
                 vals = shap_values.values
                 if isinstance(shap_values, list):
                     vals = shap_values[1].values if len(shap_values) > 1 else shap_values[0].values
@@ -1227,8 +1257,11 @@ img {{ display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 a
                     plt.close("all")
                     n_features = len(sample_x.columns)
                     fig_height = max(4.5, 0.35 * n_features + 1.5)
-                    fig = plt.figure(figsize=(14, fig_height))
+                    plt.figure(figsize=(14, fig_height))
                     shap.summary_plot(vals, sample_x, show=False, max_display=n_features)
+                    # shap.summary_plot may create its own figure; grab whichever is current.
+                    fig = plt.gcf()
+                    fig.set_size_inches(14, fig_height)
                     plt.tight_layout()
                     plt.subplots_adjust(left=0.35)
                     

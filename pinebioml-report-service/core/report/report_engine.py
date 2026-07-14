@@ -284,6 +284,7 @@ class ReportEngine:
             "classification_report_json": "classification_report.json",
             "confusion_matrix_png": "_Confusion Matrix.png",
             "roc_curve_png": "_ROC Curve.png",
+            "pr_curve_png": "_Precision-Recall Curve.png",
             "true_vs_predicted_png": "_True vs Predicted.png",
             "residuals_png": "_Residuals.png",
             "corr_heatmap_png": "_Correlation Heatmap.png",
@@ -308,6 +309,12 @@ class ReportEngine:
             "_roc curve.png": "roc_curve_png",
             "roc curve.png": "roc_curve_png",
             "roc_curve.png": "roc_curve_png",
+            "_precision-recall curve.png": "pr_curve_png",
+            "precision-recall curve.png": "pr_curve_png",
+            "_pr curve.png": "pr_curve_png",
+            "pr curve.png": "pr_curve_png",
+            "pr_curve.png": "pr_curve_png",
+            "precision_recall_curve.png": "pr_curve_png",
             "_true vs predicted.png": "true_vs_predicted_png",
             "true vs predicted.png": "true_vs_predicted_png",
             "true_vs_predicted.png": "true_vs_predicted_png",
@@ -720,13 +727,16 @@ class ReportEngine:
         activity_overlap = detected_labels & self._ACTIVITY_LABELS
 
         if activity_overlap:
-            logger.error(
-                f"CLASS LABEL CONTAMINATION DETECTED! "
-                f"Found activity recognition labels {activity_overlap} in dataset '{dataset_name}'. "
-                f"These labels likely came from a different pipeline run. "
-                f"Removing contaminated per-class data to prevent hallucinated output."
-            )
-            return []  # Better no data than wrong data
+            if "hapt" in dataset_name.lower() or "har" in dataset_name.lower() or "activity" in dataset_name.lower():
+                logger.info(f"Activity labels found in dataset '{dataset_name}'. This is expected for HAPT/HAR datasets.")
+            else:
+                logger.error(
+                    f"CLASS LABEL CONTAMINATION DETECTED! "
+                    f"Found activity recognition labels {activity_overlap} in dataset '{dataset_name}'. "
+                    f"These labels likely came from a different pipeline run. "
+                    f"Removing contaminated per-class data to prevent hallucinated output."
+                )
+                return []  # Better no data than wrong data
 
         # Cross-check: per-class support sum vs actual test set size
         if all_models:
@@ -1219,37 +1229,20 @@ class ReportEngine:
         return html
 
     def _render_html_report(self, data: dict) -> str:
-        """Render the HTML report using the report_viewer.html template."""
-        template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "resources", "templates", "report_viewer.html")
+        """Render the HTML report using the report_viewer.html template via Jinja2."""
+        import jinja2
+        import json
+        
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "resources", "templates")
+        template_path = os.path.join(template_dir, "report_viewer.html")
         if not os.path.exists(template_path):
             raise FileNotFoundError(f"Template not found at {template_path}")
             
-        with open(template_path, "r", encoding="utf-8") as f:
-            template = f.read()
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=False)
+        template = env.get_template("report_viewer.html")
             
-        # Replace template placeholders
-        # Meta info
-        html = template.replace("{{ report_id }}", html_lib.escape(data["report_id"]))
-        html = html.replace("{{ job_id }}", html_lib.escape(data["job_id"]))
-        html = html.replace("{{ dataset_name }}", html_lib.escape(data["dataset_name"]))
-        html = html.replace("{{ task_type }}", html_lib.escape(data["task_type"].replace("_", " ").title()))
-        html = html.replace("{{ generated_at }}", html_lib.escape(data["created_at"]))
-        html = html.replace("{{ model_name }}", html_lib.escape(data.get("model_name", "PineBioML Default")))
-        
-        # Diagnostic metrics
         metrics = data["metrics"]
-        html = html.replace("{{ accuracy }}", html_lib.escape(str(metrics.get("accuracy", "N/A"))))
-        html = html.replace("{{ roc_auc }}", html_lib.escape(str(metrics.get("ROC-AUC", "N/A"))))
-        html = html.replace("{{ precision }}", html_lib.escape(str(metrics.get("precision", "N/A"))))
-        html = html.replace("{{ recall }}", html_lib.escape(str(metrics.get("recall", "N/A"))))
-        html = html.replace("{{ f1_score }}", html_lib.escape(str(metrics.get("F1-Score", "N/A"))))
-        html = html.replace("{{ specificity }}", html_lib.escape(str(metrics.get("specificity", "N/A"))))
-        html = html.replace("{{ mcc }}", html_lib.escape(str(metrics.get("MCC", "N/A"))))
-        html = html.replace("{{ r2 }}", html_lib.escape(str(metrics.get("R2", "N/A"))))
-        html = html.replace("{{ rmse }}", html_lib.escape(str(metrics.get("RMSE", "N/A"))))
-        html = html.replace("{{ mae }}", html_lib.escape(str(metrics.get("MAE", "N/A"))))
-        html = html.replace("{{ mse }}", html_lib.escape(str(metrics.get("MSE", "N/A"))))
-
+        
         imbalance_warning = data.get("imbalance_warning") or {}
         if imbalance_warning:
             warning_title = html_lib.escape(str(imbalance_warning.get("title", "Accuracy may be misleading")))
@@ -1262,7 +1255,6 @@ class ReportEngine:
             )
         else:
             warning_html = ""
-        html = html.replace("{{ imbalance_warning_html }}", warning_html)
 
         narrative_source = data.get("narrative_source", "llm")
         if narrative_source != "llm":
@@ -1290,9 +1282,8 @@ class ReportEngine:
             )
         else:
             narrative_notice_html = ""
-        html = html.replace("{{ narrative_notice_html }}", narrative_notice_html)
         
-        # Narratives for expert (rendered as direct strings for JS block)
+        # Narratives for expert
         expert = data["narrative"]["expert"]
         
         # Load external glossary
@@ -1310,25 +1301,98 @@ class ReportEngine:
             elif not isinstance(text, str):
                 text = str(text) if text is not None else ""
             return text.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
-            
-        html = html.replace("{{ expert_executive_summary }}", js_escape(expert["executive_summary"]))
-        html = html.replace("{{ expert_preprocessing_and_data_quality }}", js_escape(expert.get("preprocessing_and_data_quality", "")))
-        html = html.replace("{{ expert_findings }}", js_escape(expert["findings"]))
-        html = html.replace("{{ expert_conclusion }}", js_escape(expert.get("conclusion", "")))
-        html = html.replace("{{ expert_recommendations }}", js_escape(expert.get("recommendations", "")))
-
-        # Inject JSON configs
-        import json
-        html = html.replace("{{ glossary_json }}", json.dumps(glossary))
-        html = html.replace("{{ all_models_json }}", json.dumps(data.get("all_models", [])))
-        html = html.replace("{{ overfit_json }}", json.dumps(data.get("overfit_analysis", {})))
-        
-        # Markdown replacement deferred until formatted_visuals is computed
         
         # Server-side pre-render Model Performance table
         all_models = data.get("all_models", [])
         model_perf_html = self._render_model_performance_table(all_models, metrics, data.get("task_type", ""))
-        html = html.replace("{{ model_performance_table }}", model_perf_html)
+        
+        # Format visuals
+        visuals_dict = data.get("visuals", {})
+        formatted_visuals = {}
+        for key, val in visuals_dict.items():
+            if not val:
+                formatted_visuals[key] = ""
+                continue
+            if str(val).lower().endswith(".html"):
+                formatted_visuals[key] = self._artifact_url(data["report_id"], val)
+                continue
+            b64_str = VisualAnalyzer.encode_image_to_base64(val)
+            formatted_visuals[key] = f"data:image/png;base64,{b64_str}" if b64_str else ""
+            
+        # Deduplicate visuals for the static report grid (prefer PNG for PDFs)
+        deduplicated_visuals = {}
+        seen_base_keys = {} # maps base_key -> original key
+        for k, v in formatted_visuals.items():
+            base_key = k.lower().replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').strip()
+            # Normalize common aliases to prevent duplicate cards
+            base_key_no_space = base_key.replace(' ', '')
+            aliases = {"shapsummary": "shap", "shapplot": "shap", "pcaplot": "pca", "umapplot": "umap", "plsplot": "pls", "corrheatmap": "correlation heatmap", "correlation": "correlation heatmap"}
+            for alias_k, alias_v in aliases.items():
+                if alias_k in base_key_no_space: base_key = alias_v
+            
+            existing_k = seen_base_keys.get(base_key)
+            if existing_k and str(deduplicated_visuals[existing_k]).startswith("data:image/png"):
+                continue
+            elif str(v).startswith("data:image/png") and existing_k:
+                # Replace the HTML version with the PNG version
+                del deduplicated_visuals[existing_k]
+                deduplicated_visuals[k] = v
+                seen_base_keys[base_key] = k
+            elif not existing_k:
+                deduplicated_visuals[k] = v
+                seen_base_keys[base_key] = k
+
+        # Pre-render markdown to HTML and inject plots
+        exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), formatted_visuals)
+        preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), formatted_visuals)
+        findings_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("findings", "")), formatted_visuals)
+        conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), formatted_visuals)
+        recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), formatted_visuals)
+        
+        context = {
+            "report_id": html_lib.escape(data["report_id"]),
+            "job_id": html_lib.escape(data["job_id"]),
+            "dataset_name": html_lib.escape(data["dataset_name"]),
+            "task_type": html_lib.escape(data["task_type"].replace("_", " ").title()),
+            "generated_at": html_lib.escape(data["created_at"]),
+            "model_name": html_lib.escape(data.get("model_name", "PineBioML Default")),
+            
+            "accuracy": html_lib.escape(str(metrics.get("accuracy", "N/A"))),
+            "roc_auc": html_lib.escape(str(metrics.get("ROC-AUC", "N/A"))),
+            "precision": html_lib.escape(str(metrics.get("precision", "N/A"))),
+            "recall": html_lib.escape(str(metrics.get("recall", "N/A"))),
+            "f1_score": html_lib.escape(str(metrics.get("F1-Score", "N/A"))),
+            "specificity": html_lib.escape(str(metrics.get("specificity", "N/A"))),
+            "mcc": html_lib.escape(str(metrics.get("MCC", "N/A"))),
+            "r2": html_lib.escape(str(metrics.get("R2", "N/A"))),
+            "rmse": html_lib.escape(str(metrics.get("RMSE", "N/A"))),
+            "mae": html_lib.escape(str(metrics.get("MAE", "N/A"))),
+            "mse": html_lib.escape(str(metrics.get("MSE", "N/A"))),
+            
+            "imbalance_warning_html": warning_html,
+            "narrative_notice_html": narrative_notice_html,
+            
+            "expert_executive_summary": js_escape(exec_summary_html),
+            "expert_preprocessing_and_data_quality": js_escape(preprocessing_html),
+            "expert_findings": js_escape(findings_html),
+            "expert_conclusion": js_escape(conclusion_html),
+            "expert_recommendations": js_escape(recs_html),
+            
+            "glossary_json": json.dumps(glossary),
+            "all_models_json": json.dumps(all_models),
+            "overfit_json": json.dumps(data.get("overfit_analysis", {})),
+            
+            "executive_summary": exec_summary_html,
+            "preprocessing_and_data_quality": preprocessing_html,
+            "findings": findings_html,
+            "conclusion": conclusion_html,
+            "recommendations": recs_html,
+            
+            "model_performance_table": model_perf_html,
+            "visuals": deduplicated_visuals
+        }
+        
+        html = template.render(**context)
         
         # Server-side pre-render of Clinical Insights Report Card for static viewers (like PDF)
         all_models = data.get("all_models", [])
@@ -1472,57 +1536,6 @@ class ReportEngine:
             f'<div class="rating-label" id="rating-label">{quality_label}</div>'
         )
         
-        # Embed visuals
-        visuals_dict = data["visuals"]
-        formatted_visuals = {}
-        for key, val in visuals_dict.items():
-            if not val:
-                formatted_visuals[key] = ""
-                continue
-            if str(val).lower().endswith(".html"):
-                formatted_visuals[key] = self._artifact_url(data["report_id"], val)
-                continue
-            b64_str = VisualAnalyzer.encode_image_to_base64(val)
-            formatted_visuals[key] = f"data:image/png;base64,{b64_str}" if b64_str else ""
-                
-        # Embed visuals section
-        plots_grid_html = ""
-        for key, visual_src in formatted_visuals.items():
-            if visual_src:
-                title = key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
-                if str(visual_src).lower().endswith(".html"):
-                    plots_grid_html += f"""
-                    <div class="plot-container">
-                        <iframe class="plot-img" src="{visual_src}" title="{key}" style="border:0;"></iframe>
-                        <div class="plot-title">{title}</div>
-                    </div>
-                    """
-                else:
-                    plots_grid_html += f"""
-                    <div class="plot-container" onclick="zoomPlot('{visual_src}')">
-                        <img class="plot-img" src="{visual_src}" alt="{key}">
-                        <div class="plot-title">{title}</div>
-                    </div>
-                    """
-        # Inject custom plots grid html using a robust regex that replaces the entire template plots-grid
-        import re
-        pattern = r'<div class="plots-grid"[^>]*>.*?{% endfor %}\s*</div>'
-        replacement = f'<div class="plots-grid" style="display:none;">{plots_grid_html}</div>'
-        html = re.sub(pattern, lambda _: replacement, html, flags=re.DOTALL)
-
-        # Embed visuals placeholders in body and pre-render them
-        exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), formatted_visuals)
-        preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), formatted_visuals)
-        findings_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("findings", "")), formatted_visuals)
-        conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), formatted_visuals)
-        recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), formatted_visuals)
-
-        html = html.replace("{{ executive_summary }}", exec_summary_html)
-        html = html.replace("{{ preprocessing_and_data_quality }}", preprocessing_html)
-        html = html.replace("{{ findings }}", findings_html)
-        html = html.replace("{{ conclusion }}", conclusion_html)
-        html = html.replace("{{ recommendations }}", recs_html)
-        
         return html
 
 
@@ -1543,7 +1556,11 @@ class ReportEngine:
         # Sanitize dangerous HTML tags/event handlers from LLM output
         text = sanitize_html_content(text)
         
-        html = markdown.markdown(text, extensions=['tables', 'fenced_code', 'nl2br'])
+        html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+        
+        # Wrap generated tables in a responsive container to prevent breaking page layout
+        html = html.replace('<table>', '<div style="overflow-x: auto;"><table>').replace('</table>', '</table></div>')
+        
         return html
 
     def _replace_plots_with_html(self, html_str: str, formatted_visuals: dict) -> str:
@@ -1577,17 +1594,20 @@ class ReportEngine:
                     "umap2d": "umapplot",
                 }
                 return aliases.get(value, value)
+            seen_matches = set()
             for k in keys:
                 clean_k = normalize_plot_key(k)
                 match_key = next((vk for vk in formatted_visuals if normalize_plot_key(vk) == clean_k or clean_k in normalize_plot_key(vk) or normalize_plot_key(vk) in clean_k), None)
-                if match_key and formatted_visuals[match_key]:
+                if match_key and formatted_visuals[match_key] and match_key not in seen_matches:
+                    seen_matches.add(match_key)
                     val = formatted_visuals[match_key]
                     title = match_key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
                     if str(val).lower().endswith(".html"):
                         plots_html += f"""
-                        <div class="plot-container inline-plot">
+                        <div class="plot-container inline-plot" style="position:relative;">
                             <iframe class="plot-img" src="{val}" title="{match_key}" style="border:0;"></iframe>
                             <div class="plot-title">{title}</div>
+                            <button class="btn-fullscreen" onclick="zoomPlot('{val}')" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; z-index:10; font-size:1.2rem;" title="Fullscreen">⛶</button>
                         </div>
                         """
                     else:

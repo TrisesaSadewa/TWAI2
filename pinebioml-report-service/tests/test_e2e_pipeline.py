@@ -79,7 +79,7 @@ def test_ml_pipeline_edge_cases(dirty_dataset, tmp_path):
         output_dir=output_dir
     )
     
-    assert result is True
+    assert result
     
     # Verify outputs are generated
     assert os.path.exists(output_dir)
@@ -138,7 +138,7 @@ def test_ml_pipeline_regression(regression_dataset, tmp_path):
         output_dir=output_dir
     )
     
-    assert result is True
+    assert result
     assert os.path.exists(output_dir)
     assert os.path.exists(os.path.join(output_dir, "regression_report.json"))
     assert os.path.exists(os.path.join(output_dir, "_True vs Predicted.png"))

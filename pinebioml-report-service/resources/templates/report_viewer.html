@@ -7,7 +7,7 @@
     <title>PineBioML AI Clinical Report Viewer</title>
     <!-- No-FOUC theme init: apply persisted theme (default light) before the
          body paints, so there's no flash of the wrong theme on load. -->
-    <script nonce="{{ request.state.csp_nonce }}">
+    <script nonce="{{ request.state.csp_nonce if request is defined else '' }}">
         (function () {
             try {
                 var saved = localStorage.getItem('pinebioml-theme');
@@ -27,7 +27,7 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <style nonce="{{ request.state.csp_nonce }}">
+    <style nonce="{{ request.state.csp_nonce if request is defined else '' }}">
         @media print {
             :root {
                 --bg-primary: #ffffff !important;
@@ -319,7 +319,7 @@
             text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
         }
 
-        .model-table {
+        .model-table, .section-body table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1.25rem;
@@ -331,14 +331,17 @@
         }
 
         .model-table th,
-        .model-table td {
+        .model-table td,
+        .section-body table th,
+        .section-body table td {
             padding: 1.1rem 1.25rem;
             text-align: center;
             border-bottom: 1px solid var(--border-color);
             font-size: 1rem;
         }
 
-        .model-table th {
+        .model-table th,
+        .section-body table th {
             background: rgba(255, 255, 255, 0.03);
             color: var(--accent-teal);
             font-weight: 700;
@@ -349,18 +352,22 @@
         }
 
         .model-table th:first-child,
-        .model-table td:first-child {
+        .model-table td:first-child,
+        .section-body table th:first-child,
+        .section-body table td:first-child {
             text-align: left;
             padding-left: 2rem;
             width: 28%;
             font-weight: 600;
         }
 
-        .model-table td:first-child {
+        .model-table td:first-child,
+        .section-body table td:first-child {
             color: var(--text-primary);
         }
 
-        .model-table tr:hover {
+        .model-table tr:hover,
+        .section-body table tr:hover {
             background: rgba(255, 255, 255, 0.025);
         }
 
@@ -816,8 +823,8 @@
 
         /* Visual Plots Section */
         .plots-grid {
-            display: none !important;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 2rem;
             margin-top: 1.5rem;
         }
@@ -951,7 +958,7 @@
             <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn">
                 <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
             </button>
-            <script nonce="{{ request.state.csp_nonce }}">
+            <script nonce="{{ request.state.csp_nonce if request is defined else '' }}">
                 document.addEventListener('DOMContentLoaded', () => {
                     const params = new URLSearchParams(window.location.search);
                     const token = params.get('token');
@@ -1148,21 +1155,7 @@
                 </div>
             </section>
 
-            <!-- High-res PNG Plots with Glassmorphic hover zoom effects (hidden for parsing) -->
-            <div class="plots-grid" style="display:none;">
-                {% for key, val in visuals.items() %}
-                <div class="plot-container" {% if val is string and not val.endswith('.html')
-                    %}onclick="zoomPlot('{{ val }}')" {% endif %}>
-                    {% if val is string and val.endswith('.html') %}
-                    <iframe class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
-                    {% else %}
-                    <img class="plot-img" src="{{ val }}" alt="{{ key }}">
-                    {% endif %}
-                    <div class="plot-title">{{ key.replace('_png', '').replace('.png', '').replace('_', ' ').title() }}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+
 
 
 
@@ -1206,13 +1199,38 @@
                 </div>
             </section>
 
+            <!-- 2x2 Plots Container -->
+            <section class="doc-section" id="sec-generated-plots" style="margin-top: 2rem;">
+                <div class="section-header">
+                    <h2 class="section-title">Generated Plots</h2>
+                </div>
+                <div class="section-body">
+                    <div class="plots-grid">
+                        {% for key, val in visuals.items() %}
+                        <div class="plot-container" style="position:relative;" {% if val is string and not val.endswith('.html')
+                            %}onclick="zoomPlot('{{ val }}')" {% endif %}>
+                            {% if val is string and val.endswith('.html') %}
+                            <iframe loading="lazy" class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
+                            <button class="btn-fullscreen" onclick="zoomPlot('{{ val }}')" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; z-index: 10; font-size:1.2rem;" title="Fullscreen">⛶</button>
+                            {% else %}
+                            <img loading="lazy" class="plot-img" src="{{ val }}" alt="{{ key }}">
+                            {% endif %}
+                            <div class="plot-title">{{ key.replace('_png', '').replace('.png', '').replace('_', ' ').title() }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <!-- Image Zoom Modal -->
     <div class="modal" id="plot-modal" onclick="closeModal()">
         <button title="Action" aria-label="Action" class="modal-close" onclick="closeModal()">&times;</button>
-        <img class="modal-content" id="modal-img" src="" alt="Zoomed Plot" onclick="event.stopPropagation()">
+        <img class="modal-content" id="modal-img" src="" alt="Zoomed Plot" onclick="event.stopPropagation()" style="display:none;">
+        <iframe class="modal-content" id="modal-iframe" src="" title="Zoomed Plot" style="display:none; border:none; width:90%; height:90%; background:white;" onclick="event.stopPropagation()"></iframe>
     </div>
 
     <footer>
@@ -1221,17 +1239,17 @@
     </footer>
 
     <!-- JSON Data blocks -->
-    <script nonce="{{ request.state.csp_nonce }}" id="glossary-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce if request is defined else '' }}" id="glossary-json" type="application/json">
         {{ glossary_json }}
     </script>
-    <script nonce="{{ request.state.csp_nonce }}" id="all-models-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce if request is defined else '' }}" id="all-models-json" type="application/json">
         {{ all_models_json }}
     </script>
-    <script nonce="{{ request.state.csp_nonce }}" id="overfit-json" type="application/json">
+    <script nonce="{{ request.state.csp_nonce if request is defined else '' }}" id="overfit-json" type="application/json">
         {{ overfit_json }}
     </script>
 
-    <script nonce="{{ request.state.csp_nonce }}">
+    <script nonce="{{ request.state.csp_nonce if request is defined else '' }}">
         // Inline variables injected by engine
         const narratives = {
             expert: {
@@ -1251,20 +1269,20 @@
         let overfitData = {};
         try {
             const glossaryText = glossaryEl ? glossaryEl.textContent.trim() : '{}';
-            glossary = JSON.parse(glossaryText.startsWith('{{') ? '{}' : glossaryText);
+            glossary = JSON.parse(glossaryText.startsWith('{' + '{') ? '{}' : glossaryText);
         } catch (e) {
             console.error("Failed to parse glossary JSON", e);
         }
         try {
             const allModelsText = allModelsEl ? allModelsEl.textContent.trim() : '[]';
-            allModels = JSON.parse(allModelsText.startsWith('{{') ? '[]' : allModelsText);
+            allModels = JSON.parse(allModelsText.startsWith('{' + '{') ? '[]' : allModelsText);
         } catch (e) {
             console.error("Failed to parse all models JSON", e);
         }
         try {
             const overfitEl = document.getElementById('overfit-json');
             const overfitText = overfitEl ? overfitEl.textContent.trim() : '{}';
-            overfitData = JSON.parse(overfitText.startsWith('{{') ? '{}' : overfitText);
+            overfitData = JSON.parse(overfitText.startsWith('{' + '{') ? '{}' : overfitText);
         } catch (e) {
             console.error("Failed to parse overfit JSON", e);
         }
@@ -1620,7 +1638,8 @@
                 ['Precision', fallbackMetrics.precision],
                 ['Recall / Sensitivity', fallbackMetrics.recall],
                 ['F1-Score', fallbackMetrics.f1Score],
-                ['ROC-AUC', fallbackMetrics.rocAuc],
+                ['ROC-AUC', fallbackMetrics.rocAuc]
+            ];
             let html = `<div style="margin-bottom:1.25rem;padding:0.85rem 1.5rem;background:rgba(16,185,129,0.08);border-radius:12px;border:1px solid rgba(16,185,129,0.2);text-align:center;font-size:1rem;box-shadow:0 4px 12px rgba(16,185,129,0.05);">
                 <span style="background:rgba(16,185,129,0.15);color:var(--accent-teal);padding:3px 10px;border-radius:20px;font-size:0.85em;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-right:10px;">Model Comparison Unavailable</span>
                 <span style="color:var(--text-secondary);">Detailed cross-model metrics were not captured in this run. See overall performance metrics above.</span>
@@ -1906,208 +1925,6 @@
             });
         }
 
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function parseInline(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/__(.*?)__/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/\b_([^_]+)_\b/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code>$1</code>');
-        }
-
-        function parseMarkdown(markdown) {
-            if (!markdown) return '';
-            let src = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            // Removed brittle regex replacement that corrupted table strings
-            const codeBlocks = [];
-            src = src.replace(/```([\s\S]*?)```/g, (match, code) => {
-                codeBlocks.push(code.trim());
-                return `\n===CODEBLOCK_${codeBlocks.length - 1}===\n`;
-            });
-
-            const lines = src.split('\n');
-            let html = '';
-            let inList = null;
-            let inTable = false;
-            let tableRows = [];
-
-            function renderTableHtml(rows) {
-                if (rows.length === 0) return '';
-                let tHtml = '<div style="margin-bottom: 1.5rem;"><table class="model-table"><thead><tr>';
-                // Parse headers
-                let headers = rows[0].split('|').map(x => x.trim());
-                if (headers.length > 0 && headers[0] === '') headers.shift();
-                if (headers.length > 0 && headers[headers.length - 1] === '') headers.pop();
-                headers.forEach(h => {
-                    tHtml += `<th>${parseInline(h)}</th>`;
-                });
-                tHtml += '</tr></thead><tbody>';
-                // Parse body rows
-                for (let r = 1; r < rows.length; r++) {
-                    if (rows[r].replace(/[|:\s\-]/g, '') === '') continue;
-                    tHtml += '<tr>';
-                    let cells = rows[r].split('|').map(x => x.trim());
-                    if (cells.length > 0 && cells[0] === '') cells.shift();
-                    if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
-                    cells.forEach(c => {
-                        tHtml += `<td>${parseInline(c)}</td>`;
-                    });
-                    tHtml += '</tr>';
-                }
-                tHtml += '</tbody></table></div>';
-                return tHtml;
-            }
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                let trimmed = line.trim();
-
-                if (trimmed.startsWith('===CODEBLOCK_') && trimmed.endsWith('===')) {
-                    if (inList) {
-                        html += `</${inList}>\n`;
-                        inList = null;
-                    }
-                    if (inTable) {
-                        html += renderTableHtml(tableRows);
-                        inTable = false;
-                    }
-                    const index = parseInt(trimmed.replace('===CODEBLOCK_', '').replace('===', ''), 10);
-                    html += `<pre><code>${escapeHtml(codeBlocks[index])}</code></pre>\n`;
-                    continue;
-                }
-
-                if (trimmed === '') {
-                    if (inList) {
-                        html += `</${inList}>\n`;
-                        inList = null;
-                    }
-                    if (inTable) {
-                        html += renderTableHtml(tableRows);
-                        inTable = false;
-                    }
-                    continue;
-                }
-
-                // Robust table parsing
-                // A line is part of a table if it contains at least one pipe (excluding trailing/leading)
-                // or if it's the separator line.
-                const hasPipe = trimmed.indexOf('|') !== -1;
-                
-                // Helper to check if a line is a valid markdown separator (e.g. |---|---| or ---|---)
-                function isSeparator(str) {
-                    const clean = str.replace(/[|\s-:]/g, '');
-                    return clean === '' && str.indexOf('-') !== -1 && str.indexOf('|') !== -1;
-                }
-
-                if (hasPipe) {
-                    if (inList) {
-                        html += `</${inList}>\n`;
-                        inList = null;
-                    }
-                    if (!inTable) {
-                        // Check if the next line is a separator to start a new table
-                        let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
-                        if (isSeparator(nextLine)) {
-                            inTable = true;
-                            tableRows = [];
-                            // Ensure the header is properly formatted with outer pipes for the renderer
-                            let header = trimmed;
-                            if (!header.startsWith('|')) header = '| ' + header;
-                            if (!header.endsWith('|')) header = header + ' |';
-                            tableRows.push(header);
-                            i++; // Skip the separator
-                            continue;
-                        }
-                    } else {
-                        // We are already in a table
-                        let row = trimmed;
-                        if (!row.startsWith('|')) row = '| ' + row;
-                        if (!row.endsWith('|')) row = row + ' |';
-                        tableRows.push(row);
-                        continue;
-                    }
-                } else {
-                    if (inTable) {
-                        html += renderTableHtml(tableRows);
-                        inTable = false;
-                    }
-                    // Only add to html if it's not handled by the next if blocks
-                    // (we will skip adding here because the end of the loop does it for non-tables if needed?
-                    // Wait, original code didn't add it here for non-table lines, it let them fall through to header/list parsing)
-                }
-
-                const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
-                if (headerMatch) {
-                    if (inList) {
-                        html += `</${inList}>\n`;
-                        inList = null;
-                    }
-                    const level = headerMatch[1].length;
-                    const content = parseInline(headerMatch[2]);
-                    html += `<h${level}>${content}</h${level}>\n`;
-                    continue;
-                }
-
-                const ulMatch = line.match(/^(\s*)([-*+])\s+(.*)$/);
-                if (ulMatch) {
-                    const content = parseInline(ulMatch[3]);
-                    if (inList !== 'ul') {
-                        if (inList) html += `</${inList}>\n`;
-                        html += '<ul>\n';
-                        inList = 'ul';
-                    }
-                    html += `<li>${content}</li>\n`;
-                    continue;
-                }
-
-                const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
-                if (olMatch) {
-                    const content = parseInline(olMatch[3]);
-                    if (inList !== 'ol') {
-                        if (inList) html += `</${inList}>\n`;
-                        html += '<ol>\n';
-                        inList = 'ol';
-                    }
-                    html += `<li>${content}</li>\n`;
-                    continue;
-                }
-
-                if (inList) {
-                    html += `</${inList}>\n`;
-                    inList = null;
-                }
-
-                let para = line;
-                while (i + 1 < lines.length && lines[i + 1].trim() !== '' &&
-                    !lines[i + 1].match(/^(#{1,6})\s+/) &&
-                    !lines[i + 1].match(/^(\s*)([-*+])\s+/) &&
-                    !lines[i + 1].match(/^(\s*)(\d+)\.\s+/) &&
-                    !(lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|'))) {
-                    i++;
-                    para += ' ' + lines[i].trim();
-                }
-                html += `<p>${parseInline(para)}</p>\n`;
-            }
-
-            if (inList) {
-                html += `</${inList}>\n`;
-            }
-            if (inTable) {
-                html += renderTableHtml(tableRows);
-            }
-
-            return html;
-        }
 
         function updateSection(key) {
             // Prevent re-rendering if currently editing
@@ -2116,8 +1933,7 @@
             const bodyEl = document.getElementById('body-' + (key === 'visuals_analysis' ? 'visuals' : key));
             if (!bodyEl) return;
 
-            let markdown = narratives[currentMode][key] || '';
-            let html = parseMarkdown(markdown);
+            let html = narratives[currentMode][key] || '';
 
             // Apply Glossary Tooltips
             if (glossary && Object.keys(glossary).length > 0) {
@@ -2165,13 +1981,14 @@
                         const title = matchKey.replace('_png', '').replace('.png', '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
                         const isHtmlPlot = val.toLowerCase().endsWith('.html');
                         plotsHtml += isHtmlPlot ? `
-                        <div class="plot-container inline-plot">
-                            <iframe class="plot-img" src="${val}" title="${matchKey}" style="border:0;"></iframe>
+                        <div class="plot-container inline-plot" style="position:relative;">
+                            <iframe loading="lazy" class="plot-img" src="${val}" title="${matchKey}" style="border:0;"></iframe>
                             <div class="plot-title">${title}</div>
+                            <button class="btn-fullscreen" onclick="zoomPlot('${val}')" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; z-index:10; font-size:1.2rem;" title="Fullscreen">⛶</button>
                         </div>
                         ` : `
                         <div class="plot-container inline-plot" onclick="zoomPlot('${val}')">
-                            <img class="plot-img" src="${val}" alt="${matchKey}">
+                            <img loading="lazy" class="plot-img" src="${val}" alt="${matchKey}">
                             <div class="plot-title">${title}</div>
                         </div>
                         `;
@@ -2216,12 +2033,24 @@
         function zoomPlot(src) {
             const modal = document.getElementById('plot-modal');
             const img = document.getElementById('modal-img');
-            img.src = src;
+            const iframe = document.getElementById('modal-iframe');
+            
+            if (src.toLowerCase().endsWith('.html')) {
+                img.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.src = src;
+            } else {
+                iframe.style.display = 'none';
+                img.style.display = 'block';
+                img.src = src;
+            }
+            
             modal.classList.add('open');
         }
 
         function closeModal() {
             document.getElementById('plot-modal').classList.remove('open');
+            document.getElementById('modal-iframe').src = "";
         }
 
         function updateMetricCardsForTask() {
@@ -2235,7 +2064,7 @@
                 ['MSE', fallbackMetrics.mse]
             ].filter(([, value]) => {
                 const clean = String(value ?? '').trim();
-                return clean && clean !== 'N/A' && clean !== 'undefined' && !clean.startsWith('{{');
+                return clean && clean !== 'N/A' && clean !== 'undefined' && !clean.startsWith('{' + '{');
             });
             if (!rows.length) return;
             grid.innerHTML = rows.map(([label, value]) => `

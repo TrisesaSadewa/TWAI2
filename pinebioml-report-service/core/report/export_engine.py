@@ -85,9 +85,9 @@ class ExportEngine:
         Convert rendered HTML or report data to PDF.
         """
         try:
-            from weasyprint import HTML
+            from playwright.sync_api import sync_playwright
 
-            logger.info(f"Rendering PDF using WeasyPrint to {output_pdf_path}...")
+            logger.info(f"Rendering PDF using Playwright to {output_pdf_path}...")
             if isinstance(report_content, dict):
                 md_content = self._build_markdown(report_content)
                 html_content = pypandoc.convert_text(md_content, 'html', format='md')
@@ -95,8 +95,23 @@ class ExportEngine:
                 html_content = str(report_content)
 
             os.makedirs(os.path.dirname(output_pdf_path), exist_ok=True)
-            base_url = os.path.abspath(os.path.dirname(output_pdf_path))
-            HTML(string=html_content, base_url=base_url).write_pdf(output_pdf_path)
+            
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox'])
+                page = browser.new_page()
+                # Use a larger viewport to mimic desktop rendering
+                page.set_viewport_size({"width": 1280, "height": 1024})
+                page.set_content(html_content, wait_until='networkidle')
+                # Wait an extra second for any lazy loaded or responsive grid elements to settle
+                page.wait_for_timeout(1000)
+                page.pdf(
+                    path=output_pdf_path, 
+                    format="A4", 
+                    print_background=True,
+                    margin={"top": "20px", "right": "20px", "bottom": "20px", "left": "20px"}
+                )
+                browser.close()
+                
             return True
         except Exception as e:
             logger.error(f"Failed to render PDF: {e}")

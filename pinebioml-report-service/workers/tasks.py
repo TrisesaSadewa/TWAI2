@@ -2,8 +2,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import logging
-logging.getLogger("weasyprint").setLevel(logging.ERROR)
-
 import os
 import time
 import sys
@@ -72,6 +70,11 @@ def train_and_generate_report_task_sync(payload: dict):
     
     # Directory to store the plots
     output_dir = os.path.join(app_settings.MEDIA_ROOT, report_id, "output")
+    # Clean stale artifacts from any previous run of this report_id to prevent
+    # cross-dataset contamination (e.g. scores.csv from a different pipeline).
+    if os.path.isdir(output_dir):
+        import shutil
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     try:

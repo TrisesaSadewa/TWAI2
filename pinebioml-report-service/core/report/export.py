@@ -4,16 +4,6 @@ import base64
 from typing import Dict, Any, List
 import sys
 
-# Suppress stderr writes during weasyprint import to avoid noisy console prints on systems without GTK
-_stderr = sys.stderr
-try:
-    with open(os.devnull, 'w') as f:
-        sys.stderr = f
-        from weasyprint import HTML
-except Exception:
-    HTML = None
-finally:
-    sys.stderr = _stderr
 
 from docx import Document
 from docx.shared import Inches, Pt
@@ -24,11 +14,25 @@ load_dotenv()
 
 def export_pdf(html_content: str, output_path: str) -> str:
     """
-    Converts rendered HTML content to a PDF using WeasyPrint.
+    Converts rendered HTML content to a PDF using Playwright Chromium Engine.
     """
-    # Weasyprint needs a base URL if there are relative paths, but our template embeds CSS
     print(f"Generating PDF report: {output_path}")
-    HTML(string=html_content).write_pdf(output_path)
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox'])
+        page = browser.new_page()
+        page.set_viewport_size({"width": 1280, "height": 1024})
+        page.set_content(html_content, wait_until='networkidle')
+        page.wait_for_timeout(1000)
+        page.pdf(
+            path=output_path, 
+            format="A4", 
+            print_background=True,
+            margin={"top": "20px", "right": "20px", "bottom": "20px", "left": "20px"}
+        )
+        browser.close()
+
     return output_path
 
 def export_docx(parsed_data: Dict[str, Any], llm_analysis: Dict[str, Any], images_dict: Dict[str, str], output_path: str) -> str:
