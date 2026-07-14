@@ -1604,7 +1604,7 @@ class ReportEngine:
                     title = match_key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
                     if str(val).lower().endswith(".html"):
                         plots_html += f"""
-                        <div class="plot-container inline-plot" style="position:relative;">
+                        <div class="plot-container inline-plot full-width" style="position:relative;">
                             <iframe class="plot-img" src="{val}" title="{match_key}" style="border:0;"></iframe>
                             <div class="plot-title">{title}</div>
                             <button class="btn-fullscreen" onclick="zoomPlot('{val}')" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; z-index:10; font-size:1.2rem;" title="Fullscreen">⛶</button>

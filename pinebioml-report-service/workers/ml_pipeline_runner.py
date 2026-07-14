@@ -1065,7 +1065,6 @@ def run_dynamic_pipeline(
                             template="plotly_white",
                             title='SHAP Summary Plot',
                             height=max(600, 30 * len(sorted_idx)),
-                            width=1000,
                             coloraxis_colorbar=dict(
                                 title="Feature Value",
                                 tickvals=[0, 1],

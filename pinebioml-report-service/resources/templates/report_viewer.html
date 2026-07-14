@@ -842,6 +842,10 @@
             max-width: 100%;
         }
 
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
         .plot-container {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -1207,7 +1211,7 @@
                 <div class="section-body">
                     <div class="plots-grid">
                         {% for key, val in visuals.items() %}
-                        <div class="plot-container" style="position:relative;" {% if val is string and not val.endswith('.html')
+                        <div class="plot-container {% if val is string and val.endswith('.html') %}full-width{% endif %}" style="position:relative;" {% if val is string and not val.endswith('.html')
                             %}onclick="zoomPlot('{{ val }}')" {% endif %}>
                             {% if val is string and val.endswith('.html') %}
                             <iframe loading="lazy" class="plot-img" src="{{ val }}" title="{{ key }}" style="border:0;"></iframe>
@@ -1981,7 +1985,7 @@
                         const title = matchKey.replace('_png', '').replace('.png', '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
                         const isHtmlPlot = val.toLowerCase().endsWith('.html');
                         plotsHtml += isHtmlPlot ? `
-                        <div class="plot-container inline-plot" style="position:relative;">
+                        <div class="plot-container inline-plot full-width" style="position:relative;">
                             <iframe loading="lazy" class="plot-img" src="${val}" title="${matchKey}" style="border:0;"></iframe>
                             <div class="plot-title">${title}</div>
                             <button class="btn-fullscreen" onclick="zoomPlot('${val}')" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; z-index:10; font-size:1.2rem;" title="Fullscreen">⛶</button>
