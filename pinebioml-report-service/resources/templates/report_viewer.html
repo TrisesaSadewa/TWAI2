@@ -944,6 +944,165 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
+        /* Glance Strip & Verdict Card */
+        .glance-strip {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem; margin-bottom: 2rem;
+        }
+        .glance-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 1.25rem; text-align: center;
+        }
+        .glance-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem; }
+        .glance-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .glance-detail { font-size: 1.1rem; color: var(--text-secondary); font-family: monospace; }
+        .glance-good { border-top: 3px solid #10b981; }
+        .glance-warn { border-top: 3px solid #f59e0b; }
+        .glance-risk { border-top: 3px solid #ef4444; }
+
+        .verdict-card {
+            display: flex; align-items: flex-start; gap: 1rem;
+            padding: 1.25rem 1.5rem; border-radius: 16px;
+            margin-bottom: 2rem; border: 1px solid var(--border-color);
+        }
+        .verdict-ready { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); }
+        .verdict-conditional { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3); }
+        .verdict-not_recommended { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3); }
+        .verdict-icon { font-size: 2rem; line-height: 1; }
+        .verdict-title { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .verdict-ready .verdict-title { color: #10b981; }
+        .verdict-conditional .verdict-title { color: #f59e0b; }
+        .verdict-not_recommended .verdict-title { color: #ef4444; }
+        .verdict-reasons { padding-left: 1.25rem; color: var(--text-secondary); font-size: 0.95rem; margin: 0; }
+        .verdict-reasons li { margin-bottom: 0.3rem; }
+
+        /* Module 3 Additions */
+        .section-body blockquote {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.06), rgba(5, 150, 105, 0.04));
+            border-left: 4px solid var(--accent-teal);
+            border-radius: 0 12px 12px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        .section-body blockquote p {
+            margin-bottom: 0;
+        }
+        .findings-stage {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .stage-header {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            color: var(--accent-teal);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .stage-header::before {
+            content: '▸';
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+        details[open] > .stage-header::before {
+            transform: rotate(90deg);
+        }
+        .stage-header::-webkit-details-marker { display: none; }
+        .stage-content {
+            padding: 1.25rem;
+        }
+        @media print {
+            details.findings-stage { border: none; }
+            .stage-header { cursor: default; }
+            .stage-header::before { content: ''; }
+            details:not([open]) { display: block !important; }
+            details:not([open]) > .stage-content { display: block !important; }
+        }
+        .toc-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .toc-link {
+            display: block;
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .toc-link:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .toc-link.active {
+            color: var(--accent-teal);
+            border-left-color: var(--accent-teal);
+            background: var(--accent-teal-glow);
+            font-weight: 600;
+        }
+        .inline-plots-container + p,
+        .plot-container + p {
+            border-left: 3px solid var(--accent-teal-glow);
+            padding-left: 1rem;
+            margin-left: 0.25rem;
+        }
+
+        .reading-time {
+            font-size: 0.78rem; color: var(--text-secondary);
+            font-weight: 400; margin-left: 0.75rem;
+            background: var(--bg-secondary); padding: 2px 8px; border-radius: 10px;
+        }
+
+        .quick-actions-bar {
+            display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;
+            padding: 1.5rem; margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary); border-radius: 16px;
+        }
+        .qa-btn {
+            padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.9rem;
+            font-family: 'Outfit', sans-serif; font-weight: 600;
+            border: 1px solid var(--border-color); background: var(--bg-card);
+            color: var(--text-primary); cursor: pointer; text-decoration: none;
+            transition: all 0.2s;
+        }
+        .qa-btn:hover { border-color: var(--accent-teal); color: var(--accent-teal); transform: translateY(-1px); }
+
+        @media print { .quick-actions-bar { display: none !important; } }
+        
+        .per-class-details { margin: 1rem 0 2rem 0; }
+        .per-class-summary {
+            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1rem;
+            color: var(--text-secondary); cursor: pointer; padding: 0.5rem 0;
+        }
+        .per-class-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .class-card {
+            padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+        .class-good { border-left: 4px solid #10b981; }
+        .class-moderate { border-left: 4px solid #f59e0b; }
+        .class-poor { border-left: 4px solid #ef4444; }
+        .class-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .class-name { font-weight: 700; font-size: 0.95rem; }
+        .class-support { font-size: 0.8rem; color: var(--text-secondary); margin-left: auto; }
+        .class-metrics { display: flex; flex-direction: column; gap: 0.3rem; }
+        .class-metrics > div { display: flex; justify-content: space-between; }
+        .class-metric-label { font-size: 0.85rem; color: var(--text-secondary); }
+        .class-metric-value { font-weight: 600; font-size: 0.9rem; font-family: monospace; }
     </style>
 </head>
 
@@ -981,6 +1140,18 @@
 
         <!-- Sidebar Metadata -->
         <aside class="sidebar">
+            <div class="meta-section">
+                <h4 class="sidebar-section-title">Navigation</h4>
+                <nav class="toc-nav" style="margin-top: 0.75rem;">
+                    <a href="#report-card-container" class="toc-link active" data-section="report-card-container">Report Card</a>
+                    <a href="#sec-executive_summary" class="toc-link" data-section="sec-executive_summary">Executive Summary</a>
+                    <a href="#sec-model_performance" class="toc-link" data-section="sec-model_performance">Model Performance</a>
+                    <a href="#sec-findings" class="toc-link" data-section="sec-findings">Findings</a>
+                    <a href="#sec-conclusion" class="toc-link" data-section="sec-conclusion">Conclusion</a>
+                    <a href="#sec-recommendations" class="toc-link" data-section="sec-recommendations">Recommendations</a>
+                    <a href="#sec-generated-plots" class="toc-link" data-section="sec-generated-plots">Generated Plots</a>
+                </nav>
+            </div>
             <div class="meta-section">
                 <h4 class="sidebar-section-title">Run Information</h4>
                 <ul class="meta-list" style="margin-top: 1rem;">
@@ -1090,10 +1261,57 @@
                 </div>
             </div>
 
+            {% if per_class_html %}
+            {{ per_class_html }}
+            {% endif %}
+
+            <!-- Glance Strip -->
+            {% if glance %}
+            <div class="glance-strip">
+                <div class="glance-card glance-good">
+                    <div class="glance-label">Strongest Metric</div>
+                    <div class="glance-value">{{ glance.strongest.label }}</div>
+                    <div class="glance-detail">{{ glance.strongest.value }}</div>
+                </div>
+                <div class="glance-card glance-warn">
+                    <div class="glance-label">Weakest Metric</div>
+                    <div class="glance-value">{{ glance.weakest.label }}</div>
+                    <div class="glance-detail">{{ glance.weakest.value }}</div>
+                </div>
+                <div class="glance-card">
+                    <div class="glance-label">Top Predictive Feature</div>
+                    <div class="glance-value" title="{{ glance.top_feature }}">{{ glance.top_feature }}</div>
+                </div>
+                <div class="glance-card glance-risk">
+                    <div class="glance-label">Key Risk Flag</div>
+                    <div class="glance-value" title="{{ glance.biggest_risk }}">{{ glance.biggest_risk }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Clinical Readiness Verdict -->
+            {% if verdict %}
+            <div class="verdict-card verdict-{{ verdict.level }}" role="status">
+                <div class="verdict-icon">
+                    {% if verdict.level == 'ready' %}🟢
+                    {% elif verdict.level == 'conditional' %}🟡
+                    {% else %}🔴{% endif %}
+                </div>
+                <div class="verdict-content">
+                    <div class="verdict-title">{{ verdict.title }}</div>
+                    <ul class="verdict-reasons">
+                        {% for reason in verdict.reasons %}
+                        <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
             <!-- Report Sections -->
             <section class="doc-section" id="sec-executive_summary">
                 <div class="section-header">
                     <h2 class="section-title">Executive Summary</h2>
+                    <span class="reading-time">{{ reading_time_summary }}</span>
                     <div class="edit-controls" id="controls-executive_summary">
                         <button title="Action" aria-label="Action" class="btn-edit"
                             onclick="toggleEdit('executive_summary')">Edit</button>
@@ -1143,6 +1361,7 @@
             <section class="doc-section" id="sec-findings">
                 <div class="section-header">
                     <h2 class="section-title">Quantitative Analysis & Findings</h2>
+                    <span class="reading-time">{{ reading_time_findings }}</span>
                     <div class="edit-controls" id="controls-findings">
                         <button title="Action" aria-label="Action" class="btn-edit"
                             onclick="toggleEdit('findings')">Edit</button>
@@ -1166,6 +1385,7 @@
             <section class="doc-section" id="sec-conclusion">
                 <div class="section-header">
                     <h2 class="section-title">Conclusion</h2>
+                    <span class="reading-time">{{ reading_time_conclusion }}</span>
                     <div class="edit-controls" id="controls-conclusion">
                         <button title="Action" aria-label="Action" class="btn-edit"
                             onclick="toggleEdit('conclusion')">Edit</button>
@@ -1187,6 +1407,7 @@
             <section class="doc-section" id="sec-recommendations">
                 <div class="section-header">
                     <h2 class="section-title">Recommendations</h2>
+                    <span class="reading-time">{{ reading_time_recommendations }}</span>
                     <div class="edit-controls" id="controls-recommendations">
                         <button title="Action" aria-label="Action" class="btn-edit"
                             onclick="toggleEdit('recommendations')">Edit</button>
@@ -1226,6 +1447,13 @@
                     </div>
                 </div>
             </section>
+
+            <div class="quick-actions-bar">
+                <a href="/report/{{ report_id }}/download/pdf" class="qa-btn qa-pdf" target="_blank">📄 Download PDF</a>
+                <a href="/report/{{ report_id }}/download/docx" class="qa-btn qa-docx">📝 Download DOCX</a>
+                <button class="qa-btn qa-share" onclick="navigator.clipboard.writeText(window.location.href).then(() => this.textContent = '✅ Copied!')">🔗 Copy Report Link</button>
+                <button class="qa-btn qa-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆ Back to Top</button>
+            </div>
 
         </main>
     </div>
@@ -1383,6 +1611,7 @@
             // Render Markdown Sections (basic HTML rendering of markdown features)
             updateSection('executive_summary');
             renderModelPerformance();
+            updateSection('preprocessing_and_data_quality');
             updateSection('findings');
             updateSection('conclusion');
             updateSection('recommendations');
@@ -1939,13 +2168,26 @@
 
             let html = narratives[currentMode][key] || '';
 
+            // Strip existing tooltips to prevent double-wrapping
+            html = html.replace(/<span class="tooltip-trigger">([\s\S]*?)<span class="tooltip-text">[\s\S]*?<\/span><\/span>/gi, '$1');
+            html = html.replace(/<span class="glossary-term"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+
             // Apply Glossary Tooltips
             if (glossary && Object.keys(glossary).length > 0) {
-                for (const [term, definition] of Object.entries(glossary)) {
+                for (const [term, data] of Object.entries(glossary)) {
                     // Escape term for regex, match whole words only, avoid matching inside HTML tags
                     const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp(`(^|\\W)(${escapedTerm})(?=\\W|$)(?![^<]*>)`, 'gi');
-                    html = html.replace(regex, `$1<span class="tooltip-trigger">$2<span class="tooltip-text">${definition}</span></span>`);
+                    let defText = "";
+                    if (typeof data === 'string') {
+                        defText = data;
+                    } else if (typeof data === 'object' && data !== null) {
+                        defText = `<strong>EN:</strong> ${data.en || ''}<br/><strong>ZH:</strong> ${data.zh || ''}`;
+                        if (data.analogy) {
+                            defText += `<br/><em style="color:var(--accent-teal);">Analogy:</em> ${data.analogy}`;
+                        }
+                    }
+                    html = html.replace(regex, `$1<span class="tooltip-trigger">$2<span class="tooltip-text">${defText}</span></span>`);
                 }
             }
 
@@ -2091,6 +2333,7 @@
             renderOverfitAnalysis();
             updateSection('executive_summary');
             renderModelPerformance();
+            updateSection('preprocessing_and_data_quality');
             updateSection('findings');
             updateSection('conclusion');
             updateSection('recommendations');
@@ -2163,6 +2406,47 @@
             // Attach event listeners to replace inline onclicks
             document.getElementById('btn-toggle-dark').addEventListener('click', toggleDarkMode);
         }
+
+        // Scroll-spy for TOC navigation
+        (function() {
+            const tocLinks = document.querySelectorAll('.toc-link');
+            if (!tocLinks.length) return;
+            
+            const sectionIds = Array.from(tocLinks).map(l => l.getAttribute('data-section'));
+            const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+            
+            function updateActive() {
+                let current = '';
+                const scrollY = window.scrollY + 120; // offset for sticky header
+                
+                for (const section of sections) {
+                    if (section.offsetTop <= scrollY) {
+                        current = section.id;
+                    }
+                }
+                
+                tocLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('data-section') === current);
+                });
+            }
+            
+            window.addEventListener('scroll', updateActive, { passive: true });
+            setTimeout(updateActive, 100);
+            
+            // Smooth scroll on click
+            tocLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.getElementById(link.getAttribute('data-section'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Update active manually to avoid scroll lag
+                        tocLinks.forEach(l => l.classList.remove('active'));
+                        link.classList.add('active');
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 

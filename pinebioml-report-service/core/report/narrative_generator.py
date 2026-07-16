@@ -72,10 +72,33 @@ class NarrativeGenerator:
         clinical context and structural examples
     """
 
+    _DATASET_CONTEXTS = {
+        "breast_cancer": "Binary classification of breast tumor malignancy from fine-needle aspirate (FNA) cell nucleus morphology measurements. The clinical goal is to assist pathologists in distinguishing benign from malignant masses.",
+        "heart_disease": "Prediction of heart disease presence from patient demographics, vital signs, and clinical test results. Supports early cardiovascular risk stratification.",
+        "diabetes": "Classification or regression of diabetes indicators from metabolic and demographic features. Relevant to early screening and preventive care.",
+        "lung_cancer": "Detection of lung cancer from clinical and/or imaging-derived features. High-stakes binary classification where false negatives carry significant clinical risk.",
+    }
+
     def __init__(self):
         self.api_key = settings.LLM_API_KEY
         self.base_url = settings.LLM_API_BASE_URL
         self.model = get_deployment_writer_model()
+
+    def _build_clinical_context(self, dataset_name: str, task_type: str, selected_features: list) -> str:
+        """Infer clinical domain context from dataset name and features."""
+        name_lower = dataset_name.lower() if dataset_name else ""
+        for pattern, context in self._DATASET_CONTEXTS.items():
+            if pattern in name_lower:
+                return f"CLINICAL CONTEXT:\n  {context}"
+        
+        if selected_features:
+            feat_sample = ", ".join(selected_features[:10])
+            return (
+                f"CLINICAL CONTEXT:\n"
+                f"  Dataset domain not auto-detected. Features include: {feat_sample}.\n"
+                f"  Infer the likely clinical domain from these feature names and write accordingly."
+            )
+        return ""
 
     def _is_regression_task(self, task_type: str) -> bool:
         return "regression" in str(task_type or "").lower()
@@ -165,11 +188,17 @@ class NarrativeGenerator:
         imbalance_warning=None, all_models=None
     ) -> str:
         """Build the factual DATA section — same for all tiers."""
-        sections = [
+        clinical_ctx = self._build_clinical_context(dataset_name, task_type, selected_features)
+        
+        sections = []
+        if clinical_ctx:
+            sections.append(clinical_ctx)
+            
+        sections.extend([
             f"DATASET: {dataset_name}",
             f"ML TASK: {task_type}",
             f"METRICS:\n{formatted_metrics}",
-        ]
+        ])
 
         if shap_features:
             lines = "\n".join(f"  - {f['feature']}: importance={f['importance']}" for f in shap_features)
@@ -362,12 +391,12 @@ Write a JSON object with this EXACT structure. All values MUST be a single Markd
 
 {{
   "expert": {{
-    "executive_summary": "1) Short Summary of results. 2) Example of the performance (e.g., 'In 100 patients, the model can...'). 3) Key Points Identified. Readable in 30 seconds. NO dramatic language.",
+    "executive_summary": "**VERDICT:** One sentence declaring clinical readiness ('ready for preliminary screening', 'conditionally suitable', or 'not recommended'). \\n\\n**PERFORMANCE SNAPSHOT:** 2-3 sentences translating key metrics into plain clinical language with a concrete patient-count example.\\n\\n**CRITICAL FLAGS:** 1-2 sentences noting the most important warnings (e.g., imbalance, leakage) or stating 'No critical anomalies detected.'\\n\\nRule: Readable in 30 seconds. Total length: 5-8 sentences.",
     "preprocessing_and_data_quality": "Write 4-5 sentences explaining the data quality. You MUST explicitly discuss this metadata: {data_quality_text}",
-    "findings": "Quantitative Analysis & Findings. MUST BE A SINGLE MARKDOWN STRING. 1) Format Accuracy, Precision, Sensitivity/Recall, Specificity, F1-Score, MCC, ROC-AUC as a standard Markdown table. The table MUST be preceded by two newlines. The first row MUST be exactly `| Metric | Value |` followed by the separator `|---|---|`. DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. 2) Put [PLOT: roc_curve]. 3) Write a 3-5 sentence explanation of the ROC curve. Think step-by-step as a skeptical expert: describe geometry, interpret power, and critique high scores (>0.95) for data leakage. 4) Put [PLOT: pr_curve]. 5) Write a 3-5 sentence explanation of the PR curve detailing precision-recall tradeoffs. 6) Put [PLOT: confusion_matrix]. 7) Write a 3-5 sentence explanation of the Confusion Matrix. 8) Put [PLOT: correlation_heatmap]. 9) Write a 3-5 sentence explanation of the Correlation Heatmap (top 5-10 features). 10) Put [PLOT: feature_importance]. 11) Write a 3-5 sentence explanation of Feature Importance (top 5-10 features). 12) Put [PLOT: shap_summary]. 13) Write a 3-5 sentence explanation of SHAP (top 5-10 features). 14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each if present.{' 15) Add Overfitting analysis.' if has_overfit_data else ''} **NARRATIVE FLOW RULE:** Ensure analysis flows logically across plots, confirming or challenging earlier suspicions rather than repeating them.",
+    "findings": "MUST BE A SINGLE MARKDOWN STRING. Structure as exactly 5 stages using ### headers:\\n\\n### Stage 1 — Overall Performance\\nRender a Markdown table with exactly two columns (| Metric | Value |) containing all metrics. Below it, 2-3 sentences of clinical context.\\n\\n### Stage 2 — Discrimination Analysis\\n[PLOT: roc_curve]\\n3-5 sentences analyzing ROC. Critique high scores (>0.95) for leakage.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: pr_curve]\\n3-5 sentences analyzing PR curve. **CROSS-REFERENCE:** State if PR confirms/challenges ROC.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 3 — Error Analysis\\n[PLOT: confusion_matrix]\\n3-5 sentences on confusion matrix errors (FP vs FN impact). Include per-class breakdown if available. **CROSS-REFERENCE:** Connect to discrimination analysis.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 4 — Feature Intelligence\\n[PLOT: correlation_heatmap]\\n3-5 sentences on correlation. \\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: feature_importance]\\n3-5 sentences on key drivers. \\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: shap_summary]\\n3-5 sentences on SHAP directions. **CROSS-REFERENCE:** Do SHAP results align with feature importance?\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 5 — Generalization & Stability\\nDiscuss dimensionality reduction ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) and overfitting if present. **CROSS-REFERENCE:** Synthesize overall evidence.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n**NARRATIVE FLOW ENFORCEMENT:** Each stage MUST begin with a transition sentence connecting to the previous stage.",
     "visuals_analysis": "Explain each available plot as a SINGLE MARKDOWN STRING. Put the relevant [PLOT: plot_name] placeholder directly above each explanation. Explain how to read the plot axes, colors, bars, or clusters. Do not invent metrics or repeat unsupported performance claims.",
-    "conclusion": "Conclusion of the model. MUST BE A SINGLE STRING of at least 5-10 sentences.",
-    "recommendations": "1) Dataset fix / how to improve data quality. 2) Recommendations on model usage. 3) Other tips. MUST BE A SINGLE STRING of at least 5-10 sentences."
+    "conclusion": "**OVERALL ASSESSMENT:** 2-3 sentences providing definitive clinical judgment.\\n\\n**KEY STRENGTHS:** 2-3 bullet points with specific metric references.\\n\\n**KEY LIMITATIONS:** 2-3 bullet points with specific metric references.\\n\\n**BEFORE DEPLOYMENT:** 1-3 concrete actionable steps required.",
+    "recommendations": "**DATA QUALITY IMPROVEMENTS:** 2-3 suggestions.\\n\\n**MODEL ARCHITECTURE CONSIDERATIONS:** 2-3 suggestions.\\n\\n**VALIDATION PROTOCOL:** 2-3 concrete steps.\\n\\n**CLINICAL INTEGRATION PATHWAY:** 2-3 practical considerations. Every suggestion must be specific to THIS dataset and model."
   }},
   "glossary": {{
     "Accuracy": "English definition",
@@ -385,8 +414,9 @@ RULES:
 5. If an ACCURACY / CLASS IMBALANCE WARNING is present, explicitly state that accuracy alone may be misleading in the expert executive_summary and expert findings.
 6. Write at least 150 words per section.
 7. Do NOT claim 100%, perfect, flawless, or error-free performance unless that exact value is present in the DATA.
-8. For class balance and imbalance correction, use only DATA QUALITY & PREPROCESSING facts. If imbalance metadata says "not recorded", write that it was not recorded; do NOT infer the data are balanced or that no correction was used.
-9. Do NOT repeat these instructions in your output."""
+8. DO NOT hallucinate arbitrary percentages (e.g., PCA variance) or exact true/false positive counts unless explicitly provided in the DATA.
+9. For class balance and imbalance correction, use only DATA QUALITY & PREPROCESSING facts. If imbalance metadata says "not recorded", write that it was not recorded; do NOT infer the data are balanced or that no correction was used.
+10. Do NOT repeat these instructions in your output."""
 
         return [
             {"role": "system", "content": system},
@@ -413,45 +443,95 @@ Generate a JSON object with two keys: "expert" and "glossary".
 
 EXPERT REPORT (Follow these EXACT sections and instructions. All section values MUST be a single Markdown string, NO nested JSON objects or arrays):
 - "executive_summary":
-   1) Short Summary of results.
-   2) Example of the performance (e.g., "In 100 patients, the model can...").
-   3) Key Points Identified.
-   *Rule: Must be readable in 30 seconds. NO dramatic language or grand proclamations (e.g., avoid "struck a balance", "harmonic balance").*
+   **Must contain exactly three clearly labeled paragraphs:**
+   **VERDICT:** One sentence declaring clinical readiness: 'This model is [ready for preliminary screening / conditionally suitable — requires further validation / not recommended for clinical use] because [rationale].'
+   **PERFORMANCE SNAPSHOT:** 2-3 sentences translating key metrics into plain clinical language with a concrete patient-count example (e.g., 'For every 100 patients...').
+   **CRITICAL FLAGS:** 1-2 sentences noting the most important warnings (e.g., imbalance, leakage) or stating 'No critical anomalies detected.'
+   *Rule: Readable in 30 seconds. NO dramatic language. Total length: 5-8 sentences.*
 
 - "preprocessing_and_data_quality":
    1) Provide a detailed, definitive, and actionable explanation of the input data quality and preprocessing. MUST BE EXACTLY 4-5 SENTENCES.
    *Rule: You MUST explicitly mention the class distribution and exact imbalance strategy/tools only when they are recorded in DATA QUALITY & PREPROCESSING or PER-CLASS PERFORMANCE. If imbalance metadata is "not recorded", say it was not recorded and do NOT infer balanced classes, no imbalance correction, SMOTE, oversampling, class weighting, or threshold tuning. Do NOT use speculative language like "likely", "appears", or "I feel like". State facts based ONLY on the provided DATA section.*
 
 - "findings":
-   **MUST BE A SINGLE MARKDOWN STRING OF AT LEAST 10 SENTENCES. DO NOT OUTPUT AS NESTED JSON OBJECTS.**
-   **Quantitative Analysis & Findings**
-   1) Render the Overall Performance Metrics (Accuracy, ROC-AUC, Precision, Recall/Sensitivity, Specificity, F1-Score, MCC) as a standard Markdown table with EXACTLY two columns: "Metric" and "Value". DO NOT include an interpretation column. This table MUST BE AT THE VERY TOP of the section. **CRITICAL RULE: YOU MUST USE THE EXACT NUMBERS PROVIDED IN THE `PRE-COMPUTED METRICS` SECTION. DO NOT INVENT OR HALLUCINATE NUMBERS. If Accuracy is 99.12%, you must write 99.12%.**
-   2) Put [PLOT: roc_curve] directly below the metrics table.
-   3) Write a 3-5 sentence explanation of the ROC curve. Channel a skeptical clinical peer reviewer and think step-by-step: First, describe the visual geometry of the curve. Second, interpret the clinical discriminative power. Third, explicitly critique the results—if the AUC is suspiciously high (e.g., > 0.95), you MUST raise questions about potential data leakage or overly optimistic train-test splits.
-   4) Put [PLOT: pr_curve] directly below the ROC curve explanation.
-   5) Write a 3-5 sentence explanation of the PR curve. Think step-by-step: Describe the specific trade-off dynamics (e.g., how precision declines as recall increases) and what the AUC-PR confirms about prioritizing true positives while maintaining specificity.
-   6) Put [PLOT: confusion_matrix] directly below the PR curve explanation.
-   7) Write a 3-5 sentence explanation of the Confusion Matrix (TNs, TPs, FPs, FNs) and clinical impact.
-   8) Put [PLOT: correlation_heatmap] directly below the confusion matrix explanation.
-   9) Write a 3-5 sentence explanation of the Correlation Heatmap, focusing on the top 5-10 features.
-   10) Put [PLOT: feature_importance] directly below the correlation heatmap explanation.
-   11) Write a 3-5 sentence explanation of Feature Importance, focusing on the top 5-10 features.
-   12) Put [PLOT: shap_summary] directly below the feature importance explanation.
-   13) Write a 3-5 sentence explanation of SHAP, focusing on the top 5-10 features.
-   14) Discuss dimensionality reduction plots ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with a 3-5 sentence explanation for each plot if present.{f'''
-   15) Write an Overfitting Analysis paragraph based on train/test gaps.''' if has_overfit_data else ''}
-   **NARRATIVE FLOW RULE:** Ensure your analysis flows logically from one plot to the next. Do not blindly repeat the same conclusions for every plot; instead, use the PR curve and Confusion Matrix to either confirm or challenge the suspicions you raised during the ROC curve analysis.
+   **MUST BE A SINGLE MARKDOWN STRING. Structure as exactly 5 stages using ### headers:**
+   
+   ### Stage 1 — Overall Performance
+   Render a Markdown table with exactly two columns (| Metric | Value |) containing all metrics. Below it, write 2-3 sentences of clinical context interpretation.
+   
+   ### Stage 2 — Discrimination Analysis
+   [PLOT: roc_curve]
+   Write 3-5 sentences analyzing ROC curve geometry, interpret discriminative power, and critique high scores (>0.95) for potential data leakage.
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   [PLOT: pr_curve]
+   Write 3-5 sentences analyzing PR curve tradeoffs. **CROSS-REFERENCE:** State whether PR confirms or challenges ROC.
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   
+   ### Stage 3 — Error Analysis
+   [PLOT: confusion_matrix]
+   Write 3-5 sentences explaining confusion matrix (TNs, TPs, FPs, FNs) and their clinical impact. Include per-class breakdown if available. **CROSS-REFERENCE:** Connect back to discrimination analysis.
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   
+   ### Stage 4 — Feature Intelligence
+   [PLOT: correlation_heatmap]
+   Write 3-5 sentences on correlation.
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   [PLOT: feature_importance]
+   Write 3-5 sentences focusing on the top 3-5 drivers.
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   [PLOT: shap_summary]
+   Write 3-5 sentences on SHAP. Explain direction of influence. **CROSS-REFERENCE:** Do SHAP results align with feature importance?
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   
+   ### Stage 5 — Generalization & Stability
+   Discuss dimensionality reduction ([PLOT: pca_2d], [PLOT: pls_2d], [PLOT: umap_2d]) with 2-3 sentences each if present. Comment on cluster separability.{f'''
+   Write an Overfitting Analysis paragraph based on train/test gaps.''' if has_overfit_data else ''}
+   **CROSS-REFERENCE:** Synthesize — does overall evidence paint a consistent picture?
+   > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
+   
+   **NARRATIVE FLOW ENFORCEMENT:** Each stage MUST begin with a transition sentence connecting to the previous stage. Use phrases like "Building on the discrimination analysis above...", "The error patterns below confirm/challenge...", "Consistent with the feature analysis...".
 
 - "visuals_analysis":
    Explain any other available plots with the relevant [PLOT: plot_name] placeholder directly above the explanation. Focus on how to read the axes, colors, bars, clusters, or curves. Do not invent values. Do not repeat unsupported performance scores.
 
 - "conclusion":
-   - Detailed conclusion of what has been discussed. Read in 60 seconds. NO dramatic language. Avoid technical/convoluted words. MUST BE A SINGLE STRING OF AT LEAST 5-10 SENTENCES.
+   **Must contain exactly four clearly labeled parts:**
+   **OVERALL ASSESSMENT:** 2-3 sentences providing definitive clinical judgment.
+   **KEY STRENGTHS:** 2-3 bullet points with specific metric references.
+   **KEY LIMITATIONS:** 2-3 bullet points with specific metric references.
+   **BEFORE DEPLOYMENT:** 1-3 concrete actionable steps required.
+   *Rule: Total length 8-12 sentences. No dramatic language.*
 
 - "recommendations":
-   1) Dataset fix / how to improve the quality of the data.
-   2) Recommendations on model usage.
-   3) Other tips and Recommendations. MUST BE A SINGLE STRING OF AT LEAST 5-10 SENTENCES.
+   **Structure into exactly four labeled categories:**
+   **DATA QUALITY IMPROVEMENTS:** 2-3 specific suggestions based on actual features and data quality.
+   **MODEL ARCHITECTURE CONSIDERATIONS:** 2-3 suggestions based on the models tested.
+   **VALIDATION PROTOCOL:** 2-3 concrete validation steps appropriate for the dataset.
+   **CLINICAL INTEGRATION PATHWAY:** 2-3 practical considerations for deployment.
+   *Rule: Every suggestion must be actionable and specific to THIS dataset and model.*
+
+Your output MUST be a valid JSON object matching this exact schema:
+{
+  "expert": {
+    "executive_summary": "...",
+    "preprocessing_and_data_quality": "...",
+    "findings": "...",
+    "visuals_analysis": "...",
+    "conclusion": "...",
+    "recommendations": "..."
+  },
+  "glossary": {
+    "Term 1": "Definition",
+    "Term 2": "Definition"
+  }
+}
+
+RULES:
+1. Use ONLY the metric values from the DATA section. Do not invent numbers.
+2. The expert findings MUST reference specific values (e.g., "Precision of 0.93").
+3. Do NOT claim 100%, perfect, flawless, or error-free performance unless that exact value is present in the DATA.
+4. DO NOT hallucinate arbitrary percentages (e.g. PCA variance) or exact true/false positive counts unless explicitly provided in the DATA.
+5. If an ACCURACY / CLASS IMBALANCE WARNING is present, explicitly state that accuracy alone may be misleading.
 
 Output ONLY the JSON object. Do NOT include markdown code fences around it."""
 
@@ -503,19 +583,25 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
             messages = self._build_prompt_tier1(data_block, imbalance_metadata, has_overfit_data)
 
         model_cfg = model_cfg or {}
+        
+        max_tokens = model_cfg.get("max_tokens", 8192)
+        
         payload = {
             "model": resolved_model,
             "messages": messages,
-            "temperature": model_cfg.get("temperature", 0.2)
+            "temperature": model_cfg.get("temperature", 0.2),
+            "max_tokens": max_tokens
         }
 
         # Set Ollama-specific options if local endpoint is used
         options = {}
         if use_cpu_fallback:
             options["num_gpu"] = 0
+            
+        options["num_predict"] = max_tokens
         
         # Override context window size based on model config
-        context_tokens = model_cfg.get("context_tokens") or model_cfg.get("max_tokens")
+        context_tokens = model_cfg.get("context_tokens") or max_tokens
         if context_tokens:
             options["num_ctx"] = context_tokens
             
@@ -571,15 +657,16 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
             # (legacy think_pattern regex removed — superseded by the _OPEN/_CLOSE
             #  handling above, which also covers unclosed tags.)
 
-            if cleaned_response.startswith("```json"):
-                cleaned_response = cleaned_response[7:]
-            if cleaned_response.startswith("```"):
-                cleaned_response = cleaned_response[3:]
-            if cleaned_response.endswith("```"):
-                cleaned_response = cleaned_response[:-3]
+            # Robust JSON extraction to ignore conversational filler and markdown
+            json_match = re.search(r'\{.*\}', cleaned_response, re.DOTALL)
+            if json_match:
+                cleaned_response = json_match.group(0)
+            
+            # Strip trailing commas that break Python's json.loads
+            cleaned_response = re.sub(r',\s*([\}\]])', r'\1', cleaned_response)
                 
             try:
-                parsed_json = json.loads(cleaned_response.strip())
+                parsed_json = json.loads(cleaned_response)
 
                 def _flatten_to_markdown(val):
                     if isinstance(val, str): return val
@@ -921,8 +1008,8 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                         pass
 
         if imbalance_metadata:
-            for k, v in imbalance_metadata.items():
-                v_str = str(v).replace('%', '').strip()
+            def _extract_pct(val_str):
+                v_str = str(val_str).replace('%', '').strip()
                 try:
                     val = float(v_str)
                     allowed.add(round(val * 100, 2))
@@ -930,6 +1017,13 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                     allowed.add(round(val, 4))
                 except (ValueError, TypeError):
                     pass
+            
+            for k, v in imbalance_metadata.items():
+                if isinstance(v, dict):
+                    for sub_v in v.values():
+                        _extract_pct(sub_v)
+                else:
+                    _extract_pct(v)
 
         bad_sections = []
         error_messages = []

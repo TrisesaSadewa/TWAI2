@@ -1228,6 +1228,193 @@ class ReportEngine:
         html += "</table></div>"
         return html
 
+    @staticmethod
+    def _estimate_reading_time(html_content: str) -> str:
+        """Estimate reading time from HTML content (average 200 words/min)."""
+        import re
+        text = re.sub(r'<[^>]+>', '', html_content or '')
+        word_count = len(text.split())
+        minutes = max(1, round(word_count / 200))
+        return f"~{minutes} min read"
+
+    def _render_per_class_cards(self, per_class: list) -> str:
+        if not per_class:
+            return ""
+        
+        import html as html_lib
+        html = '<details class="per-class-details" open><summary class="per-class-summary">Per-Class Breakdown</summary><div class="per-class-grid">'
+        
+        for c in per_class:
+            f1 = float(c.get("f1", 0))
+            if f1 >= 0.85:
+                color_class = "class-good"
+                indicator = "🟢"
+            elif f1 >= 0.60:
+                color_class = "class-moderate" 
+                indicator = "🟡"
+            else:
+                color_class = "class-poor"
+                indicator = "🔴"
+            
+            html += f'''
+            <div class="class-card {color_class}">
+                <div class="class-header">
+                    <span class="class-indicator">{indicator}</span>
+                    <span class="class-name">Class: {html_lib.escape(str(c.get("class", "?")))}</span>
+                    <span class="class-support">n={c.get("support", "?")}</span>
+                </div>
+                <div class="class-metrics">
+                    <div><span class="class-metric-label">Precision</span><span class="class-metric-value">{c.get("precision", 0):.1%}</span></div>
+                    <div><span class="class-metric-label">Recall</span><span class="class-metric-value">{c.get("recall", 0):.1%}</span></div>
+                    <div><span class="class-metric-label">F1</span><span class="class-metric-value">{f1:.1%}</span></div>
+                </div>
+            </div>'''
+        
+        html += '</div></details>'
+        return html
+
+    def _wrap_stages_in_details(self, html_str: str) -> str:
+        """Convert ### Stage N headers into collapsible <details> sections."""
+        import re
+        if not html_str or '<h3' not in html_str:
+            return html_str
+        
+        # Split on <h3> tags that contain "Stage"
+        pattern = re.compile(r'(<h3[^>]*>.*?Stage.*?</h3>)', re.IGNORECASE)
+        parts = pattern.split(html_str)
+        
+        if len(parts) < 3:  # No stage headers found
+            return html_str
+        
+        result = parts[0]  # Content before first stage header
+        i = 1
+        while i < len(parts):
+            if pattern.match(parts[i]):
+                header_text = re.sub(r'</?h3>', '', parts[i]).strip()
+                content = parts[i + 1] if i + 1 < len(parts) else ""
+                # All expanded by default (open attribute). PDF print CSS keeps them open.
+                result += f'<details open class="findings-stage"><summary class="stage-header">{header_text}</summary><div class="stage-content">{content}</div></details>'
+                i += 2
+            else:
+                result += parts[i]
+                i += 1
+        
+        return result
+
+    def _compute_clinical_verdict(self, metrics: dict, imbalance_warning: dict, 
+                                    overfit_analysis: dict, task_type: str) -> dict:
+        is_regression = "regression" in str(task_type or "").lower()
+        reasons = []
+        blockers = []
+        cautions = []
+
+        if is_regression:
+            r2 = self._metric_to_unit_interval(metrics.get("R2"))
+            if r2 is not None:
+                if r2 < 0.30:
+                    blockers.append(f"R² is {r2:.2f} — model explains less than 30% of variance")
+                elif r2 < 0.60:
+                    cautions.append(f"R² is {r2:.2f} — moderate explanatory power only")
+        else:
+            acc = self._metric_to_unit_interval(metrics.get("accuracy"))
+            auc = self._metric_to_unit_interval(metrics.get("ROC-AUC"))
+            recall = self._metric_to_unit_interval(metrics.get("recall"))
+            spec = self._metric_to_unit_interval(metrics.get("specificity"))
+            mcc = self._metric_to_unit_interval(metrics.get("MCC"))
+
+            # Hard blockers
+            if acc is not None and acc < 0.60:
+                blockers.append(f"Accuracy is {acc*100:.1f}% — near random chance")
+            if auc is not None and auc < 0.60:
+                blockers.append(f"ROC-AUC is {auc:.3f} — poor class separation")
+            if recall is not None and recall < 0.40:
+                blockers.append(f"Sensitivity is {recall*100:.1f}% — majority of positive cases missed")
+
+            # Soft cautions
+            if auc is not None and auc > 0.99:
+                cautions.append("ROC-AUC > 0.99 — investigate possible data leakage")
+            if acc is not None and acc > 0.99:
+                cautions.append("Accuracy > 99% — suspiciously high, check for target leakage")
+            if spec is not None and spec < 0.50:
+                cautions.append(f"Specificity is {spec*100:.1f}% — high false positive rate")
+            if mcc is not None and mcc < 0.30:
+                cautions.append(f"MCC is {mcc:.3f} — weak balanced performance")
+            if imbalance_warning:
+                cautions.append(imbalance_warning.get("title", "Class imbalance detected"))
+
+        # Overfitting check
+        if overfit_analysis and overfit_analysis.get("is_overfitting"):
+            worst = overfit_analysis.get("worst_gap", {})
+            gap_pct = worst.get("gap_pct", "")
+            cautions.append(f"Overfitting detected — train/test gap of {gap_pct}")
+
+        if blockers:
+            level = "not_recommended"
+            title = "Not Recommended for Clinical Use"
+            reasons = blockers + cautions
+        elif cautions:
+            level = "conditional"
+            title = "Conditional — Further Validation Required"
+            reasons = cautions
+        else:
+            level = "ready"
+            title = "Ready for Preliminary Screening"
+            reasons = ["All key metrics are within acceptable ranges"]
+
+        return {"level": level, "title": title, "reasons": reasons}
+
+    def _compute_at_a_glance(self, metrics: dict, shap_features: list, 
+                              anomaly_flags: list, task_type: str) -> dict:
+        is_regression = "regression" in str(task_type or "").lower()
+        metric_keys = ["R2", "RMSE", "MAE"] if is_regression else ["accuracy", "ROC-AUC", "precision", "recall", "specificity", "MCC"]
+        scored = []
+        for k in metric_keys:
+            val = self._metric_to_unit_interval(metrics.get(k))
+            if val is not None:
+                scored.append((k, val))
+        
+        strongest = max(scored, key=lambda x: x[1]) if scored else ("N/A", 0)
+        weakest = min(scored, key=lambda x: x[1]) if scored else ("N/A", 0)
+        
+        top_feature = shap_features[0]["feature"] if shap_features else "Not available"
+        biggest_risk = anomaly_flags[0] if anomaly_flags else "No anomalies detected"
+        
+        return {
+            "strongest": {"label": strongest[0], "value": f"{strongest[1]*100:.1f}%" if strongest[1] <= 1.0 else f"{strongest[1]:.4f}"},
+            "weakest": {"label": weakest[0], "value": f"{weakest[1]*100:.1f}%" if weakest[1] <= 1.0 else f"{weakest[1]:.4f}"},
+            "top_feature": top_feature,
+            "biggest_risk": biggest_risk[:80]
+        }
+
+    def _auto_link_glossary_terms(self, html_str: str, glossary: dict) -> str:
+        if not html_str or not glossary:
+            return html_str
+        import re
+        sorted_terms = sorted(glossary.keys(), key=len, reverse=True)
+        for term in sorted_terms:
+            entry = glossary[term]
+            if isinstance(entry, dict):
+                tooltip = f'EN: {entry.get("en", "")}'
+                if entry.get("zh"):
+                    tooltip += f' | ZH: {entry.get("zh", "")}'
+                analogy = entry.get("analogy", "")
+                if analogy:
+                    tooltip += f" — 💡 {analogy}"
+            else:
+                tooltip = str(entry).split(" | ")[0]
+            
+            pattern = re.compile(
+                r'(?<![<\w/])(\b' + re.escape(term) + r'\b)(?![^<]*>)(?![^<]*</span>)',
+                re.IGNORECASE
+            )
+            replacement = (
+                f'<span class="glossary-term" tabindex="0" '
+                f'title="{html_lib.escape(tooltip)}">'
+                f'\\1</span>'
+            )
+            html_str = pattern.sub(replacement, html_str, count=1)
+        return html_str
+
     def _render_html_report(self, data: dict) -> str:
         """Render the HTML report using the report_viewer.html template via Jinja2."""
         import jinja2
@@ -1343,13 +1530,39 @@ class ReportEngine:
                 seen_base_keys[base_key] = k
 
         # Pre-render markdown to HTML and inject plots
+        self._figure_counter = 0
         exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), formatted_visuals)
         preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), formatted_visuals)
         findings_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("findings", "")), formatted_visuals)
+        
+        # Wrap findings stages
+        findings_html = self._wrap_stages_in_details(findings_html)
+        
         conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), formatted_visuals)
         recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), formatted_visuals)
         
+        # Calculate new deterministic UI components
+        verdict = self._compute_clinical_verdict(metrics, imbalance_warning, 
+                                                 data.get("overfit_analysis", {}), 
+                                                 data.get("task_type", ""))
+        
+        glance = self._compute_at_a_glance(metrics, 
+                                           data.get("shap_features", []), 
+                                           data.get("anomaly_flags", []), 
+                                           data.get("task_type", ""))
+        
+        # Apply glossary auto-linking
+        exec_summary_html = self._auto_link_glossary_terms(exec_summary_html, glossary)
+        findings_html = self._auto_link_glossary_terms(findings_html, glossary)
+        conclusion_html = self._auto_link_glossary_terms(conclusion_html, glossary)
+        recs_html = self._auto_link_glossary_terms(recs_html, glossary)
+        
         context = {
+            "per_class_html": self._render_per_class_cards(data.get("per_class", [])),
+            "reading_time_summary": self._estimate_reading_time(exec_summary_html),
+            "reading_time_findings": self._estimate_reading_time(findings_html),
+            "reading_time_conclusion": self._estimate_reading_time(conclusion_html),
+            "reading_time_recommendations": self._estimate_reading_time(recs_html),
             "report_id": html_lib.escape(data["report_id"]),
             "job_id": html_lib.escape(data["job_id"]),
             "dataset_name": html_lib.escape(data["dataset_name"]),
@@ -1389,7 +1602,10 @@ class ReportEngine:
             "recommendations": recs_html,
             
             "model_performance_table": model_perf_html,
-            "visuals": deduplicated_visuals
+            "visuals": deduplicated_visuals,
+            
+            "verdict": verdict,
+            "glance": glance
         }
         
         html = template.render(**context)
@@ -1419,7 +1635,7 @@ class ReportEngine:
             if not acc_key:
                 acc_key = next((k for k in keys if isinstance(all_models[0].get(k), (int, float))), None)
             if not acc_key:
-                acc_key = keys[1] if len(keys) > 1 else keys[0]
+                acc_key = keys[1] if len(keys) > 1 else (keys[0] if keys else None)
                 
             # Prefer exact match 'Modeling'/'model_name', then any key containing 'model'
             model_key = next((k for k in keys if k.lower() in ("modeling", "model", "model_name")), None)
@@ -1428,7 +1644,7 @@ class ReportEngine:
             if not model_key:
                 model_key = next((k for k in keys if isinstance(all_models[0].get(k), str)), None)
             if not model_key:
-                model_key = keys[0]
+                model_key = keys[0] if keys else None
                 
             try:
                 sorted_models = sorted(all_models, key=lambda x: float(x.get(acc_key, 0) or 0), reverse=True)
@@ -1601,7 +1817,8 @@ class ReportEngine:
                 if match_key and formatted_visuals[match_key] and match_key not in seen_matches:
                     seen_matches.add(match_key)
                     val = formatted_visuals[match_key]
-                    title = match_key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
+                    self._figure_counter = getattr(self, '_figure_counter', 0) + 1
+                    title = f"Figure {self._figure_counter} — " + match_key.replace('_png', '').replace('_html', '').replace('.png', '').replace('.html', '').replace('_', ' ').title()
                     if str(val).lower().endswith(".html"):
                         plots_html += f"""
                         <div class="plot-container inline-plot full-width" style="position:relative;">

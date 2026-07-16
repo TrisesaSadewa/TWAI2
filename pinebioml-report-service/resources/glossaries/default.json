@@ -1,21 +1,140 @@
 {
-    "Accuracy": "The proportion of correct predictions | 準確率：正確預測的比例",
-    "AUC-ROC": "A measure of the model's ability to distinguish between classes | AUC-ROC：衡量模型區分不同類別的能力",
-    "ROC-AUC": "A measure of the model's ability to distinguish between classes | ROC-AUC：衡量模型區分不同類別的能力",
-    "Precision": "The proportion of positive predictions that were actually correct | 精確率：陽性預測中實際正確的比例",
-    "Recall": "The proportion of actual positives that were correctly identified | 召回率：實際陽性中被正確識別的比例",
-    "Sensitivity": "The proportion of actual positives that were correctly identified | 靈敏度：實際陽性中被正確識別的比例",
-    "Specificity": "The proportion of actual negatives that were correctly identified | 特異度：實際陰性中被正確識別的比例",
-    "F1-Score": "The harmonic mean of precision and recall | F1 分數：精確率和召回率的調和平均數",
-    "MCC": "Matthews Correlation Coefficient, a balanced measure of quality | MCC：馬修斯相關係數，平衡的分類質量指標",
-    "SHAP": "A method to explain individual predictions based on feature importance | SHAP：一種基於特徵重要性來解釋個別預測的方法",
-    "false alarms": "Healthy cases that were incorrectly flagged as abnormal (False Positives) | 誤報：被錯誤標記為異常的健康案例（偽陽性）",
-    "missed cases": "Abnormal cases that the model failed to detect (False Negatives) | 漏報：模型未能檢測到的異常案例（偽陰性）",
-    "texture": "The smoothness or roughness of the cell surface | 紋理：細胞表面的光滑或粗糙程度",
-    "radius": "The distance from the center of the cell to its outer edge | 半徑：從細胞中心到其外邊緣的距離",
-    "perimeter": "The distance all the way around the outside of the cell | 周長：圍繞細胞外部的總距離",
-    "symmetry": "How balanced and matching the two halves of the cell are | 對稱性：細胞兩半的平衡和匹配程度",
-    "compactness": "A measure of the object's shape, defined as perimeter^2 / area - 1.0 | 緊密度：物體形狀的量度",
-    "concavity": "Severity of concave portions of the contour | 凹度：輪廓的凹陷部分的嚴重程度",
-    "smoothness": "Local variation in radius lengths | 平滑度：半徑長度的局部變化"
+  "Accuracy": {
+    "en": "The proportion of all predictions that were correct",
+    "zh": "準確率：所有預測中正確的比例",
+    "analogy": "Out of all patients the model evaluated, how many did it get right?",
+    "matters": "Best used when classes are balanced. Can be misleading with imbalanced datasets."
+  },
+  "ROC-AUC": {
+    "en": "Area Under the ROC Curve — measures how well the model separates classes across all thresholds",
+    "zh": "ROC-AUC：衡量模型在所有閾值下區分類別的能力",
+    "analogy": "Imagine sliding the 'sensitivity dial' from 0 to max — AUC measures total performance across all settings",
+    "matters": "Use for overall discrimination quality. Less affected by class imbalance than accuracy."
+  },
+  "Precision": {
+    "en": "Of all cases the model flagged as positive, how many actually were positive",
+    "zh": "精確率：模型標記為陽性的案例中實際為陽性的比例",
+    "analogy": "If the model says 'this patient has cancer', how often is it right?",
+    "matters": "Critical when false positives are costly (unnecessary surgery, patient anxiety)."
+  },
+  "Recall": {
+    "en": "Of all actual positive cases, how many did the model correctly identify",
+    "zh": "召回率：實際陽性案例中被模型正確識別的比例",
+    "analogy": "Of all patients who truly have cancer, how many does the model catch?",
+    "matters": "Critical when missing a case is dangerous (cancer screening, disease detection)."
+  },
+  "Sensitivity": {
+    "en": "Same as Recall — the proportion of actual positives correctly identified",
+    "zh": "靈敏度：與召回率相同，實際陽性中被正確識別的比例",
+    "analogy": "A highly sensitive test rarely misses real cases — it catches almost everyone who is sick",
+    "matters": "Essential for screening tests where missing a diagnosis has severe consequences."
+  },
+  "Specificity": {
+    "en": "Of all actual negative cases, how many did the model correctly identify as negative",
+    "zh": "特異度：實際陰性案例中被正確識別為陰性的比例",
+    "analogy": "A highly specific test rarely raises false alarms — healthy patients are correctly cleared",
+    "matters": "Important when false alarms cause harm (unnecessary biopsies, patient distress)."
+  },
+  "F1-Score": {
+    "en": "The harmonic mean of precision and recall — balances both types of errors",
+    "zh": "F1 分數：精確率和召回率的調和平均數",
+    "analogy": "A combined score that penalizes models that are good at one but bad at the other",
+    "matters": "Best single metric when you need to balance catching cases vs. avoiding false alarms."
+  },
+  "MCC": {
+    "en": "Matthews Correlation Coefficient — a balanced metric accounting for all four confusion matrix cells",
+    "zh": "MCC：馬修斯相關係數，考慮混淆矩陣所有四個單元格的平衡指標",
+    "analogy": "The fairest single number for classification quality — works even when classes are very unbalanced",
+    "matters": "Most reliable single metric for imbalanced datasets. Ranges from -1 (worst) to +1 (perfect)."
+  },
+  "SHAP": {
+    "en": "SHapley Additive exPlanations — a method to explain which features drove each prediction",
+    "zh": "SHAP：一種基於特徵重要性來解釋個別預測的方法",
+    "analogy": "Like asking 'which symptoms contributed most to this diagnosis?' for each individual patient",
+    "matters": "Essential for model interpretability and clinical trust."
+  },
+  "Confusion Matrix": {
+    "en": "A table showing the counts of correct and incorrect predictions for each class",
+    "zh": "混淆矩陣：顯示每個類別正確和錯誤預測數量的表格",
+    "analogy": "A scorecard showing exactly where the model got things right and wrong",
+    "matters": "The most detailed view of model errors — shows false positives and false negatives separately."
+  },
+  "False Positives": {
+    "en": "Healthy cases incorrectly flagged as abnormal by the model",
+    "zh": "偽陽性：被模型錯誤標記為異常的健康案例",
+    "analogy": "The model says 'cancer detected' but the patient is actually healthy — a false alarm",
+    "matters": "Leads to unnecessary follow-up procedures, patient anxiety, and wasted resources."
+  },
+  "False Negatives": {
+    "en": "Abnormal cases that the model failed to detect",
+    "zh": "偽陰性：模型未能檢測到的異常案例",
+    "analogy": "The model says 'all clear' but the patient actually has cancer — a missed diagnosis",
+    "matters": "The most dangerous error in screening — patients with real conditions go untreated."
+  },
+  "Overfitting": {
+    "en": "When a model performs well on training data but poorly on new, unseen data",
+    "zh": "過擬合：模型在訓練數據上表現良好但在新數據上表現不佳",
+    "analogy": "Like a student who memorizes the answer key but can't solve new problems",
+    "matters": "A model that overfits will fail in real clinical deployment."
+  },
+  "Cross-Validation": {
+    "en": "Repeated train/test splitting to estimate model performance more reliably",
+    "zh": "交叉驗證：重複訓練/測試分割以更可靠地估計模型性能",
+    "analogy": "Testing the model multiple times on different patient groups to make sure results aren't a fluke",
+    "matters": "More trustworthy than a single train/test split, especially with small datasets."
+  },
+  "Data Leakage": {
+    "en": "When information from the test set accidentally influences the training process",
+    "zh": "數據洩漏：測試集的信息意外影響訓練過程",
+    "analogy": "Like a student who accidentally sees the exam questions before the test — inflated performance",
+    "matters": "If detected, all performance metrics are unreliable and the model must be retrained."
+  },
+  "Feature Selection": {
+    "en": "Choosing the most informative input variables to improve model performance",
+    "zh": "特徵選擇：選擇最具信息量的輸入變量以提高模型性能",
+    "analogy": "Like a doctor deciding which lab tests are actually useful vs. which are noise",
+    "matters": "Reduces complexity, improves interpretability, and can prevent overfitting."
+  },
+  "Class Imbalance": {
+    "en": "When one class has significantly more samples than another in the dataset",
+    "zh": "類別不平衡：數據集中某一類別的樣本明顯多於另一類別",
+    "analogy": "If 95% of patients are healthy, the model can get 95% accuracy by always predicting 'healthy'",
+    "matters": "Makes accuracy misleading. Use F1, MCC, AUC, and per-class metrics instead."
+  },
+  "Threshold Tuning": {
+    "en": "Adjusting the decision boundary to optimize for a specific metric (e.g., sensitivity vs. specificity)",
+    "zh": "閾值調整：調整決策邊界以優化特定指標",
+    "analogy": "Setting how cautious the alarm system should be — too sensitive and you get false alarms, too lenient and you miss real threats",
+    "matters": "Default threshold (0.5) is rarely optimal for clinical applications."
+  },
+  "PCA": {
+    "en": "Principal Component Analysis — a dimensionality reduction technique that finds the axes of maximum variance",
+    "zh": "PCA：主成分分析，一種找到最大方差軸的降維技術",
+    "analogy": "Compressing a 3D object into a 2D shadow that preserves the most important shape information",
+    "matters": "Useful for visualizing high-dimensional data and detecting natural clusters."
+  },
+  "UMAP": {
+    "en": "Uniform Manifold Approximation and Projection — a nonlinear dimensionality reduction for visualization",
+    "zh": "UMAP：均勻流形近似與投影，一種非線性降維可視化技術",
+    "analogy": "Like arranging photos by visual similarity on a table — similar items cluster together",
+    "matters": "Better at preserving local structure than PCA. Reveals subgroups in the data."
+  },
+  "PR Curve": {
+    "en": "Precision-Recall Curve — shows the tradeoff between precision and recall at different thresholds",
+    "zh": "PR 曲線：顯示不同閾值下精確率和召回率之間的權衡",
+    "analogy": "As you try harder to catch all real cases (recall), you inevitably flag more false alarms (lower precision)",
+    "matters": "More informative than ROC for imbalanced datasets where the positive class is rare."
+  },
+  "R²": {
+    "en": "Coefficient of determination — how much of the target variability the model explains (0 to 1)",
+    "zh": "R²：決定係數，模型解釋的目標變異性比例（0 到 1）",
+    "analogy": "If R² = 0.85, the model explains 85% of why outcomes differ between patients",
+    "matters": "Primary metric for regression tasks. Higher is better; negative means worse than the average."
+  },
+  "RMSE": {
+    "en": "Root Mean Squared Error — the average prediction error in the same units as the target",
+    "zh": "RMSE：均方根誤差，與目標相同單位的平均預測誤差",
+    "analogy": "On average, the model's prediction is off by this much",
+    "matters": "Penalizes large errors more than small ones. Compare to the target's natural range."
+  }
 }
