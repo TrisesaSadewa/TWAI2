@@ -505,7 +505,6 @@ class Basic_tuner(ABC, BaseEstimator):
             y_pred = (self.best_model.predict_proba(x)[:, 1]
                       > self.best_threshold).astype(int)
         else:
-        """
         y_pred = self.best_model.predict(x)
 
         # label encoding
@@ -515,6 +514,10 @@ class Basic_tuner(ABC, BaseEstimator):
             idx = x.index
         else:
             idx = None
+
+        if hasattr(y_pred, "ndim") and y_pred.ndim > 1:
+            import numpy as np
+            y_pred = np.ravel(y_pred)
 
         y_pred = Series(y_pred, index=idx, name=self.label_name_)
 

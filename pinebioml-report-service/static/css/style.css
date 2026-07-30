@@ -48,13 +48,34 @@ Version:	1.1
 /*=============================
 	Global CSS 
 ===============================*/
-/* Scroll progress bar — replaces native scrollbar */
+/* PinBioML Integrated Custom Scrollbar Styling */
 html {
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
     overscroll-behavior-y: none;
 }
-html::-webkit-scrollbar {
-    display: none;
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+    border: 2px solid #f8fafc;
+    transition: background 0.25s ease-in-out;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #1A76D1;
+}
+::-webkit-scrollbar-thumb:active {
+    background: #155ab6;
+}
+::-webkit-scrollbar-corner {
+    background: transparent;
 }
 body {
     overflow-anchor: none;

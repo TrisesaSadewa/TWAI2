@@ -66,8 +66,9 @@ def test_api_disconnect_resilience():
         return {'status': 'SUCCESS'}
 
     # Simulate client starting the job
+    from core.config import settings
     with TestClient(app) as live_client:
-        response = live_client.post("/api/train", json=payload)
+        response = live_client.post("/api/train", json=payload, headers={"X-API-Key": settings.SERVICE_API_KEY})
         assert response.status_code == 200
         data = response.json()
         report_id = data["report_id"]

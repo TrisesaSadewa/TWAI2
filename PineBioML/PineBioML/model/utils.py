@@ -76,8 +76,12 @@ class sklearn_esitimator_wrapper(BaseEstimator):
         Returns:
             Series: kernel prediction
         """
+        preds = self.kernel.predict(x)
+        if hasattr(preds, "ndim") and preds.ndim > 1:
+            import numpy as np
+            preds = np.ravel(preds)
 
-        return Series(self.kernel.predict(x),
+        return Series(preds,
                       index=getattr(x, "index", None),
                       name=self.label_name_)
 

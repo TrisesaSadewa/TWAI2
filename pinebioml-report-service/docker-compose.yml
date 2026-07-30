@@ -42,10 +42,8 @@ services:
       - |
         echo "Waiting for ollama to be ready..." &&
         until ollama list >/dev/null 2>&1; do sleep 2; done &&
-        echo "Pulling CPU writer model (deepseek-r1:14b)..." &&
-        ollama pull deepseek-r1:14b &&
-        echo "Pulling verifier model (qwen2.5-coder:14b)..." &&
-        ollama pull qwen2.5-coder:14b &&
+        echo "Pulling primary LLM & verifier model (qwen3.5:9b)..." &&
+        ollama pull qwen3.5:9b &&
         echo "All models pulled." && ollama list
     restart: "no"
 
@@ -67,10 +65,10 @@ services:
       - DATABASE_URL=postgresql://pinebioml:${POSTGRES_PASSWORD}@db:5432/pinebioml_db
       - OLLAMA_BASE_URL=http://ollama:11434
       - LLM_API_BASE_URL=http://ollama:11434/v1
-      - LLM_MODEL=deepseek-r1:14b
+      - LLM_MODEL=qwen3.5:9b
       - WRITER_DEPLOYMENT=gpu
-      - CPU_DEPLOYMENT_WRITER_MODEL=deepseek-r1:14b
-      - VERIFIER_MODEL=qwen2.5-coder:14b
+      - CPU_DEPLOYMENT_WRITER_MODEL=qwen3.5:9b
+      - VERIFIER_MODEL=qwen3.5:9b
       - LLM_REQUEST_TIMEOUT_SECONDS=900
     depends_on:
       - db

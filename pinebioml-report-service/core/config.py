@@ -24,6 +24,7 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "roles":        ["analysis"],
         "description":  "DeepSeek-R1 14B",
         "max_tokens":   8192,
+        "context_tokens": 16384,
         "temperature":  0.2,
     },
     "qwen2.5-coder-14b": {
@@ -32,7 +33,8 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "vram_gb":      8.7,
         "roles":        ["analysis"],
         "description":  "Qwen 2.5 Coder 14B",
-        "max_tokens":   8192,
+        "max_tokens":   4096,
+        "context_tokens": 8192,
         "temperature":  0.15,
     },
     "qwen3.5:9b": {
@@ -42,16 +44,17 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "roles":        ["analysis"],
         "description":  "Qwen 3.5 9B",
         "max_tokens":   8192,
+        "context_tokens": 16384,
         "temperature":  0.15,
     },
-    "gemma4:12b": {
-        "ollama_tag":   "gemma4:12b",
+    "deepseek-r1:8b": {
+        "ollama_tag":   "deepseek-r1:8b",
         "tier":         2,
         "vram_gb":      7.0,
         "roles":        ["analysis"],
-        "description":  "Gemma4 12B",
+        "description":  "DeepSeek-R1 8B",
         "max_tokens":   8192,
-        "context_tokens": 32768,
+        "context_tokens": 16384,
         "temperature":  0.15,
     },
 
@@ -92,6 +95,17 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "description":  "Moondream2 — Lightweight vision",
         "max_tokens":   2048,
         "temperature":  0.3,
+    },
+
+    # ── Embedding models ─────────────
+    "granite-embedding-311m": {
+        "ollama_tag":   "ibm-granite/granite-embedding-311m-multilingual-r2",
+        "tier":         1,
+        "vram_gb":      0.3,
+        "roles":        ["embedding"],
+        "description":  "IBM Granite 311M Multilingual R2 Embedding",
+        "max_tokens":   512,
+        "temperature":  0.0,
     }
 }
 
@@ -110,6 +124,7 @@ _SUPPORTED_MODELS["qwen3-vl"] = "qwen3-vl:8b"
 _SUPPORTED_MODELS["qwen3.5"] = "qwen3.5:9b"
 _SUPPORTED_MODELS["qwen2.5-coder"] = "qwen2.5-coder:14b"
 _SUPPORTED_MODELS["deepseek-r1"] = "deepseek-r1:14b"
+_SUPPORTED_MODELS["granite-embedding"] = "ibm-granite/granite-embedding-311m-multilingual-r2"
 
 
 def get_model_tier(model_alias: str) -> int:
@@ -180,17 +195,13 @@ class Settings(BaseSettings):
     # LLM Settings (supports both Ollama local and OpenAI-compatible cloud API)
     LLM_API_KEY: Optional[str] = None
     LLM_API_BASE_URL: str = "http://localhost:11434/v1"
-    LLM_MODEL: str = "deepseek-r1:14b"
+    LLM_MODEL: str = "qwen3.5:9b"
     WRITER_DEPLOYMENT: str = "gpu"
-    CPU_DEPLOYMENT_WRITER_MODEL: str = "deepseek-r1:14b"
+    CPU_DEPLOYMENT_WRITER_MODEL: str = "qwen3.5:9b"
     LLM_REQUEST_TIMEOUT_SECONDS: int = 900
 
-    # Tier-2 hallucination verifier model. This must be a FAST, NON-REASONING
-    # model: the verifier answers a single YES/NO grounding question per flagged
-    # sentence, so a reasoning model (deepseek-r1) is both wasteful and too slow
-    # (it times out on CPU-only hosts). GPU deployments keep LLM_MODEL on the
-    # reasoning model; CPU deployments switch the writer via WRITER_DEPLOYMENT.
-    VERIFIER_MODEL: str = "qwen2.5-coder:14b"
+    # Tier-2 hallucination verifier model (Reuses warm qwen3.5:9b in VRAM for 0 swap delay)
+    VERIFIER_MODEL: str = "qwen3.5:9b"
 
     # Threshold tuning for binary classification on imbalanced data. After fit,
     # the decision threshold for the minority class is searched (0.05-0.95) to
@@ -198,8 +209,8 @@ class Settings(BaseSettings):
     # (balanced, default), "sensitivity" (screening-first / recall), "mcc".
     THRESHOLD_OPTIMIZE_METRIC: str = "f1"
 
-    # Embedding model served via Ollama
-    EMBEDDING_MODEL: str = "nomic-embed-text"
+    # Embedding model
+    EMBEDDING_MODEL: str = "granite-embed:latest"
 
     # Vision / multimodal model for chart & plot analysis
     VISION_MODEL: str = "glm-ocr:latest"

@@ -19,7 +19,9 @@ from core.config import settings as app_settings
 try:
     def _patched_dir(self):
         d = set(dir(type(self)) + list(self.__dict__.keys()))
-        if hasattr(self, 'is_regression') and self.is_regression() and 'predict_proba' in d:
+        has_kernel_proba = hasattr(self, 'kernel') and "predict_proba" in dir(self.kernel)
+        is_reg = hasattr(self, 'is_regression') and callable(self.is_regression) and self.is_regression()
+        if (is_reg or not has_kernel_proba) and 'predict_proba' in d:
             d.remove('predict_proba')
         return list(d)
         
@@ -122,8 +124,28 @@ def run_dynamic_pipeline(
             train_x.loc[mask, col] = le_x.fit_transform(train_x.loc[mask, col].astype(str))
             train_x[col] = pd.to_numeric(train_x[col])
     
-    # Pre-select numeric columns for plotting
+    # Pre-select numeric columns for plotting (on training set only to prevent leakage in EDA)
     numeric_x = train_x.select_dtypes(include=['number'])
+
+    # Apply train/test split from settings
+    train_size_setting = float(settings.get("train_size", 80)) / 100.0
+    test_size = 1.0 - train_size_setting
+    
+    # We maintain variables for both train and test to prevent leakage.
+    if test_size > 0.0:
+        from sklearn.model_selection import train_test_split
+        stratify_param = train_y if not is_regression else None
+        
+        # Split everything, ensuring indices align
+        train_x, test_x, train_y, test_y, train_y_orig, test_y_orig, numeric_x, numeric_test_x = train_test_split(
+            train_x, train_y, train_y_orig, numeric_x, 
+            test_size=test_size, stratify=stratify_param, random_state=42
+        )
+    else:
+        test_x = train_x.copy()
+        test_y = train_y.copy()
+        test_y_orig = train_y_orig.copy()
+        numeric_test_x = numeric_x.copy()
     
     os.makedirs(output_dir, exist_ok=True)
     
@@ -331,8 +353,78 @@ def run_dynamic_pipeline(
             n_iter = min(tuning_n_iter, grid_size)
             # HalvingRandomSearchCV needs to be able to reduce resources; passing n_candidates=n_iter ensures it limits its initial random pool
             search = HalvingRandomSearchCV(estimator, param_grid, n_candidates=n_iter, factor=3, cv=cv_folds, n_jobs=-1, random_state=42, verbose=1)
-        
-        return sklearn_esitimator_wrapper(search)
+        class SafeSearchWrapper:
+            def __init__(self, search_obj):
+                self.search_obj = search_obj
+                self.fallback_ = None
+                
+            def fit(self, X, y, **kwargs):
+                try:
+                    self.search_obj.fit(X, y, **kwargs)
+                except Exception as e:
+                    logger.error(f"Search failed for {self.search_obj.estimator.__class__.__name__}: {e}")
+                    if is_regression:
+                        from sklearn.dummy import DummyRegressor
+                        self.fallback_ = DummyRegressor(strategy="mean").fit(X, y)
+                    else:
+                        from sklearn.dummy import DummyClassifier
+                        self.fallback_ = DummyClassifier(strategy="prior").fit(X, y)
+                return self
+                
+            def predict(self, X, **kwargs):
+                fallback = getattr(self, "fallback_", None)
+                if fallback is not None:
+                    return fallback.predict(X)
+                return self.search_obj.predict(X, **kwargs)
+
+            def is_regression(self):
+                return is_regression
+
+            @property
+            def _estimator_type(self):
+                return "regressor" if is_regression else "classifier"
+
+            def __dir__(self):
+                d = set(dir(type(self)) + list(self.__dict__.keys()))
+                search_obj = self.__dict__.get("search_obj")
+                if search_obj is not None:
+                    try:
+                        d.update(dir(search_obj))
+                    except Exception:
+                        pass
+                fallback = self.__dict__.get("fallback_")
+                if fallback is not None:
+                    try:
+                        d.update(dir(fallback))
+                    except Exception:
+                        pass
+                if is_regression or (search_obj is not None and not hasattr(search_obj, "predict_proba")):
+                    if "predict_proba" in d:
+                        d.remove("predict_proba")
+                return list(d)
+                
+            def __getattr__(self, attr):
+                if attr in ("search_obj", "fallback_") or attr.startswith("__"):
+                    raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
+                fallback = self.__dict__.get("fallback_")
+                if fallback is not None:
+                    if hasattr(fallback, attr):
+                        return getattr(fallback, attr)
+                search_obj = self.__dict__.get("search_obj")
+                if search_obj is not None:
+                    return getattr(search_obj, attr)
+                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
+
+            def __deepcopy__(self, memo):
+                import copy
+                cls = self.__class__
+                result = cls.__new__(cls)
+                memo[id(self)] = result
+                for k, v in self.__dict__.items():
+                    setattr(result, k, copy.deepcopy(v, memo))
+                return result
+                
+        return sklearn_esitimator_wrapper(SafeSearchWrapper(search))
 
     if is_regression:
         if has("RandomForest"):
@@ -374,7 +466,41 @@ def run_dynamic_pipeline(
         if has("MLP"):
             model_dict["MLP"] = tune_model(MLPClassifier(max_iter=1000), {"hidden_layer_sizes": [(50,), (100,), (50,50)], "alpha": [0.0001, 0.001]})
         if has("XGBoost"):
-            model_dict["XGBoost"] = tune_model(XGBClassifier(eval_metric="logloss", scale_pos_weight=xgb_spw, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
+            from sklearn.base import BaseEstimator, ClassifierMixin
+            class SafeXGBClassifier(BaseEstimator, ClassifierMixin):
+                def __init__(self, n_estimators=100, learning_rate=0.1, eval_metric="logloss", scale_pos_weight=None, random_state=None):
+                    self.n_estimators = n_estimators
+                    self.learning_rate = learning_rate
+                    self.eval_metric = eval_metric
+                    self.scale_pos_weight = scale_pos_weight
+                    self.random_state = random_state
+
+                def fit(self, X, y, **fit_params):
+                    from sklearn.preprocessing import LabelEncoder
+                    from xgboost import XGBClassifier
+                    self._le = LabelEncoder()
+                    y_encoded = self._le.fit_transform(y)
+                    self.classes_ = self._le.classes_
+                    
+                    self.model_ = XGBClassifier(
+                        n_estimators=self.n_estimators,
+                        learning_rate=self.learning_rate,
+                        eval_metric=self.eval_metric,
+                        scale_pos_weight=self.scale_pos_weight if len(self.classes_) == 2 else None,
+                        random_state=self.random_state
+                    )
+                    self.model_.fit(X, y_encoded, **fit_params)
+                    return self
+
+                def predict(self, X):
+                    preds = self.model_.predict(X)
+                    if hasattr(preds, "ravel"):
+                        preds = preds.ravel()
+                    return self._le.inverse_transform(preds)
+                    
+                def predict_proba(self, X):
+                    return self.model_.predict_proba(X)
+            model_dict["XGBoost"] = tune_model(SafeXGBClassifier(eval_metric="logloss", scale_pos_weight=xgb_spw, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("LightGBM"):
             model_dict["LightGBM"] = tune_model(LGBMClassifier(verbose=-1, class_weight=cw, random_state=42), {"n_estimators": [50, 100, 200], "learning_rate": [0.01, 0.1, 0.2]})
         if has("AdaBoost"):
@@ -642,25 +768,45 @@ def run_dynamic_pipeline(
             # Export all model results to CSV
             pd.DataFrame(pine_model.result).to_csv(os.path.join(output_dir, "All-model-result.csv"), index=False)
             
-            # Use training predictions for plotting since we didn't pass a separate test set
+            # Evaluate on test set
             import numpy as np
-            pred_raw = np.array(pine_model.train_pred[best_idx])
-            if pred_raw.ndim == 2 and pred_raw.shape[1] > 1:
-                pred_y = np.argmax(pred_raw, axis=1)
-            else:
-                pred_y = pred_raw.ravel()
-            train_y_flat = np.array(train_y).ravel()
+            import copy
             
-            if len(pred_y) != len(train_y_flat):
-                # Try to use the model's predict method if it's fitted
+            stage_method_map = {s: best[s] for (s, _) in experiment[:-1] if s in best}
+            eval_train_x = numeric_x
+            eval_test_x = numeric_test_x
+            for (s, methods) in experiment[:-1]:
+                mname = stage_method_map.get(s)
+                if not mname or mname not in methods: continue
+                transformer = copy.deepcopy(methods[mname])
+                eval_train_x = transformer.fit_transform(eval_train_x, train_y)
+                eval_test_x = transformer.transform(eval_test_x)
+            
+            final_wrapper = copy.deepcopy(best_model_obj)
+            final_wrapper.fit(eval_train_x, train_y)
+            final_kernel = final_wrapper.kernel if hasattr(final_wrapper, 'kernel') else final_wrapper
+            
+            try:
+                pred_y = final_kernel.predict(eval_test_x)
+            except Exception:
+                pred_y = np.zeros(len(test_y))
+
+            if (not is_regression) and hasattr(final_wrapper, "predict_proba"):
                 try:
-                    pred_y = model.predict(train_x)
+                    test_probas = np.asarray(final_wrapper.predict_proba(eval_test_x))
                 except Exception:
-                    # Truncate as a fallback
-                    if len(pred_y) > len(train_y_flat):
-                        pred_y = pred_y[:len(train_y_flat)]
-                    else:
-                        train_y_flat = train_y_flat[:len(pred_y)]
+                    test_probas = None
+            elif (not is_regression) and hasattr(final_kernel, "decision_function"):
+                try:
+                    scores = np.asarray(final_kernel.decision_function(eval_test_x))
+                    test_probas = np.column_stack([-scores, scores]) if scores.ndim == 1 else scores
+                except Exception:
+                    test_probas = None
+            else:
+                test_probas = None
+                
+            eval_y_flat = np.array(test_y).ravel()
+            train_y_flat = eval_y_flat # Alias for downstream label formatting
             
             if not is_regression:
                 if target_le is not None:
@@ -736,7 +882,13 @@ def run_dynamic_pipeline(
                         # Re-derive predictions at the tuned threshold.
                         tuned_threshold = round(best_t, 4)
                         threshold_metric = metric_name
-                        tuned_pred = (pos_prob >= best_t).astype(int)
+                        
+                        if test_probas is not None:
+                            test_pos_prob = test_probas[:, pos_idx]
+                            tuned_pred = (test_pos_prob >= best_t).astype(int)
+                        else:
+                            tuned_pred = pred_y
+                        
                         # Map back to original class labels (minority / other).
                         other_label = next((c for c in classes if c != target_label), target_label)
                         tuned_labels = np.where(tuned_pred == 1, target_label, other_label)
@@ -804,35 +956,11 @@ def run_dynamic_pipeline(
                 try:
                     import copy
 
-                    best_row = pine_model.result[best_idx] if pine_model.result else {}
-                    stage_method_map = {
-                        stage_name: best_row[stage_name]
-                        for (stage_name, _) in experiment[:-1]
-                        if stage_name in best_row
-                    }
+                    roc_model = final_kernel
 
-                    roc_x = numeric_x
-                    for (stage_name, methods) in experiment[:-1]:
-                        method_name = stage_method_map.get(stage_name)
-                        if not method_name or method_name not in methods:
-                            continue
-                        transformer = copy.deepcopy(methods[method_name])
-                        roc_x = transformer.fit_transform(roc_x, train_y)
-
-                    roc_wrapper = copy.deepcopy(best_model_obj)
-                    roc_wrapper.fit(roc_x, train_y)
-                    roc_model = roc_wrapper.kernel if hasattr(roc_wrapper, 'kernel') else roc_wrapper
-
-                    if hasattr(roc_wrapper, "predict_proba"):
-                        probas = np.asarray(roc_wrapper.predict_proba(roc_x))
+                    if test_probas is not None:
+                        probas = test_probas
                         classes = np.asarray(getattr(roc_model, "classes_", np.sort(train_y.unique())))
-                    elif hasattr(roc_model, "decision_function"):
-                        scores = np.asarray(roc_model.decision_function(roc_x))
-                        classes = np.asarray(getattr(roc_model, "classes_", np.sort(train_y.unique())))
-                        if scores.ndim == 1:
-                            probas = np.column_stack([-scores, scores])
-                        else:
-                            probas = scores
                     else:
                         raise RuntimeError("Best model does not expose predict_proba or decision_function")
 
@@ -841,7 +969,7 @@ def run_dynamic_pipeline(
                         pos_idx = 1 if probas.ndim == 2 and probas.shape[1] > 1 else 0
                         pos_label = classes[pos_idx] if len(classes) > pos_idx else np.sort(train_y.unique())[-1]
                         y_score = probas[:, pos_idx] if probas.ndim == 2 else probas.ravel()
-                        fpr, tpr, _ = metrics.roc_curve(train_y, y_score, pos_label=pos_label)
+                        fpr, tpr, _ = metrics.roc_curve(test_y, y_score, pos_label=pos_label)
                         roc_auc = metrics.auc(fpr, tpr)
                         label_str = target_le.inverse_transform([int(pos_label)])[0] if target_le is not None else str(pos_label)
                         ax.plot(fpr, tpr, linewidth=2, label=f'{label_str} AUC = {roc_auc:0.3f}')
@@ -849,7 +977,7 @@ def run_dynamic_pipeline(
                         for i, label in enumerate(classes):
                             if probas.ndim != 2 or i >= probas.shape[1]:
                                 continue
-                            fpr, tpr, _ = metrics.roc_curve(train_y == label, probas[:, i])
+                            fpr, tpr, _ = metrics.roc_curve(test_y == label, probas[:, i])
                             roc_auc = metrics.auc(fpr, tpr)
                             label_str = target_le.inverse_transform([int(label)])[0] if target_le is not None else str(label)
                             ax.plot(fpr, tpr, linewidth=2, label=str(label_str) + ' (AUC=%0.3f)' % roc_auc)
@@ -863,7 +991,41 @@ def run_dynamic_pipeline(
                     ax.legend(loc='lower right')
                     fig.tight_layout()
                     fig.savefig(os.path.join(output_dir, "_ROC Curve.png"), bbox_inches='tight', dpi=160)
+                    fig.savefig(os.path.join(output_dir, "_ROC Curve.png"), bbox_inches='tight', dpi=160)
                     plt.close(fig)
+                    
+                    # Also plot Precision-Recall Curve
+                    fig_pr, ax_pr = plt.subplots(figsize=(7, 5))
+                    if len(classes) <= 2:
+                        pos_idx = 1 if probas.ndim == 2 and probas.shape[1] > 1 else 0
+                        pos_label = classes[pos_idx] if len(classes) > pos_idx else np.sort(train_y.unique())[-1]
+                        y_score = probas[:, pos_idx] if probas.ndim == 2 else probas.ravel()
+                        precision, recall, _ = metrics.precision_recall_curve(test_y, y_score, pos_label=pos_label)
+                        avg_prec = metrics.average_precision_score(test_y == pos_label, y_score)
+                        label_str = target_le.inverse_transform([int(pos_label)])[0] if target_le is not None else str(pos_label)
+                        ax_pr.plot(recall, precision, linewidth=2, label=f'{label_str} AP = {avg_prec:0.3f}')
+                        baseline = (test_y == pos_label).mean()
+                        ax_pr.plot([0, 1], [baseline, baseline], 'r--', linewidth=1.5, label="Random baseline")
+                    else:
+                        for i, label in enumerate(classes):
+                            if probas.ndim != 2 or i >= probas.shape[1]:
+                                continue
+                            precision, recall, _ = metrics.precision_recall_curve(test_y == label, probas[:, i])
+                            avg_prec = metrics.average_precision_score(test_y == label, probas[:, i])
+                            label_str = target_le.inverse_transform([int(label)])[0] if target_le is not None else str(label)
+                            ax_pr.plot(recall, precision, linewidth=2, label=str(label_str) + ' (AP=%0.3f)' % avg_prec)
+                        ax_pr.plot([0, 1], [0.5, 0.5], 'r--', linewidth=1.5, label="Random baseline")
+                        
+                    ax_pr.set_xlim([0, 1])
+                    ax_pr.set_ylim([0, 1.05])
+                    ax_pr.set_ylabel('Precision')
+                    ax_pr.set_xlabel('Recall (Sensitivity)')
+                    ax_pr.set_title('Precision-Recall Curve')
+                    ax_pr.grid(alpha=0.25)
+                    ax_pr.legend(loc='lower left')
+                    fig_pr.tight_layout()
+                    fig_pr.savefig(os.path.join(output_dir, "_PR Curve.png"), bbox_inches='tight', dpi=160)
+                    plt.close(fig_pr)
                 except Exception as ex:
                     logger.warning(f"Failed to plot ROC: {ex}")
                     fig, ax = plt.subplots(figsize=(7, 5))
@@ -987,6 +1149,7 @@ def run_dynamic_pipeline(
                 fig_fi.update_xaxes(showgrid=True, gridcolor='lightgrey', zeroline=True, zerolinecolor='black')
                 fig_fi.update_yaxes(showgrid=False)
                 fig_fi.write_html(os.path.join(output_dir, "feature_importance.html"))
+                scores.to_csv(os.path.join(output_dir, "feature_importance.csv"), index=False)
             except Exception as e:
                 logger.warning(f"Failed to generate ensemble feature importance: {e}")
                 if hasattr(underlying_model, 'feature_importances_'):
@@ -995,12 +1158,14 @@ def run_dynamic_pipeline(
                     fig_fi = px.bar(df_fi, y='Feature', x='Importance', orientation='h', title="Feature Importance")
                     fig_fi.update_layout(height=800)
                     fig_fi.write_html(os.path.join(output_dir, "feature_importance.html"))
+                    df_fi.to_csv(os.path.join(output_dir, "feature_importance.csv"), index=False)
                 elif hasattr(underlying_model, 'coef_'):
                     importances = underlying_model.coef_[0] if len(underlying_model.coef_.shape) > 1 else underlying_model.coef_
                     df_fi = pd.DataFrame({'Feature': eval_x.columns, 'Importance': importances}).sort_values('Importance', ascending=True)
                     fig_fi = px.bar(df_fi, y='Feature', x='Importance', orientation='h', title="Feature Coefficients")
                     fig_fi.update_layout(height=800)
                     fig_fi.write_html(os.path.join(output_dir, "feature_importance.html"))
+                    df_fi.to_csv(os.path.join(output_dir, "feature_importance.csv"), index=False)
                 else:
                     with open(os.path.join(output_dir, "feature_importance.html"), "w") as f:
                         f.write("<html><body><h3>Feature Importance not available for this model</h3></body></html>")
@@ -1085,6 +1250,30 @@ def run_dynamic_pipeline(
                         
                         with open(os.path.join(output_dir, "shap_plot.html"), "w", encoding="utf-8") as f:
                             f.write(html)
+                            
+                        # Generate shap_features.csv with directionality for the LLM
+                        feature_summaries = []
+                        for i in sorted_idx[-15:]:
+                            fname = sample_x.columns[i]
+                            f_vals = sample_x.iloc[:, i]
+                            s_vals = vals[:, i]
+                            
+                            corr = 0
+                            if np.std(f_vals) > 0 and np.std(s_vals) > 0:
+                                corr = np.corrcoef(f_vals, s_vals)[0, 1]
+                            
+                            direction = "Positive" if corr > 0.1 else ("Negative" if corr < -0.1 else "Mixed/Non-linear")
+                            feature_summaries.append({
+                                "Feature": fname,
+                                "Importance": mean_abs_shap[i],
+                                "Direction": direction,
+                                "Correlation": corr
+                            })
+                            
+                        try:
+                            pd.DataFrame(feature_summaries).sort_values("Importance", ascending=False).to_csv(os.path.join(output_dir, "shap_features.csv"), index=False)
+                        except Exception as e:
+                            logger.error(f"Failed to write shap_features.csv: {e}")
                     except Exception as e:
                         logger.warning(f"Plotly SHAP failed: {e}. Falling back to Matplotlib.")
                         _write_feature_contribution_fallback("Plotly generation failed")
@@ -1210,7 +1399,7 @@ img {{ display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 a
                         curr_x = t.transform(curr_x)
                     return curr_x
 
-                if hasattr(shap_kernel, 'is_regression') and shap_kernel.is_regression():
+                if is_regression or (hasattr(shap_kernel, 'is_regression') and callable(shap_kernel.is_regression) and shap_kernel.is_regression()):
                     def _predict(x_arr):
                         return np.asarray(shap_kernel.predict(_transform_for_shap(x_arr))).ravel()
                     explainer = shap.Explainer(_predict, sample_x)

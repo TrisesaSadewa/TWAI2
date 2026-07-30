@@ -456,10 +456,13 @@
                         Generating AI Report... <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">Waiting for data</span></div>
                 </div>
 
-                <div class="text-center" style="margin-top: 30px;">
-                    <button id="see-result-btn" class="btn btn-primary"
-                        style="display: none; background-color: #5b9bd5; border-color: #5b9bd5; color: white; padding: 10px 20px;"
-                        onclick="goToResult()">See Your ML Results</button>
+                <div class="text-center" style="margin-top: 30px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                    <button id="see-result-btn" class="btn btn-secondary"
+                        style="display: none; background-color: #6c757d; border-color: #6c757d; color: white; padding: 12px 24px; font-weight: 600; border-radius: 6px;"
+                        onclick="goToResult()"><i class="icofont-chart-bar-graph"></i> See ML Results</button>
+                    <button id="see-ai-report-btn" class="btn btn-primary"
+                        style="display: none; background-color: #1A76D1; border-color: #1A76D1; color: white; padding: 12px 24px; font-weight: 600; border-radius: 6px; box-shadow: 0 4px 12px rgba(26, 118, 209, 0.35);"
+                        onclick="goToAIReport()"><i class="icofont-file-document"></i> View AI Clinical Report</button>
                 </div>
             </div>
         </section>
@@ -535,6 +538,11 @@
             const newUrl = currentUrl.replace('result_example', 'result');
             window.location.href = newUrl;
         }
+
+        function goToAIReport() {
+            window.location.href = `/report/${uuid}/html?token=ui_token`;
+        }
+
         const uuid = "{{ uuid }}";
         let fallbackTimer = null;
         let sseConnected = false;
@@ -546,17 +554,16 @@
 
             // Parse granular message if it's JSON
             let statusMessage = data.message;
-            let granularComplete = false;
             try {
                 if (statusMessage && statusMessage.startsWith("{")) {
                     const parsed = JSON.parse(statusMessage);
                     if (parsed.granular) {
-                        isGranular = true;
                         statusMessage = parsed.message || "Evaluating pipelines...";
-                        document.getElementById('c-model').innerText = parsed.granular.completed;
-                        document.getElementById('step-model').innerHTML = document.getElementById('step-model').innerHTML.replace(/\/\d+\)/, `/${parsed.granular.total})`);
-                        if (parsed.granular.completed >= parsed.granular.total) {
-                            granularComplete = true;
+                        const cModelEl = document.getElementById('c-model');
+                        if (cModelEl) cModelEl.innerText = parsed.granular.completed;
+                        const stepModelEl = document.getElementById('step-model');
+                        if (stepModelEl) {
+                            stepModelEl.innerHTML = stepModelEl.innerHTML.replace(/\/\d+\)/, `/${parsed.granular.total})`);
                         }
                     }
                 }
@@ -566,34 +573,55 @@
 
             updateProgressBar(pct);
 
-            if (pct >= 10 || granularComplete) {
+            if (pct >= 10) {
                 markStepComplete('step-missing', 'missing');
                 markStepComplete('step-norm', 'norm');
             }
-            if (pct >= 30 || granularComplete) {
+            if (pct >= 30) {
                 markStepComplete('step-feature', 'feature');
             }
-            if (pct >= 70 || granularComplete) {
+            if (data.status === "GENERATING" || data.status === "SUCCESS") {
                 markStepComplete('step-model', 'model');
             }
 
             if (data.status === "SUCCESS") {
                 pipelineFinished = true;
                 updateProgressBar(100);
+                markStepComplete('step-missing', 'missing');
+                markStepComplete('step-norm', 'norm');
+                markStepComplete('step-feature', 'feature');
+                markStepComplete('step-model', 'model');
+                
                 const reportStep = document.getElementById('step-report');
                 if (reportStep) {
-                    markStepComplete('step-report', null);
-                    if (aiReportStartedTime > 0) {
-                        document.getElementById('timer-report').innerText = formatTime(Date.now() - aiReportStartedTime);
-                    } else {
-                        document.getElementById('timer-report').innerText = "00:00";
-                    }
+                    reportStep.innerHTML = '<i class="fa fa-check-circle" style="color: green;"></i> Generating AI Report Complete <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">' + (aiReportStartedTime > 0 ? formatTime(Date.now() - aiReportStartedTime) : "00:00") + '</span>';
                 }
+
                 document.getElementById('main-spinner').className = "icofont-check-circled";
                 document.getElementById('main-spinner').style.color = "green";
                 document.getElementById('main-status-title').innerText = "Processing Complete";
-                document.getElementById('main-status-desc').innerText = "Your analysis results are ready to be viewed.";
-                document.getElementById('see-result-btn').style.display = 'inline-block';
+                document.getElementById('main-status-desc').innerText = "Your machine learning models and AI Clinical Report are ready. Redirecting to your report...";
+                
+                const seeResultBtn = document.getElementById('see-result-btn');
+                if (seeResultBtn) {
+                    seeResultBtn.style.display = 'inline-block';
+                    seeResultBtn.style.backgroundColor = '#6c757d';
+                    seeResultBtn.style.borderColor = '#6c757d';
+                }
+
+                const seeAiReportBtn = document.getElementById('see-ai-report-btn');
+                if (seeAiReportBtn) {
+                    seeAiReportBtn.style.display = 'inline-block';
+                    seeAiReportBtn.className = "btn btn-primary";
+                    seeAiReportBtn.disabled = false;
+                    seeAiReportBtn.innerHTML = '<i class="icofont-file-document"></i> View AI Clinical Report';
+                }
+
+                // Automatically navigate to AI Clinical Report after 2 seconds
+                setTimeout(() => {
+                    goToAIReport();
+                }, 2000);
+
             } else if (data.status === "FAILED") {
                 pipelineFinished = true;
                 alert("Machine learning task failed: " + statusMessage);
@@ -605,11 +633,9 @@
                 markStepComplete('step-model', 'model');
 
                 const reportStep = document.getElementById('step-report');
-                if (reportStep && !reportStep.innerHTML.includes('fa-spinner')) {
-                    let reportTextHtml = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">00:00</span>';
+                if (reportStep) {
+                    let reportTextHtml = '<i class="fa fa-spinner fa-spin" style="color: #1b8adb;"></i> Generating AI Report... ' + pct + '% <span id="timer-report" style="float: right; font-family: monospace; font-size: 1rem; color: #888;">' + (aiReportStartedTime > 0 ? formatTime(Date.now() - aiReportStartedTime) : "00:00") + '</span>';
                     reportStep.innerHTML = reportTextHtml;
-                } else if (reportStep && reportStep.innerHTML.includes('fa-spinner')) {
-                    reportStep.innerHTML = reportStep.innerHTML.replace(/\d+%/, pct + '%');
                 }
 
                 document.getElementById('main-spinner').className = "icofont-check-circled";

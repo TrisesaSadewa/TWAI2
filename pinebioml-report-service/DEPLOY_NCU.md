@@ -297,11 +297,11 @@ Docker Desktop with the WSL2 backend automatically passes the GPU to Docker, so 
 Production `.env.production` configuration for GPU usage:
 
 ```env
-LLM_MODEL=deepseek-r1:14b
+LLM_MODEL=qwen3.5:9b
 WRITER_DEPLOYMENT=gpu
-CPU_DEPLOYMENT_WRITER_MODEL=deepseek-r1:14b
-VERIFIER_MODEL=qwen2.5-coder:14b
-EMBEDDING_MODEL=nomic-embed-text
+CPU_DEPLOYMENT_WRITER_MODEL=qwen3.5:9b
+VERIFIER_MODEL=qwen3.5:9b
+EMBEDDING_MODEL=ibm-granite/granite-embedding-311m-multilingual-r2
 VISION_MODEL=glm-ocr:latest
 ENABLE_VISION_ANALYSIS=false
 LLM_REQUEST_TIMEOUT_SECONDS=900

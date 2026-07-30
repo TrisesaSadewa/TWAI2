@@ -16,6 +16,7 @@ pinebioml-report-service/.env
 pinebioml-report-service/.env.*
 !pinebioml-report-service/.env.example
 !pinebioml-report-service/.env.production.example
+pinebioml-report-service/debug_log.txt
 
 # Generated runtime data — reports, datasets, media, exports
 pinebioml-report-service/storage/
@@ -36,12 +37,20 @@ output/
 # Local reference captures and generated docs not needed on GitHub
 ORGINAL HTML/
 PineBioML/documents/
+PineBioML AI Clinical Report Viewer deployed #2.pdf
+PineBioML AI Clinical Report Viewer deployed #1.pdf
 
 # Local package/build artifacts
 PineBioML/build/
 PineBioML/*.egg-info/
+parsed_content.txt
+pinebioml-report-service\output_no_context.json
+pinebioml-report-service\output_with_context.json
 
 # OS / editor noise
 .DS_Store
 Thumbs.db
 *.swp
+
+# Model weights
+*.gguf

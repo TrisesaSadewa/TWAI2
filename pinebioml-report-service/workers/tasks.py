@@ -122,6 +122,7 @@ def train_and_generate_report_task_sync(payload: dict):
             "classification_report_json": "classification_report.json",
             "confusion_matrix_png": "_Confusion Matrix.png",
             "roc_curve_png": "_ROC Curve.png",
+            "pr_curve_png": "_PR Curve.png",
             "true_vs_predicted_png": "_True vs Predicted.png",
             "residuals_png": "_Residuals.png",
             "corr_heatmap_png": "_Correlation Heatmap.png",

@@ -49,6 +49,8 @@
     <link rel="stylesheet" href="/static/css/style.css?v=20260630">
     <link rel="stylesheet" href="/static/css/responsive.css">
     <style nonce="{{ request.state.csp_nonce }}">
+
+
         html, body {
             overscroll-behavior-y: none;
             height: auto !important;
@@ -413,6 +415,35 @@
                                         <td>
                                             <span id="file-name-display" style="margin-left: 10px; color: #555;"></span>
                                             <span id="wrong-display" style="margin-left: 10px; color: #555;"></span>
+                                            <button type="button" id="toggle-upload-context-btn" class="btn btn-sm btn-link no-preloader" style="padding: 0; font-size: 0.85rem; color: #1A76D1; text-decoration: none; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: none; cursor: pointer;">
+                                                <i class="fa fa-plus-circle"></i> Add Optional Study Context & Metadata
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr id="upload-metadata-row">
+                                        <td colspan="3" style="padding-top: 10px; padding-bottom: 10px;">
+                                            <div id="upload-metadata-box" class="metadata-context-box" style="display: none; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-top: 5px; margin-bottom: 5px;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                                    <div style="display: flex; align-items: center;">
+                                                        <i class="fa fa-info-circle" style="color: #1A76D1; font-size: 1rem; margin-right: 8px;"></i>
+                                                        <span style="font-weight: 600; font-size: 0.92rem; color: #2d3748;">Additional Study Context & Metadata</span>
+                                                        <span style="font-size: 0.75rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; padding: 2px 8px; border-radius: 12px; margin-left: 8px;">Optional — Complements Auto-Detection</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary no-preloader insert-template-btn" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #1A76D1; color: #1A76D1; background: transparent; cursor: pointer;">
+                                                        <i class="fa fa-magic" style="margin-right: 4px;"></i> Insert Template
+                                                    </button>
+                                                </div>
+                                                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; line-height: 1.4;">
+                                                    Provide background information to give the AI LLM deeper context for your dataset (e.g. disease background, research goals, feature definitions, target labels). This works in tandem with our automated domain detection.
+                                                </p>
+                                                <div style="display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; font-size: 0.78rem; color: #475569;">
+                                                    <span>🩺 <b>Disease/Condition</b></span>
+                                                    <span>🎯 <b>Research Objective</b></span>
+                                                    <span>🧬 <b>Feature Descriptions</b></span>
+                                                    <span>📊 <b>Target Meaning</b></span>
+                                                </div>
+                                                <textarea name="additional_context" class="form-control context-textarea" rows="3" style="width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 0.85rem; line-height: 1.4; color: #1e293b; background-color: #ffffff; resize: vertical;" placeholder="e.g.&#10;• Disease/Topic: Breast Cancer Diagnostic Study&#10;• Research Objective: Classify malignant vs benign tumors based on cell nuclei features&#10;• Feature Notes: radius_mean = mean cell distance; texture_mean = gray-scale variability&#10;• Target Meaning: 1 = Malignant, 0 = Benign"></textarea>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
@@ -431,11 +462,6 @@
                 </div>
             </section>
         </div><br>
-
-
-          
-
-
 
         <!-- Test data -->
         <br><div style="padding: 10px;">
@@ -491,16 +517,60 @@
                                         <td>Diabetes Progression Dataset</td>
                                         <td>This is a real-world medical dataset for diabetes disease progression regression. <a class="no-preloader" href="/static/examples/diabetes_disease_progression.xlsx" download>Download Excel</a></td>
                                     </tr>
+                                    <tr id="test-metadata-row">
+                                        <td colspan="3" style="padding-top: 10px; padding-bottom: 10px;">
+                                            <div id="test-metadata-box" class="metadata-context-box" style="display: none; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-top: 5px; margin-bottom: 5px;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                                        <i class="fa fa-info-circle" style="color: #1A76D1; font-size: 1rem; margin-right: 4px;"></i>
+                                                        <span style="font-weight: 600; font-size: 0.92rem; color: #2d3748;">Additional Study Context & Metadata</span>
+                                                        <span id="test-dataset-badge" style="font-size: 0.75rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; padding: 2px 8px; border-radius: 12px;">Pregenerated: Breast Cancer Wisconsin</span>
+                                                    </div>
+                                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                                        <button type="button" id="btn-autofill-test-context" class="btn btn-sm btn-outline-primary no-preloader" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #1A76D1; color: #1A76D1; background: #ffffff; cursor: pointer;">
+                                                            <i class="fa fa-sparkles" style="margin-right: 4px;"></i> Load Pregenerated Metadata
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary no-preloader insert-template-btn" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #64748b; color: #475569; background: #ffffff; cursor: pointer;">
+                                                            <i class="fa fa-magic" style="margin-right: 4px;"></i> Insert Blank Template
+                                                        </button>
+                                                        <button type="button" id="btn-clear-test-context" class="btn btn-sm btn-outline-secondary no-preloader" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #cbd5e1; color: #64748b; background: #ffffff; cursor: pointer;">
+                                                            <i class="fa fa-eraser" style="margin-right: 4px;"></i> Clear Text
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; line-height: 1.4;">
+                                                    Provide background information to give the AI LLM deeper context for your dataset. For test data, accurate pregenerated domain metadata is provided below and can be edited or cleared.
+                                                </p>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; font-size: 0.78rem; color: #475569;">
+                                                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                                        <span>🩺 <b>Disease/Condition</b></span>
+                                                        <span>🎯 <b>Research Objective</b></span>
+                                                        <span>🧬 <b>Feature Descriptions</b></span>
+                                                        <span>📊 <b>Target Meaning</b></span>
+                                                    </div>
+                                                    <div>
+                                                        <label style="margin: 0; cursor: pointer; font-weight: 500; color: #1e293b;">
+                                                            <input type="checkbox" id="include-test-context-chk" checked style="margin-right: 4px; vertical-align: middle;"> Submit with study metadata
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <textarea id="test-additional-context" name="additional_context" class="form-control context-textarea" rows="5" style="width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; padding: 10px; font-size: 0.85rem; line-height: 1.45; color: #1e293b; background-color: #ffffff; resize: vertical; font-family: inherit;"></textarea>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th>
+                                        <td colspan="2">
+                                            <button type="button" id="toggle-test-context-btn" class="btn btn-sm btn-link no-preloader" style="padding: 0; font-size: 0.85rem; color: #1A76D1; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: none; cursor: pointer;">
+                                                <i class="fa fa-plus-circle"></i> Add Optional Study Context & Metadata
+                                            </button>
+                                        </td>
+                                        <td>
                                             <div class="button" style="float: right;">
                                                 <button title="Action" aria-label="Action" type="submit" class="btn">Submit</button>
                                             </div>
-                                        </th>
+                                        </td>
                                     </tr>
-                                </table>                                
+                                </table> 
                             </form>
                         </div>
                     </div>
@@ -649,10 +719,136 @@
                 // 更新顯示選擇的檔案名稱
                 fileNameDisplay.textContent = fileName;
                 fileNameDisplay.style.color = 'black';
+
+                // Automatically reveal optional study context box on file upload
+                const uploadContextBox = document.getElementById('upload-metadata-box');
+                const toggleUploadBtn = document.getElementById('toggle-upload-context-btn');
+                if (uploadContextBox) {
+                    uploadContextBox.style.display = 'block';
+                }
+                if (toggleUploadBtn) {
+                    toggleUploadBtn.innerHTML = '<i class="fa fa-minus-circle"></i> Hide Optional Study Context & Metadata';
+                }
             } else {
                 wrongDisplay.textContent = 'Please choose the data';
             }
         });
+
+        // Toggle buttons for optional study context boxes
+        const toggleUploadBtn = document.getElementById('toggle-upload-context-btn');
+        const uploadContextBox = document.getElementById('upload-metadata-box');
+        if (toggleUploadBtn && uploadContextBox) {
+            toggleUploadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isHidden = uploadContextBox.style.display === 'none' || !uploadContextBox.style.display;
+                uploadContextBox.style.display = isHidden ? 'block' : 'none';
+                toggleUploadBtn.innerHTML = isHidden 
+                    ? '<i class="fa fa-minus-circle"></i> Hide Optional Study Context & Metadata'
+                    : '<i class="fa fa-plus-circle"></i> Add Optional Study Context & Metadata';
+            });
+        }
+
+        const toggleTestBtn = document.getElementById('toggle-test-context-btn');
+        const testContextBox = document.getElementById('test-metadata-box');
+        if (toggleTestBtn && testContextBox) {
+            toggleTestBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isHidden = testContextBox.style.display === 'none' || !testContextBox.style.display;
+                testContextBox.style.display = isHidden ? 'block' : 'none';
+                toggleTestBtn.innerHTML = isHidden 
+                    ? '<i class="fa fa-minus-circle"></i> Hide Optional Study Context & Metadata'
+                    : '<i class="fa fa-plus-circle"></i> Add Optional Study Context & Metadata';
+            });
+        }
+
+        // ── Pregenerated Medical Context & Metadata for Test Datasets ──
+        const PREGENERATED_TEST_CONTEXT = {
+            pd: `• Disease / Condition: Breast Cancer (Invasive Ductal Carcinoma)\n• Research Objective: Binary classification of tumor masses (Malignant vs. Benign) using fine needle aspirate (FNA) digitized cell nuclei features.\n• Key Feature Descriptions:\n  - radius_mean: Mean distance from center to perimeter points\n  - texture_mean: Standard deviation of gray-scale values\n  - perimeter_mean & area_mean: Tumor contour geometry dimensions\n  - smoothness_mean: Local variation in radius lengths\n  - concavity_mean: Severity of concave contour indentations\n• Target Outcome Meaning: 1 = Malignant (cancerous tumor), 0 = Benign (non-cancerous mass)\n• Sample Cohort Info: 569 patient FNA aspirate samples (357 benign, 212 malignant), UCI ML Repository.`,
+
+            heart: `• Disease / Condition: Coronary Artery Disease / Atherosclerotic Cardiovascular Disease\n• Research Objective: Predict presence and risk severity of cardiac artery narrowing (>50% diameter narrowing) using patient clinical baseline metrics and stress diagnostics.\n• Key Feature Descriptions:\n  - cp: Chest pain type (0=typical angina, 1=atypical angina, 2=non-anginal, 3=asymptomatic)\n  - trestbps: Resting blood pressure (mmHg)\n  - chol: Serum cholesterol (mg/dl)\n  - thalach: Maximum heart rate achieved during exercise stress testing\n  - oldpeak & slope: Exercise-induced ST segment depression and peak slope\n  - ca: Number of major vessels (0-3) colored by fluoroscopy\n• Target Outcome Meaning: 1 = Presence of significant heart disease (>50% vessel stenosis), 0 = Absence of heart disease (<50% stenosis)\n• Sample Cohort Info: 303 adult patient diagnostic records from Cleveland Clinic Foundation.`,
+
+            parkinsons: `• Disease / Condition: Parkinson's Disease (Neurodegenerative Motor Disorder)\n• Research Objective: Distinguish Parkinson's disease patients from healthy control subjects using biomedical acoustic voice recordings and vocal frequency dynamics.\n• Key Feature Descriptions:\n  - MDVP:Fo(Hz), Fhi(Hz), Flo(Hz): Average, maximum, and minimum fundamental vocal frequency\n  - MDVP:Jitter(%) & RAP: Frequency variation measures of pitch period instability\n  - MDVP:Shimmer & APQ: Amplitude variation measures across acoustic speech signals\n  - NHR & HNR: Noise-to-harmonics ratio in vocal fundamental frequency\n  - RPDE, D2, DFA, PPE: Nonlinear dynamical complexity & pitch period entropy metrics\n• Target Outcome Meaning: 1 = Diagnosed Parkinson's Disease patient, 0 = Healthy Control subject\n• Sample Cohort Info: 195 acoustic voice recordings from 31 subjects (23 diagnosed with Parkinson's).`,
+
+            diabetes: `• Disease / Condition: Type 2 Diabetes Mellitus / Metabolic Syndrome\n• Research Objective: Quantitative forecasting of 1-year diabetes disease progression measure from baseline patient demographics and blood serum clinical biomarkers.\n• Key Feature Descriptions:\n  - age, sex, bmi: Patient demographic and body mass index baseline measurements\n  - bp: Mean arterial blood pressure (mmHg)\n  - s1 (tc), s2 (ldl), s3 (hdl): Total serum cholesterol and lipoprotein subfractions\n  - s4 (tch), s5 (ltg), s6 (glu): Triglyceride levels and fasting blood glucose\n• Target Outcome Meaning: Continuous quantitative measure of diabetes disease progression 1 year after baseline (range: 25 - 346)\n• Sample Cohort Info: 442 baseline diabetes patient records (Efron et al. LARS dataset).`
+        };
+
+        const DATASET_NAMES = {
+            pd: "Breast Cancer Wisconsin",
+            heart: "Heart Disease Cleveland",
+            parkinsons: "Parkinson's Disease Voice",
+            diabetes: "Diabetes Progression"
+        };
+
+        const testContextTextarea = document.getElementById('test-additional-context');
+        const testDatasetBadge = document.getElementById('test-dataset-badge');
+        const btnAutofillTest = document.getElementById('btn-autofill-test-context');
+        const btnClearTest = document.getElementById('btn-clear-test-context');
+        const includeTestContextChk = document.getElementById('include-test-context-chk');
+
+        function getSelectedTestDatasetKey() {
+            const checkedRadio = document.querySelector('input[name="dataset"]:checked');
+            return checkedRadio ? checkedRadio.value : 'pd';
+        }
+
+        function loadPregeneratedMetadataForSelected() {
+            const key = getSelectedTestDatasetKey();
+            if (testContextTextarea) {
+                testContextTextarea.value = PREGENERATED_TEST_CONTEXT[key] || '';
+                testContextTextarea.disabled = false;
+            }
+            if (testDatasetBadge) {
+                testDatasetBadge.textContent = 'Pregenerated: ' + (DATASET_NAMES[key] || key);
+            }
+            if (includeTestContextChk) {
+                includeTestContextChk.checked = true;
+            }
+        }
+
+        // Initialize default pregenerated context for initial checked test dataset (Breast Cancer)
+        loadPregeneratedMetadataForSelected();
+
+        // Listen for radio button dataset changes
+        document.querySelectorAll('input[name="dataset"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                loadPregeneratedMetadataForSelected();
+            });
+        });
+
+        if (btnAutofillTest) {
+            btnAutofillTest.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadPregeneratedMetadataForSelected();
+            });
+        }
+
+        if (btnClearTest) {
+            btnClearTest.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (testContextTextarea) {
+                    testContextTextarea.value = '';
+                }
+                if (includeTestContextChk) {
+                    includeTestContextChk.checked = false;
+                }
+            });
+        }
+
+        if (includeTestContextChk && testContextTextarea) {
+            includeTestContextChk.addEventListener('change', function() {
+                if (!includeTestContextChk.checked) {
+                    testContextTextarea.dataset.savedValue = testContextTextarea.value;
+                    testContextTextarea.value = '';
+                    testContextTextarea.disabled = true;
+                } else {
+                    if (testContextTextarea.dataset.savedValue) {
+                        testContextTextarea.value = testContextTextarea.dataset.savedValue;
+                    } else {
+                        loadPregeneratedMetadataForSelected();
+                    }
+                    testContextTextarea.disabled = false;
+                }
+            });
+        }
 
         submitButton.addEventListener('click', function (event) {
 
@@ -718,6 +914,27 @@
                     setTimeout(() => {
                         window.location.href = element.href; // 延遲後跳轉
                     }, 300); // 根據需要調整延遲時間
+                }
+            });
+        });
+
+        // Add handler for "Insert Template" buttons in metadata context boxes
+        document.querySelectorAll('.insert-template-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const container = btn.closest('.metadata-context-box');
+                if (container) {
+                    const textarea = container.querySelector('.context-textarea');
+                    if (textarea) {
+                        const templateText = "• Disease / Condition: \n• Research Objective: \n• Key Feature Descriptions: \n• Target Outcome Meaning: \n• Sample Cohort Info: ";
+                        if (!textarea.value.trim()) {
+                            textarea.value = templateText;
+                        } else {
+                            textarea.value += "\n" + templateText;
+                        }
+                        textarea.focus();
+                    }
                 }
             });
         });

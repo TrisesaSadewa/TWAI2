@@ -909,6 +909,8 @@ async def ui_check_page(request: Request, uuid: str):
             traceback.print_exc()
             pass
 
+    additional_context = form_data.get("additional_context", "").strip() if request.method == "POST" else ""
+
     return templates.TemplateResponse(
         name="check.html", 
         request=request, 
@@ -917,7 +919,8 @@ async def ui_check_page(request: Request, uuid: str):
             "uuid": uuid,
             "filename": original_filename,
             "columns": columns,
-            "rows": rows
+            "rows": rows,
+            "additional_context": additional_context
         }
     )
 
@@ -1085,12 +1088,14 @@ def ui_actual_result_page(request: Request, uuid: str):
 async def ui_setting_page(request: Request, uuid: str):
     uuid = validate_uuid_param(uuid)
     target_column = ""
+    additional_context = ""
     form_data = await request.form()
     from core.security import validate_csrf_from_form
     if request.method == "POST":
         validate_csrf_from_form(request, form_data)
         target_column = form_data.get("target_column", "")
-    return templates.TemplateResponse(name="setting.html", request=request, context={"request": request, "uuid": uuid, "target_column": target_column})
+        additional_context = form_data.get("additional_context", "").strip()
+    return templates.TemplateResponse(name="setting.html", request=request, context={"request": request, "uuid": uuid, "target_column": target_column, "additional_context": additional_context})
 
 @app.api_route("/Statistical_Analysis/result_example/{uuid}/", methods=["GET", "POST"])
 async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_db)):
@@ -1108,6 +1113,7 @@ async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_
     k_fold = form_data.get("k_fold", "5")
     tuning_strategy = form_data.get("tuning_strategy", "RandomizedSearchCV")
     tuning_n_iter = form_data.get("tuning_n_iter", "10")
+    additional_context = form_data.get("additional_context", "").strip()
     
     missing_count = len([m for m in missing_methods if m not in ("missing_all", "None")])
     norm_count = len([m for m in norm_methods if m not in ("norm_all", "None")])
@@ -1123,7 +1129,8 @@ async def ui_result_page(request: Request, uuid: str, db: Session = Depends(get_
         "validation_method": validation_method,
         "k_fold": k_fold,
         "tuning_strategy": tuning_strategy,
-        "tuning_n_iter": int(tuning_n_iter)
+        "tuning_n_iter": int(tuning_n_iter),
+        "additional_context": additional_context
     }
     
     payload = {

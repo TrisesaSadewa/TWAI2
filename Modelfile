@@ -1,0 +1,1 @@
+FROM ./granite-embedding-311m-multilingual-r2-q8_0.gguf

@@ -16,6 +16,7 @@ def test_upload_rejects_unsupported_extension():
     response = client.post(
         "/api/upload",
         files={"file": ("malware.exe", b"MZ fake executable", "application/octet-stream")},
+        headers={"X-API-Key": settings.SERVICE_API_KEY},
     )
 
     assert response.status_code == 400
@@ -28,6 +29,7 @@ def test_upload_rejects_oversized_file(monkeypatch):
     response = client.post(
         "/api/upload",
         files={"file": ("too_large.csv", b"target,value\n0,1\n", "text/csv")},
+        headers={"X-API-Key": settings.SERVICE_API_KEY},
     )
 
     assert response.status_code == 413
@@ -38,6 +40,7 @@ def test_upload_accepts_valid_csv():
     response = client.post(
         "/api/upload",
         files={"file": ("small.csv", b"target,value\n0,1\n1,2\n", "text/csv")},
+        headers={"X-API-Key": settings.SERVICE_API_KEY},
     )
 
     assert response.status_code == 200

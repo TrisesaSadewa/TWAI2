@@ -188,6 +188,7 @@ class ReportEngine:
         if progress_callback:
             progress_callback(70, "Writing your personalized report...")
         # 4. Generate Narratives
+        additional_context = manifest.get("additional_context") or manifest.get("settings", {}).get("additional_context")
         models = manifest.get("models", {})
         narrative = self.narrative_generator.generate_narrative(
             dataset_name=dataset_name,
@@ -204,7 +205,8 @@ class ReportEngine:
             selected_features=selected_features,
             imbalance_metadata=prep_meta if prep_meta else None,
             imbalance_warning=imbalance_warning if imbalance_warning else None,
-            all_models=all_models
+            all_models=all_models,
+            additional_context=additional_context
         )
         
         # Save results in report structure
@@ -229,6 +231,8 @@ class ReportEngine:
             "imbalance_metadata": prep_meta,
             "imbalance_warning": imbalance_warning,
             "selected_features": selected_features,
+            "shap_features": shap_features,
+            "anomaly_flags": anomaly_flags,
             "visuals": {k: v["path"] for k, v in combined_visuals_summary.items()},
             "narrative": narrative,
             "narrative_source": narrative_source,
@@ -280,6 +284,8 @@ class ReportEngine:
         output_dir = os.path.join(settings.MEDIA_ROOT, report_id, "output")
         candidates = {
             "model_scores_csv": "All-model-result.csv",
+            "shap_csv": "shap_features.csv",
+            "feature_importance_csv": "feature_importance.csv",
             "regression_report_json": "regression_report.json",
             "classification_report_json": "classification_report.json",
             "confusion_matrix_png": "_Confusion Matrix.png",
@@ -690,14 +696,27 @@ class ReportEngine:
         if not reasons:
             return {}
 
-        return {
-            "severity": "high" if accuracy is not None and accuracy >= 0.85 and (specificity is not None and specificity < 0.30) else "medium",
-            "title": "Accuracy may be misleading because of class imbalance",
-            "message": (
+        is_high_risk = accuracy is not None and accuracy >= 0.85 and ((specificity is not None and specificity < 0.30) or (minority_recall is not None and minority_recall < 0.30))
+
+        if is_high_risk:
+            title = "Accuracy may be misleading because of class imbalance (Look at F1-Score & MCC instead)"
+            message = (
                 "Do not interpret accuracy alone as clinical readiness. "
                 + "; ".join(reasons)
                 + ". Use balanced metrics such as specificity, minority-class recall, macro-F1, MCC, ROC-AUC, and threshold analysis before deployment."
-            ),
+            )
+        else:
+            title = "Class Imbalance Mitigated During Training"
+            message = (
+                f"Class support is imbalanced by about {imbalance_ratio}:1 (largest class makes up {share_text} of labeled samples). "
+                f"Cost-sensitive sample weighting (class_weight='balanced') and stratified splitting were automatically applied during preprocessing and pipeline training to balance learning across classes. "
+                f"Balanced metrics (F1-Score, MCC, Specificity, ROC-AUC) are reported alongside headline accuracy for comprehensive evaluation."
+            )
+
+        return {
+            "severity": "high" if is_high_risk else "medium",
+            "title": title,
+            "message": message,
             "imbalance_ratio": imbalance_ratio,
             "majority_share": round(majority_share, 4) if majority_share is not None else None,
             "minority_class": minority_class,
@@ -823,8 +842,16 @@ class ReportEngine:
             return []
         try:
             import pandas as pd
+            import math
             df = pd.read_csv(csv_path)
-            return df.to_dict('records')
+            if 'model' in df.columns:
+                df = df.dropna(subset=['model'])
+            records = df.to_dict('records')
+            for r in records:
+                for k, v in r.items():
+                    if isinstance(v, float) and math.isnan(v):
+                        r[k] = None
+            return records
         except Exception as e:
             logger.error(f"Failed to parse all models CSV {csv_path}: {e}")
             return []
@@ -861,10 +888,13 @@ class ReportEngine:
             
             features = []
             for _, row in top_df.iterrows():
-                features.append({
+                feat_dict = {
                     "feature": str(row[feature_col]),
                     "importance": float(row[importance_col])
-                })
+                }
+                if "Direction" in df.columns:
+                    feat_dict["direction"] = str(row["Direction"])
+                features.append(feat_dict)
             return features
         except Exception as e:
             logger.error(f"Failed to parse SHAP CSV {csv_path}: {e}")
@@ -1159,7 +1189,17 @@ class ReportEngine:
 
         best = all_models[best_idx]
         best_name = best.get(model_key, "Unknown")
-        best_acc = fmt_val("TEST ACCURACY", best.get(acc_col_key)) if acc_col_key else "N/A"
+        
+        test_acc_val = None
+        has_test_acc_in_row = find_metric_key(("test_accuracy", "test_acc")) is not None
+        if has_test_acc_in_row:
+            test_acc_val = best.get(find_metric_key(("test_accuracy", "test_acc")))
+        elif metrics and ("accuracy" in metrics or "test_accuracy" in metrics):
+            test_acc_val = metrics.get("accuracy", metrics.get("test_accuracy"))
+        elif acc_col_key:
+            test_acc_val = best.get(acc_col_key)
+
+        best_acc = fmt_val("TEST ACCURACY", test_acc_val) if test_acc_val is not None else "N/A"
         
         callout_html = (
             f'<div style="margin-bottom:1.25rem;padding:1rem 1.5rem;background:rgba(16,185,129,0.08);'
@@ -1500,11 +1540,10 @@ class ReportEngine:
             if not val:
                 formatted_visuals[key] = ""
                 continue
-            if str(val).lower().endswith(".html"):
-                formatted_visuals[key] = self._artifact_url(data["report_id"], val)
-                continue
-            b64_str = VisualAnalyzer.encode_image_to_base64(val)
-            formatted_visuals[key] = f"data:image/png;base64,{b64_str}" if b64_str else ""
+            
+            # Use artifact URLs for all artifacts (including .png) instead of Base64 encoding. 
+            # This prevents massive script blocks in the HTML viewer that freeze the browser.
+            formatted_visuals[key] = self._artifact_url(data["report_id"], val)
             
         # Deduplicate visuals for the static report grid (prefer PNG for PDFs)
         deduplicated_visuals = {}
@@ -1518,9 +1557,12 @@ class ReportEngine:
                 if alias_k in base_key_no_space: base_key = alias_v
             
             existing_k = seen_base_keys.get(base_key)
-            if existing_k and str(deduplicated_visuals[existing_k]).startswith("data:image/png"):
+            v_str = str(v).lower()
+            existing_v_str = str(deduplicated_visuals.get(existing_k, "")).lower()
+            
+            if existing_k and (existing_v_str.endswith(".png") or "data:image/png" in existing_v_str):
                 continue
-            elif str(v).startswith("data:image/png") and existing_k:
+            elif (v_str.endswith(".png") or "data:image/png" in v_str) and existing_k:
                 # Replace the HTML version with the PNG version
                 del deduplicated_visuals[existing_k]
                 deduplicated_visuals[k] = v
@@ -1531,15 +1573,20 @@ class ReportEngine:
 
         # Pre-render markdown to HTML and inject plots
         self._figure_counter = 0
-        exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), formatted_visuals)
-        preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), formatted_visuals)
-        findings_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("findings", "")), formatted_visuals)
+        exec_summary_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("executive_summary", "")), deduplicated_visuals)
+        preprocessing_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("preprocessing_and_data_quality", "")), deduplicated_visuals)
+        findings_md = expert.get("findings", "")
+        visuals_md = expert.get("visuals_analysis", "")
+        if visuals_md and isinstance(visuals_md, str) and visuals_md.strip():
+            findings_md = findings_md.rstrip() + f"\n\n### Stage 6 — Chart Explanations\n{visuals_md.strip()}"
+            
+        findings_html = self._replace_plots_with_html(self._markdown_to_html(findings_md), deduplicated_visuals)
         
         # Wrap findings stages
         findings_html = self._wrap_stages_in_details(findings_html)
         
-        conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), formatted_visuals)
-        recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), formatted_visuals)
+        conclusion_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("conclusion", "")), deduplicated_visuals)
+        recs_html = self._replace_plots_with_html(self._markdown_to_html(expert.get("recommendations", "")), deduplicated_visuals)
         
         # Calculate new deterministic UI components
         verdict = self._compute_clinical_verdict(metrics, imbalance_warning, 
