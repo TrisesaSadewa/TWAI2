@@ -1162,24 +1162,24 @@ class ReportEngine:
             p_chunks = []
             
             if missing_key and row.get(missing_key) and str(row.get(missing_key)) not in ('None', 'N/A', ''):
-                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Missing Value</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[missing_key]))}</span></span>')
+                p_chunks.append(f'<span class="param-badge"><span class="param-key">Missing Value</span> <span class="param-arr">&rarr;</span> <span class="param-val">{html_lib.escape(str(row[missing_key]))}</span></span>')
             
             if norm_key and row.get(norm_key) and str(row.get(norm_key)) not in ('None', 'N/A', ''):
-                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Normalization</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[norm_key]))}</span></span>')
+                p_chunks.append(f'<span class="param-badge"><span class="param-key">Normalization</span> <span class="param-arr">&rarr;</span> <span class="param-val">{html_lib.escape(str(row[norm_key]))}</span></span>')
                 
             if fs_key and row.get(fs_key) and str(row.get(fs_key)) not in ('None', 'N/A', ''):
-                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">Feature Selection</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(row[fs_key]))}</span></span>')
+                p_chunks.append(f'<span class="param-badge"><span class="param-key">Feature Selection</span> <span class="param-arr">&rarr;</span> <span class="param-val">{html_lib.escape(str(row[fs_key]))}</span></span>')
 
             if p_dict:
                 if p_chunks:
                     p_chunks.append('<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid var(--border-color); height: 16px;"></span>')
                 for k, v in p_dict.items():
                     clean_k = str(k).replace("clf__", "").replace("selector__", "")
-                    p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--accent-teal);font-family:monospace;font-weight:600;">{html_lib.escape(str(clean_k))}</span> <span style="color:var(--text-secondary); font-size:0.9em; margin:0 4px;">&rarr;</span> <span style="font-family:monospace; color:var(--text-primary); font-weight:600;">{html_lib.escape(str(v))}</span></span>')
+                    p_chunks.append(f'<span class="param-badge"><span class="param-key">{html_lib.escape(str(clean_k))}</span> <span class="param-arr">&rarr;</span> <span class="param-val">{html_lib.escape(str(v))}</span></span>')
             elif p_val and str(p_val) not in ('None', 'N/A', 'Default (No Tuning)'):
                 if p_chunks:
                     p_chunks.append('<span style="margin: 0 10px; color: var(--text-secondary); border-left: 1px solid var(--border-color); height: 16px;"></span>')
-                p_chunks.append(f'<span style="background:var(--bg-secondary); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;"><span style="color:var(--text-primary); font-family:monospace; font-weight:600;">{html_lib.escape(str(p_val))}</span></span>')
+                p_chunks.append(f'<span class="param-badge"><span class="param-val">{html_lib.escape(str(p_val))}</span></span>')
                 
             if p_chunks:
                 margin_top = "0px" if not is_callout else "6px"

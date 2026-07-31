@@ -615,10 +615,7 @@
                     seeAiReportBtn.innerHTML = '<i class="icofont-file-document"></i> View AI Clinical Report';
                 }
 
-                // Automatically navigate to AI Clinical Report after 2 seconds
-                setTimeout(() => {
-                    goToAIReport();
-                }, 2000);
+
 
             } else if (data.status === "FAILED") {
                 pipelineFinished = true;
