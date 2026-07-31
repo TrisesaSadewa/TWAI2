@@ -457,8 +457,8 @@
                 </div>
 
                 <div class="text-center" style="margin-top: 30px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                    <button id="see-result-btn" class="btn btn-secondary"
-                        style="display: none; background-color: #6c757d; border-color: #6c757d; color: white; padding: 12px 24px; font-weight: 600; border-radius: 6px;"
+                    <button id="see-result-btn" class="btn"
+                        style="display: none; background-color: #f8fafc; border: 1px solid #1A76D1; color: #1A76D1; padding: 12px 24px; font-weight: 600; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'"
                         onclick="goToResult()"><i class="icofont-chart-bar-graph"></i> See ML Results</button>
                     <button id="see-ai-report-btn" class="btn btn-primary"
                         style="display: none; background-color: #1A76D1; border-color: #1A76D1; color: white; padding: 12px 24px; font-weight: 600; border-radius: 6px; box-shadow: 0 4px 12px rgba(26, 118, 209, 0.35);"
@@ -605,8 +605,6 @@
                 const seeResultBtn = document.getElementById('see-result-btn');
                 if (seeResultBtn) {
                     seeResultBtn.style.display = 'inline-block';
-                    seeResultBtn.style.backgroundColor = '#6c757d';
-                    seeResultBtn.style.borderColor = '#6c757d';
                 }
 
                 const seeAiReportBtn = document.getElementById('see-ai-report-btn');
@@ -656,7 +654,13 @@
         const evtSource = new EventSource(`/report/stream/${uuid}?token=ui_token`);
 
         evtSource.onmessage = function(event) {
-            if (event.data === "[DONE]") { evtSource.close(); return; }
+            if (event.data === "[DONE]") { 
+                evtSource.close(); 
+                if (!pipelineFinished) {
+                    handleStatusData({status: "SUCCESS", progress_pct: 100});
+                }
+                return; 
+            }
             try {
                 const payload = JSON.parse(event.data);
                 if (payload.connected) {

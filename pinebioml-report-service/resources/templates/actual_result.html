@@ -999,7 +999,13 @@ This file contains detailed performance metrics for all models.<br/>
             const evtSource = new EventSource(`/report/stream/${reportId}?token=ui_token`);
 
             evtSource.onmessage = function(event) {
-                if (event.data === "[DONE]") { evtSource.close(); return; }
+                if (event.data === "[DONE]") { 
+                    evtSource.close(); 
+                    if (!aiReportFinished) {
+                        handleStatusData({status: "SUCCESS", progress_pct: 100});
+                    }
+                    return; 
+                }
                 try {
                     const payload = JSON.parse(event.data);
                     if (payload.connected) {

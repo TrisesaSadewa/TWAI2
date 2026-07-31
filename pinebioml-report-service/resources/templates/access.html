@@ -422,27 +422,31 @@
                                     </tr>
                                     <tr id="upload-metadata-row">
                                         <td colspan="3" style="padding-top: 10px; padding-bottom: 10px;">
-                                            <div id="upload-metadata-box" class="metadata-context-box" style="display: none; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-top: 5px; margin-bottom: 5px;">
-                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                                                    <div style="display: flex; align-items: center;">
-                                                        <i class="fa fa-info-circle" style="color: #1A76D1; font-size: 1rem; margin-right: 8px;"></i>
-                                                        <span style="font-weight: 600; font-size: 0.92rem; color: #2d3748;">Additional Study Context & Metadata</span>
-                                                        <span style="font-size: 0.75rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; padding: 2px 8px; border-radius: 12px; margin-left: 8px;">Optional — Complements Auto-Detection</span>
+                                            <div id="upload-metadata-box" class="metadata-context-box" style="display: none; background: #ffffff; border: 1px solid #eaeaec; border-radius: 12px; padding: 20px; margin-top: 10px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                                                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                                                    <div>
+                                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                                            <i class="fa fa-layer-group" style="color: #1A76D1; font-size: 1.1rem;"></i>
+                                                            <span style="font-weight: 600; font-size: 1rem; color: #1e293b;">Study Context & Metadata</span>
+                                                            <span style="font-size: 0.7rem; background: #f1f5f9; color: #64748b; font-weight: 600; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Optional</span>
+                                                        </div>
+                                                        <p style="font-size: 0.8rem; color: #64748b; margin: 0; max-width: 600px; line-height: 1.5;">
+                                                            Enhance AI detection by providing background information like disease context, research goals, feature definitions, and target labels.
+                                                        </p>
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary no-preloader insert-template-btn" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #1A76D1; color: #1A76D1; background: transparent; cursor: pointer;">
-                                                        <i class="fa fa-magic" style="margin-right: 4px;"></i> Insert Template
+                                                    <button type="button" class="btn btn-sm no-preloader insert-template-btn" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; color: #334155; background: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: all 0.2s; height: fit-content;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'">
+                                                        <i class="fa fa-magic" style="color: #1A76D1;"></i> Insert Template
                                                     </button>
                                                 </div>
-                                                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; line-height: 1.4;">
-                                                    Provide background information to give the AI LLM deeper context for your dataset (e.g. disease background, research goals, feature definitions, target labels). This works in tandem with our automated domain detection.
-                                                </p>
-                                                <div style="display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; font-size: 0.78rem; color: #475569;">
-                                                    <span>🩺 <b>Disease/Condition</b></span>
-                                                    <span>🎯 <b>Research Objective</b></span>
-                                                    <span>🧬 <b>Feature Descriptions</b></span>
-                                                    <span>📊 <b>Target Meaning</b></span>
+                                                
+                                                <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                                                    <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-stethoscope" style="color:#64748b;"></i> Disease/Condition</span>
+                                                    <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-bullseye" style="color:#64748b;"></i> Research Objective</span>
+                                                    <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-dna" style="color:#64748b;"></i> Feature Descriptions</span>
+                                                    <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-chart-pie" style="color:#64748b;"></i> Target Meaning</span>
                                                 </div>
-                                                <textarea name="additional_context" class="form-control context-textarea" rows="3" style="width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 0.85rem; line-height: 1.4; color: #1e293b; background-color: #ffffff; resize: vertical;" placeholder="e.g.&#10;• Disease/Topic: Breast Cancer Diagnostic Study&#10;• Research Objective: Classify malignant vs benign tumors based on cell nuclei features&#10;• Feature Notes: radius_mean = mean cell distance; texture_mean = gray-scale variability&#10;• Target Meaning: 1 = Malignant, 0 = Benign"></textarea>
+                                                
+                                                <textarea name="additional_context" class="form-control context-textarea" rows="4" style="width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; padding: 12px; font-size: 0.85rem; line-height: 1.5; color: #334155; background-color: #ffffff; resize: vertical; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); transition: border-color 0.2s;" placeholder="e.g.&#10;• Disease/Topic: Breast Cancer Diagnostic Study&#10;• Research Objective: Classify malignant vs benign tumors based on cell nuclei features&#10;• Feature Notes: radius_mean = mean cell distance; texture_mean = gray-scale variability&#10;• Target Meaning: 1 = Malignant, 0 = Benign" onfocus="this.style.borderColor='#1A76D1'; this.style.outline='none'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
                                             </div>
                                         </td>
                                     </tr>
@@ -519,42 +523,42 @@
                                     </tr>
                                     <tr id="test-metadata-row">
                                         <td colspan="3" style="padding-top: 10px; padding-bottom: 10px;">
-                                            <div id="test-metadata-box" class="metadata-context-box" style="display: none; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-top: 5px; margin-bottom: 5px;">
-                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                                                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                                        <i class="fa fa-info-circle" style="color: #1A76D1; font-size: 1rem; margin-right: 4px;"></i>
-                                                        <span style="font-weight: 600; font-size: 0.92rem; color: #2d3748;">Additional Study Context & Metadata</span>
-                                                        <span id="test-dataset-badge" style="font-size: 0.75rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; padding: 2px 8px; border-radius: 12px;">Pregenerated: Breast Cancer Wisconsin</span>
+                                            <div id="test-metadata-box" class="metadata-context-box" style="display: none; background: #ffffff; border: 1px solid #eaeaec; border-radius: 12px; padding: 20px; margin-top: 10px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                                                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                                                    <div style="flex: 1; min-width: 250px;">
+                                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                                            <i class="fa fa-layer-group" style="color: #1A76D1; font-size: 1.1rem;"></i>
+                                                            <span style="font-weight: 600; font-size: 1rem; color: #1e293b;">Study Context & Metadata</span>
+                                                            <span id="test-dataset-badge" style="font-size: 0.7rem; background: #e0f2fe; color: #0284c7; font-weight: 600; padding: 2px 8px; border-radius: 12px; border: 1px solid #bae6fd;">Pregenerated: Breast Cancer Wisconsin</span>
+                                                        </div>
+                                                        <p style="font-size: 0.8rem; color: #64748b; margin: 0; max-width: 600px; line-height: 1.5;">
+                                                            Provide background information for deeper AI context. For test data, accurate domain metadata is provided below and can be edited.
+                                                        </p>
                                                     </div>
-                                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                                        <button type="button" id="btn-autofill-test-context" class="btn btn-sm btn-outline-primary no-preloader" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #1A76D1; color: #1A76D1; background: #ffffff; cursor: pointer;">
-                                                            <i class="fa fa-sparkles" style="margin-right: 4px;"></i> Load Pregenerated Metadata
+                                                    
+                                                    <div style="display: flex; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; height: fit-content;">
+                                                        <button type="button" id="btn-autofill-test-context" class="btn btn-sm no-preloader" style="font-size: 0.75rem; padding: 6px 10px; border: none; border-right: 1px solid #e2e8f0; color: #1A76D1; background: transparent; cursor: pointer; font-weight: 500; border-radius: 0; box-shadow: none;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                                            <i class="fa fa-sparkles"></i> Load Pregenerated
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-primary no-preloader insert-template-btn" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #64748b; color: #475569; background: #ffffff; cursor: pointer;">
-                                                            <i class="fa fa-magic" style="margin-right: 4px;"></i> Insert Blank Template
+                                                        <button type="button" class="btn btn-sm no-preloader insert-template-btn" style="font-size: 0.75rem; padding: 6px 10px; border: none; border-right: 1px solid #e2e8f0; color: #475569; background: transparent; cursor: pointer; font-weight: 500; border-radius: 0; box-shadow: none;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                                            <i class="fa fa-magic"></i> Template
                                                         </button>
-                                                        <button type="button" id="btn-clear-test-context" class="btn btn-sm btn-outline-secondary no-preloader" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #cbd5e1; color: #64748b; background: #ffffff; cursor: pointer;">
-                                                            <i class="fa fa-eraser" style="margin-right: 4px;"></i> Clear Text
+                                                        <button type="button" id="btn-clear-test-context" class="btn btn-sm no-preloader" style="font-size: 0.75rem; padding: 6px 10px; border: none; color: #64748b; background: transparent; cursor: pointer; font-weight: 500; border-radius: 0; box-shadow: none;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                                            <i class="fa fa-eraser"></i> Clear
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; line-height: 1.4;">
-                                                    Provide background information to give the AI LLM deeper context for your dataset. For test data, accurate pregenerated domain metadata is provided below and can be edited or cleared.
-                                                </p>
-                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; font-size: 0.78rem; color: #475569;">
-                                                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                                        <span>🩺 <b>Disease/Condition</b></span>
-                                                        <span>🎯 <b>Research Objective</b></span>
-                                                        <span>🧬 <b>Feature Descriptions</b></span>
-                                                        <span>📊 <b>Target Meaning</b></span>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                        <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-stethoscope" style="color:#64748b;"></i> Disease/Condition</span>
+                                                        <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-bullseye" style="color:#64748b;"></i> Research Objective</span>
+                                                        <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-dna" style="color:#64748b;"></i> Feature Descriptions</span>
+                                                        <span style="font-size: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 16px; display: flex; align-items: center; gap: 5px;"><i class="fa fa-chart-pie" style="color:#64748b;"></i> Target Meaning</span>
                                                     </div>
-                                                    <div>
-                                                        <label style="margin: 0; cursor: pointer; font-weight: 500; color: #1e293b;">
-                                                            <input type="checkbox" id="include-test-context-chk" checked style="margin-right: 4px; vertical-align: middle;"> Submit with study metadata
-                                                        </label>
-                                                    </div>
+                                                    <input type="checkbox" id="include-test-context-chk" checked style="display: none;">
                                                 </div>
-                                                <textarea id="test-additional-context" name="additional_context" class="form-control context-textarea" rows="5" style="width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; padding: 10px; font-size: 0.85rem; line-height: 1.45; color: #1e293b; background-color: #ffffff; resize: vertical; font-family: inherit;"></textarea>
+                                                
+                                                <textarea id="test-additional-context" name="additional_context" class="form-control context-textarea" rows="5" style="width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; padding: 12px; font-size: 0.85rem; line-height: 1.5; color: #334155; background-color: #ffffff; resize: vertical; font-family: inherit; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); transition: border-color 0.2s;" onfocus="this.style.borderColor='#1A76D1'; this.style.outline='none'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
                                             </div>
                                         </td>
                                     </tr>
@@ -565,8 +569,11 @@
                                             </button>
                                         </td>
                                         <td>
-                                            <div class="button" style="float: right;">
-                                                <button title="Action" aria-label="Action" type="submit" class="btn">Submit</button>
+                                            <div style="float: right; display: inline-flex; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                                                <button title="Submit without metadata" aria-label="Submit" type="submit" class="btn" id="submit-test-no-meta" style="padding: 12px 24px; background: #f8fafc; border: 1px solid #cbd5e1; border-right: none; color: #475569; margin: 0; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; border-radius: 8px 0 0 8px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'" onclick="document.getElementById('include-test-context-chk').checked = false; document.getElementById('include-test-context-chk').dispatchEvent(new Event('change'));">Submit</button>
+                                                <button title="Submit with metadata" aria-label="Submit with metadata" type="submit" class="btn" id="submit-test-with-meta" style="padding: 12px 30px; background: #1A76D1; border: 1px solid #1A76D1; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; font-size: 0.9rem; font-weight: 600; border-radius: 0 8px 8px 0;" onclick="document.getElementById('include-test-context-chk').checked = true; document.getElementById('include-test-context-chk').dispatchEvent(new Event('change'));">
+                                                    <i class="fa fa-file-alt"></i> Submit w/ Metadata
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
