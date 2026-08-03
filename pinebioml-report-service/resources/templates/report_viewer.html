@@ -149,6 +149,7 @@
 
         header {
             background: var(--bg-card);
+            -webkit-backdrop-filter: var(--glass-backdrop);
             backdrop-filter: var(--glass-backdrop);
             border-bottom: 1px solid var(--border-color);
             padding: 0.75rem 3rem;
@@ -1021,6 +1022,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            -webkit-backdrop-filter: var(--glass-backdrop);
             backdrop-filter: var(--glass-backdrop);
             transition: all var(--transition-speed);
             cursor: zoom-in;
@@ -1061,6 +1063,7 @@
             width: 100%;
             height: 100%;
             background: rgba(11, 15, 25, 0.95);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             align-items: center;
             justify-content: center;
@@ -1491,6 +1494,46 @@
             color: var(--text-secondary);
             font-size: 0.9em;
         }
+
+        /* Utility & Component Classes (replacing inline styles) */
+        .logo-link { display: flex; align-items: flex-end; text-decoration: none; }
+        .logo-img { height: 60px; }
+        .logo-version { font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); margin-left: 5px; margin-bottom: 5px; }
+
+        .btn-toggle-dark { margin-right: 0.5rem; }
+        .header-btn-group { display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-card); }
+        .header-btn-group .toggle-btn { border: none; border-radius: 0; text-decoration: none; }
+        .header-btn-group .toggle-btn:not(:last-child) { border-right: 1px solid var(--border-color); }
+
+        .global-alert-icon { font-size: 1.2rem; }
+
+        .hero-header-flex { align-items: center; }
+        .hero-title-flex { flex: 1; }
+        .hero-title-text { word-break: break-word; line-height: 1.2; }
+        .hero-meta-spacing { margin-top: 1rem; }
+
+        .hero-verdict-callout { margin: 0; padding: 0.75rem 1.25rem; min-width: 250px; flex-shrink: 0; }
+        .hero-verdict-label { font-size: 0.8rem; margin-bottom: 0.15rem; }
+        .hero-verdict-body { font-weight: 500; font-size: 0.95rem; }
+
+        .hero-chip-teal { border-left: 4px solid var(--accent-teal); }
+        .hero-chip-red { border-left: 4px solid #ef4444; }
+        .hero-chip-purple { border-left: 4px solid var(--accent-purple); }
+        .hero-chip-amber { border-left: 4px solid #f59e0b; }
+        .hero-chip-subtext { font-weight: 400; font-size: 0.9rem; color: var(--text-secondary); }
+        .hero-chip-break { word-break: break-all; }
+
+        .study-context-container { margin-bottom: 2rem; }
+        .study-context-callout { border-left-color: #8b5cf6 !important; background: var(--bg-card); margin: 0; padding: 1.5rem; }
+        .study-context-label { font-size: 0.85rem; color: #8b5cf6; border: 1px solid #8b5cf620; background: #8b5cf610; }
+        .study-context-icon { margin-right: 5px; }
+        .study-context-body { font-size: 0.95rem; }
+
+        .doc-section-padded { padding: 2rem; }
+        .doc-section-hidden { display: none; padding: 2rem; }
+        .section-title-sm { font-size: 1.2rem; }
+        .section-title-sm-mb { font-size: 1.2rem; margin-bottom: 1rem; }
+        .gallery-hint-text { color: var(--text-secondary); }
     </style>
 </head>
 
@@ -1498,25 +1541,21 @@
 
     <header class="header sticky">
         <div class="logo-section">
-            <a href="/" style="display: flex; align-items: flex-end; text-decoration: none;">
-                <img src="/static/PBML/PinBio.png" alt="#" style="height: 60px;">
-                <span
-                    style="font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); margin-left: 5px; margin-bottom: 5px;">V2.0.01</span>
+            <a href="/" class="logo-link">
+                <img src="/static/PBML/PinBio.png" alt="#" class="logo-img">
+                <span class="logo-version">V2.0.01</span>
             </a>
         </div>
         <div class="header-controls">
-            <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn"
-                onclick="toggleDarkMode()" style="margin-right: 0.5rem;">
+            <button title="Action" aria-label="Action" id="btn-toggle-dark" class="toggle-btn btn-toggle-dark"
+                onclick="toggleDarkMode()">
                 <span id="theme-icon">🌙</span> <span id="theme-text">Dark Mode</span>
             </button>
-            <div class="btn-group"
-                style="display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-card);">
-                <a href="/" class="toggle-btn"
-                    style="border: none; border-radius: 0; text-decoration: none; border-right: 1px solid var(--border-color);">
+            <div class="btn-group header-btn-group">
+                <a href="/" class="toggle-btn">
                     <span>🏠</span> <span>Home</span>
                 </a>
-                <a id="btn-back-dashboard" href="/Statistical_Analysis/result/{{ report_id }}/" class="toggle-btn"
-                    style="border: none; border-radius: 0; text-decoration: none;">
+                <a id="btn-back-dashboard" href="/Statistical_Analysis/result/{{ report_id }}/" class="toggle-btn">
                     <span>📊</span> <span>ML Results</span>
                 </a>
             </div>
@@ -1537,18 +1576,18 @@
 
     <!-- Global Alert Banner (Tier 1 Risk) -->
     <div id="global-alert-banner" class="global-alert">
-        <span style="font-size: 1.2rem;">⚠️</span> <span><strong>NOTICE:</strong> Perfect Performance Detected. This
+        <span class="global-alert-icon">⚠️</span> <span><strong>NOTICE:</strong> Perfect Performance Detected. This
             could indicate potential data leakage, or simply that the dataset is highly deterministic/easily separable.
             Check metrics closely.</span>
     </div>
 
     <!-- Hero Section -->
     <section class="hero-section">
-        <div class="hero-header" style="align-items: center;">
-            <div class="hero-title" style="flex: 1;">
-                <h1 id="hero-dataset-title" style="word-break: break-word; line-height: 1.2;">{{ dataset_name }} / {{
+        <div class="hero-header hero-header-flex">
+            <div class="hero-title hero-title-flex">
+                <h1 id="hero-dataset-title" class="hero-title-text">{{ dataset_name }} / {{
                     task_type }}</h1>
-                <div class="hero-meta" style="margin-top: 1rem;">
+                <div class="hero-meta hero-meta-spacing">
                     <span class="meta-pill"><strong>Model:</strong> &nbsp;{{ model_name }}</span>
                     <span class="meta-pill"><strong>Generated:</strong> &nbsp;{{ generated_at }}</span>
                     <span class="meta-pill"><strong>Job ID:</strong> &nbsp;{{ job_id }}</span>
@@ -1567,14 +1606,13 @@
                 });
             </script>
             {% if verdict %}
-            <div class="narrative-callout narrative-{{ verdict.level }}"
-                style="margin: 0; padding: 0.75rem 1.25rem; min-width: 250px; flex-shrink: 0;">
-                <div class="narrative-callout-label" style="font-size: 0.8rem; margin-bottom: 0.15rem;">
+            <div class="narrative-callout narrative-{{ verdict.level }} hero-verdict-callout">
+                <div class="narrative-callout-label hero-verdict-label">
                     {% if verdict.level == 'ready' %}🟢 READY
                     {% elif verdict.level == 'conditional' %}🟡 CONDITIONALLY SUITABLE
                     {% else %}🔴 NOT RECOMMENDED{% endif %}
                 </div>
-                <div class="narrative-callout-body" style="font-weight: 500; font-size: 0.95rem;">{{ verdict.title }}
+                <div class="narrative-callout-body hero-verdict-body">{{ verdict.title }}
                 </div>
             </div>
             {% endif %}
@@ -1582,24 +1620,24 @@
 
         {% if glance %}
         <div class="hero-glance-strip">
-            <div class="hero-chip" style="border-left: 4px solid var(--accent-teal);">
+            <div class="hero-chip hero-chip-teal">
                 <span class="hero-chip-label">Strongest Metric</span>
                 <span class="hero-chip-value">{{ glance.strongest.label }} <span
-                        style="font-weight:400; font-size:0.9rem; color:var(--text-secondary);">{{
+                        class="hero-chip-subtext">{{
                         glance.strongest.value }}</span></span>
             </div>
-            <div class="hero-chip" style="border-left: 4px solid #ef4444;">
+            <div class="hero-chip hero-chip-red">
                 <span class="hero-chip-label">Weakest Metric</span>
                 <span class="hero-chip-value">{{ glance.weakest.label }} <span
-                        style="font-weight:400; font-size:0.9rem; color:var(--text-secondary);">{{ glance.weakest.value
+                        class="hero-chip-subtext">{{ glance.weakest.value
                         }}</span></span>
             </div>
-            <div class="hero-chip" style="border-left: 4px solid var(--accent-purple);">
+            <div class="hero-chip hero-chip-purple">
                 <span class="hero-chip-label">Top Predictive Feature</span>
-                <span class="hero-chip-value" style="word-break: break-all;" title="{{ glance.top_feature }}">{{
+                <span class="hero-chip-value hero-chip-break" title="{{ glance.top_feature }}">{{
                     glance.top_feature }}</span>
             </div>
-            <div class="hero-chip" style="border-left: 4px solid #f59e0b;">
+            <div class="hero-chip hero-chip-amber">
                 <span class="hero-chip-label">Key Risk Flag</span>
                 <span class="hero-chip-value">{{ glance.biggest_risk }}</span>
             </div>
@@ -1613,14 +1651,12 @@
         <div class="left-column content-area">
 
             {% if expert_context_analysis and expert_context_analysis != 'null' and expert_context_analysis != '""' %}
-            <div class="study-context-section" style="margin-bottom: 2rem;">
-                <div class="narrative-callout"
-                    style="border-left-color: #8b5cf6; background: var(--bg-card); margin: 0; padding: 1.5rem;">
-                    <div class="narrative-callout-label"
-                        style="font-size: 0.85rem; color: #8b5cf6; border: 1px solid #8b5cf620; background: #8b5cf610;">
-                        <span style="margin-right: 5px;">🔬</span> Research Context Analysis
+            <div class="study-context-section study-context-container">
+                <div class="narrative-callout study-context-callout">
+                    <div class="narrative-callout-label study-context-label">
+                        <span class="study-context-icon">🔬</span> Research Context Analysis
                     </div>
-                    <div id="body-context_analysis" class="narrative-callout-body" style="font-size: 0.95rem;">
+                    <div id="body-context_analysis" class="narrative-callout-body study-context-body">
                         <!-- JS parseMarkdown will populate this -->
                     </div>
                 </div>
@@ -1705,9 +1741,9 @@
             </div>
 
             <!-- Overfitting Analysis Indicator -->
-            <section class="doc-section" id="sec-overfit" style="display:none; padding: 2rem;">
+            <section class="doc-section doc-section-hidden" id="sec-overfit">
                 <div class="section-header">
-                    <h2 class="section-title" style="font-size: 1.2rem;">Train vs. Test Gap Analysis</h2>
+                    <h2 class="section-title section-title-sm">Train vs. Test Gap Analysis</h2>
                 </div>
                 <div class="section-body" id="body-overfit">
                     <p>Analyzing generalization performance...</p>
@@ -1715,8 +1751,8 @@
             </section>
 
             <!-- Metrics Hub -->
-            <section class="doc-section" style="padding: 2rem;">
-                <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">Performance Metrics</h2>
+            <section class="doc-section doc-section-padded">
+                <h2 class="section-title section-title-sm-mb">Performance Metrics</h2>
                 <div class="metrics-grid" id="standard-metrics-grid">
                     <div class="metric-card"><span class="metric-value">{{ accuracy }}</span><span
                             class="metric-title">Accuracy</span></div>
@@ -1736,21 +1772,21 @@
             </section>
 
             <!-- Model Leaderboard (from old sec-model_performance) -->
-            <section class="doc-section" id="sec-model_performance" style="padding: 2rem;">
-                <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">Model Comparison</h2>
+            <section class="doc-section doc-section-padded" id="sec-model_performance">
+                <h2 class="section-title section-title-sm-mb">Model Comparison</h2>
                 <div class="section-body" id="body-model_performance">
                     {{ model_performance_table }}
                 </div>
             </section>
 
             <!-- Interactive Visuals Gallery -->
-            <section class="doc-section" id="sec-generated-plots" style="padding: 2rem;">
-                <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">Interactive Gallery</h2>
+            <section class="doc-section doc-section-padded" id="sec-generated-plots">
+                <h2 class="section-title section-title-sm-mb">Interactive Gallery</h2>
                 <div class="gallery-tabs" id="gallery-tabs-container">
                     <!-- Tabs generated by JS -->
                 </div>
                 <div class="gallery-content-area" id="gallery-content-area">
-                    <span style="color: var(--text-secondary);">Select a plot above</span>
+                    <span class="gallery-hint-text">Select a plot above</span>
                 </div>
             </section>
 
