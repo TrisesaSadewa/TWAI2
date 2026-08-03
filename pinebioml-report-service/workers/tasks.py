@@ -148,6 +148,7 @@ def train_and_generate_report_task_sync(payload: dict):
             "artifacts": artifacts,
             "feature_names": feature_names,
             "settings": settings,
+            "additional_context": payload.get("additional_context", ""),
             "models": {"analysis": get_deployment_writer_model()}
         }
         

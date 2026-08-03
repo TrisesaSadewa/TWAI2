@@ -926,7 +926,7 @@ class ReportEngine:
                 elif r2 < 0.30:
                     flags.append("Weak Fit: R2 is below 0.30, so the regression model explains only a limited share of target variation.")
                 elif r2 > 0.99:
-                    flags.append("Potential Data Leakage: R2 exceeds 0.99. This is unusual and should be checked against target leakage or duplicated variables.")
+                    flags.append("Perfect Performance Warning: R2 exceeds 0.99. This could indicate potential data leakage, or simply that the dataset is highly deterministic/easily separable (e.g., sensor data).")
             except ValueError:
                 pass
             return flags
@@ -940,13 +940,13 @@ class ReportEngine:
             if acc < 0.60:
                 flags.append("Critical Underperformance: Accuracy is below 60%. Model is barely better than random chance.")
             elif acc > 0.99:
-                flags.append("Potential Data Leakage: Accuracy exceeds 99%. Model might be overfitting or learning from the target variable.")
+                flags.append("Perfect Performance Warning: Accuracy exceeds 99%. This could indicate potential data leakage, or simply that the dataset is highly deterministic/easily separable (e.g., sensor data).")
                 
         if auc is not None:
             if auc < 0.60:
                 flags.append("Critical Underperformance: AUC is below 0.60. Model struggles to separate classes.")
             elif auc > 0.99:
-                flags.append("Potential Data Leakage: AUC exceeds 0.99. Highly unusual for clinical datasets.")
+                flags.append("Perfect Performance Warning: AUC exceeds 0.99. This could indicate potential data leakage, or simply that the dataset is highly deterministic/easily separable (e.g., sensor data).")
                 
         if recall is not None and recall < 0.50:
             flags.append("High False Negative Rate: Recall is below 50%. Model is missing the majority of positive cases.")
@@ -1316,11 +1316,11 @@ class ReportEngine:
     def _wrap_stages_in_details(self, html_str: str) -> str:
         """Convert ### Stage N headers into collapsible <details> sections."""
         import re
-        if not html_str or '<h3' not in html_str:
+        if not html_str or not re.search(r'<h[2-5]', html_str, re.IGNORECASE):
             return html_str
         
-        # Split on <h3> tags that contain "Stage"
-        pattern = re.compile(r'(<h3[^>]*>.*?Stage.*?</h3>)', re.IGNORECASE)
+        # Split on <hN> tags that contain "Stage"
+        pattern = re.compile(r'(<h[2-5][^>]*>.*?Stage.*?</h[2-5]>)', re.IGNORECASE)
         parts = pattern.split(html_str)
         
         if len(parts) < 3:  # No stage headers found
@@ -1330,7 +1330,7 @@ class ReportEngine:
         i = 1
         while i < len(parts):
             if pattern.match(parts[i]):
-                header_text = re.sub(r'</?h3>', '', parts[i]).strip()
+                header_text = re.sub(r'</?h[2-5][^>]*>', '', parts[i], flags=re.IGNORECASE).strip()
                 content = parts[i + 1] if i + 1 < len(parts) else ""
                 # All expanded by default (open attribute). PDF print CSS keeps them open.
                 result += f'<details open class="findings-stage"><summary class="stage-header">{header_text}</summary><div class="stage-content">{content}</div></details>'
@@ -1598,11 +1598,42 @@ class ReportEngine:
                                            data.get("anomaly_flags", []), 
                                            data.get("task_type", ""))
         
+        # Extract expert sections
+        expert_dict = data.get("narrative", {}).get("expert", {})
+        exec_summary = expert_dict.get("executive_summary", "")
+        preprocessing = expert_dict.get("preprocessing_and_data_quality", "")
+        findings = expert_dict.get("findings", "")
+        conclusion = expert_dict.get("conclusion", "")
+        recs = expert_dict.get("recommendations", "")
+        context_analysis = expert_dict.get("context_analysis", "")
+        
+        # Markdown to HTML and sanitize
+        exec_summary_html = self._markdown_to_html(str(exec_summary))
+        preprocessing_html = self._markdown_to_html(str(preprocessing))
+        findings_html = self._markdown_to_html(str(findings))
+        conclusion_html = self._markdown_to_html(str(conclusion))
+        recs_html = self._markdown_to_html(str(recs))
+        context_analysis_html = self._markdown_to_html(str(context_analysis))
+        
         # Apply glossary auto-linking
         exec_summary_html = self._auto_link_glossary_terms(exec_summary_html, glossary)
         findings_html = self._auto_link_glossary_terms(findings_html, glossary)
         conclusion_html = self._auto_link_glossary_terms(conclusion_html, glossary)
         recs_html = self._auto_link_glossary_terms(recs_html, glossary)
+        context_analysis_html = self._auto_link_glossary_terms(context_analysis_html, glossary)
+        
+        # Inject plots
+        self._figure_counter = 0
+        exec_summary_html = self._replace_plots_with_html(exec_summary_html, deduplicated_visuals)
+        preprocessing_html = self._replace_plots_with_html(preprocessing_html, deduplicated_visuals)
+        findings_md = findings
+        visuals_md = expert_dict.get("visuals_analysis", "")
+        if visuals_md and isinstance(visuals_md, str) and visuals_md.strip():
+            findings_md = findings_md.rstrip() + f"\n\n### Stage 6 — Chart Explanations\n{visuals_md.strip()}"
+        findings_html = self._replace_plots_with_html(self._markdown_to_html(findings_md), deduplicated_visuals)
+        findings_html = self._wrap_stages_in_details(findings_html)
+        conclusion_html = self._replace_plots_with_html(conclusion_html, deduplicated_visuals)
+        recs_html = self._replace_plots_with_html(recs_html, deduplicated_visuals)
         
         context = {
             "per_class_html": self._render_per_class_cards(data.get("per_class", [])),
@@ -1637,6 +1668,7 @@ class ReportEngine:
             "expert_findings": js_escape(findings_html),
             "expert_conclusion": js_escape(conclusion_html),
             "expert_recommendations": js_escape(recs_html),
+            "expert_context_analysis": js_escape(context_analysis_html),
             
             "glossary_json": json.dumps(glossary),
             "all_models_json": json.dumps(all_models),

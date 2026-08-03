@@ -250,10 +250,18 @@ def _clean_and_parse_llm_json(raw_text: str) -> dict:
     try:
         import json_repair
         res = json_repair.loads(target_text)
-        if isinstance(res, dict) and res:
+        if isinstance(res, list):
+            merged = {}
+            for item in res:
+                if isinstance(item, dict):
+                    merged.update(item)
+            if merged:
+                return _normalize_narrative_dict(merged)
+        elif isinstance(res, dict) and res:
             return _normalize_narrative_dict(res)
     except Exception:
         pass
+
 
     # 5. Extract outermost curly braces for actual JSON object key
     first_brace_match = re.search(r'\{\s*"[a-zA-Z0-9_]+"\s*:', target_text)
@@ -278,6 +286,14 @@ def _clean_and_parse_llm_json(raw_text: str) -> dict:
         res = json.loads(target_json, strict=False)
         if isinstance(res, dict):
             return _normalize_narrative_dict(res)
+    except json.JSONDecodeError as e:
+        if e.msg == "Extra data":
+            try:
+                res = json.loads(target_json[:e.pos].strip(), strict=False)
+                if isinstance(res, dict):
+                    return _normalize_narrative_dict(res)
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -665,6 +681,7 @@ class NarrativeGenerator:
 Generate a JSON object with two keys: "expert" and "glossary". Every section value must be a single Markdown string.
 
 EXPERT REPORT:
+- "context_analysis": Discuss the regression model's results specifically in the context of the USER-PROVIDED STUDY METADATA & OBJECTIVES (if present in the DATA). Answer the question: 'Did the model achieve what the user specifically wanted?' If no user metadata is provided, write 'No specific research context was provided by the user.'
 - "executive_summary": Summarize the continuous prediction task for dataset {dataset_name}. Discuss R2, RMSE, MAE, and MSE only if present in the DATA. Do not mention accuracy, ROC-AUC, confusion matrices, false positives, false negatives, sensitivity, specificity, or class imbalance.
 - "preprocessing_and_data_quality": Explain preprocessing and data quality using only the DATA section. If class-distribution metadata is absent, do not invent it.
 - "findings": Start with [PLOT: true_vs_predicted, residuals]. Then render a Markdown table with exactly two columns, | Metric | Value |, using only regression metrics from DATA such as R2, RMSE, MAE, and MSE. After the table, explain how close predictions are to observed values, what residual spread means, and whether unusual cases or systematic bias may be present. Then include [PLOT: feature_importance, shap_summary] and explain key drivers if available.
@@ -709,9 +726,10 @@ Write a JSON object with this EXACT structure. All values MUST be a single Markd
 
 {{
   "expert": {{
+    "context_analysis": "Discuss the results in the context of the USER-PROVIDED STUDY METADATA (if present in DATA). Answer: 'Did the model achieve what the user specifically wanted?' If no metadata is provided, write 'No specific research context was provided by the user.' MUST BE A SINGLE MARKDOWN STRING.",
     "executive_summary": "**CLINICAL BACKGROUND:** 1-2 sentences synthesizing the user-provided study metadata/disease goals if present.\\n\\n**VERDICT:** One sentence declaring clinical readiness ('ready for preliminary screening', 'conditionally suitable', or 'not recommended'). \\n\\n**PERFORMANCE SNAPSHOT:** 2-3 sentences translating key metrics into plain clinical language with a concrete patient-count example.\\n\\n**CRITICAL FLAGS:** 1-2 sentences noting the most important warnings (e.g., imbalance, leakage) or stating 'No critical anomalies detected.'\\n\\nRule: Readable in 30 seconds. Total length: 5-10 sentences.",
     "preprocessing_and_data_quality": "Write 4-5 sentences explaining the data quality. You MUST explicitly discuss this metadata: {data_quality_text}",
-    "findings": "MUST BE A SINGLE MARKDOWN STRING. Structure as exactly 5 stages using ### headers:\\n\\n### Stage 1 — Overall Performance\\nRender a Markdown table with exactly two columns (| Metric | Value |) containing all metrics. Below it, 2-3 sentences of clinical context.\\n\\n### Stage 2 — Discrimination Analysis\\n[PLOT: roc_curve]\\n[PLOT: pr_curve]\\n3-5 sentences analyzing ROC and PR curves. Critique high scores (>0.95) for leakage. Discuss precision-recall trade-offs especially for imbalanced classes.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 3 — Error Analysis\\n[PLOT: confusion_matrix]\\n3-5 sentences on confusion matrix errors (FP vs FN impact). Include per-class breakdown if available. **CROSS-REFERENCE:** Connect to discrimination analysis.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 4 — Feature Intelligence\\n[PLOT: corr_heatmap]\\n3-5 sentences on correlation. Identify any unexpected negative correlations or clustered variables.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: feature_importance]\\n3-5 sentences on key drivers. **CRITICAL**: Do NOT give generic observations. Specify exact variable names, their ranking, and hypothesize biological/clinical reasons for their importance. Highlight any surprises.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: shap_summary]\\n3-5 sentences on SHAP directions. **CRITICAL**: Detail the exact impact (positive/negative) of top features based on their directionality. Analyze complex non-linear effects if visible. Do SHAP results align with feature importance?\\n> 💡 **Key Insight:** [One sentence summarizing the most profound takeaway]\\n\\n### Stage 5 — Generalization & Stability\\nDiscuss dimensionality reduction ([PLOT: pca_plot], [PLOT: pls_plot], [PLOT: umap_plot]) and overfitting if present. **CROSS-REFERENCE:** Synthesize overall evidence.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n**NARRATIVE FLOW ENFORCEMENT:** Each stage MUST begin with a transition sentence connecting to the previous stage.",
+    "findings": "MUST BE A SINGLE MARKDOWN STRING. Structure as exactly 5 stages using ### headers:\\n\\n### Stage 1 — Overall Performance\\nRender a Markdown table with exactly two columns (| Metric | Value |) containing all metrics. Below it, 2-3 sentences of clinical context.\\n\\n### Stage 2 — Discrimination Analysis\\n[PLOT: roc_curve]\\n[PLOT: pr_curve]\\n3-5 sentences analyzing ROC and PR curves. If ROC-AUC > 0.95, evaluate if this is due to potential data leakage/overfitting, OR if the dataset features are simply highly deterministic/separable (e.g. sensor data, direct biological markers). Do not blindly assume data leakage if the data naturally has a strong signal. Discuss precision-recall trade-offs especially for imbalanced classes.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 3 — Error Analysis\\n[PLOT: confusion_matrix]\\n3-5 sentences on confusion matrix errors (FP vs FN impact). Include per-class breakdown if available. **CROSS-REFERENCE:** Connect to discrimination analysis.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n### Stage 4 — Feature Intelligence\\n[PLOT: corr_heatmap]\\n3-5 sentences on correlation. Identify any unexpected negative correlations or clustered variables.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: feature_importance]\\n3-5 sentences on key drivers. **CRITICAL**: Do NOT give generic observations. Specify exact variable names, their ranking, and hypothesize biological/clinical reasons for their importance. Highlight any surprises.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n[PLOT: shap_summary]\\n3-5 sentences on SHAP directions. **CRITICAL**: Detail the exact impact (positive/negative) of top features based on their directionality. Analyze complex non-linear effects if visible. Do SHAP results align with feature importance?\\n> 💡 **Key Insight:** [One sentence summarizing the most profound takeaway]\\n\\n### Stage 5 — Generalization & Stability\\nDiscuss dimensionality reduction ([PLOT: pca_plot], [PLOT: pls_plot], [PLOT: umap_plot]) and overfitting if present. **CROSS-REFERENCE:** Synthesize overall evidence.\\n> 💡 **Key Insight:** [One sentence takeaway]\\n\\n**NARRATIVE FLOW ENFORCEMENT:** Each stage MUST begin with a transition sentence connecting to the previous stage.",
     "visuals_analysis": "Explain each available plot as a SINGLE MARKDOWN STRING. Put the relevant [PLOT: plot_name] placeholder directly above each explanation. Explain how to read the plot axes, colors, bars, or clusters. Do not invent metrics or repeat unsupported performance claims.",
     "conclusion": "MUST BE A SINGLE MARKDOWN STRING.\\n\\n**OVERALL ASSESSMENT:** 2-3 sentences providing definitive clinical judgment.\\n\\n**KEY STRENGTHS:** 2-3 bullet points with specific metric references.\\n\\n**KEY LIMITATIONS:** 2-3 bullet points with specific metric references.\\n\\n**BEFORE DEPLOYMENT:** 1-3 concrete actionable steps required.",
     "recommendations": "MUST BE A SINGLE MARKDOWN STRING.\\n\\n**DATA QUALITY IMPROVEMENTS:** 2-3 suggestions.\\n\\n**MODEL ARCHITECTURE CONSIDERATIONS:** 2-3 suggestions.\\n\\n**VALIDATION PROTOCOL:** 2-3 concrete steps.\\n\\n**CLINICAL INTEGRATION PATHWAY:** 2-3 practical considerations. Every suggestion must be specific to THIS dataset and model."
@@ -761,6 +779,10 @@ RULES:
 Generate a JSON object with two keys: "expert" and "glossary".
 
 EXPERT REPORT (Follow these EXACT sections and instructions. All section values MUST be a single Markdown string, NO nested JSON objects or arrays):
+- "context_analysis":
+   **MUST BE A SINGLE MARKDOWN STRING.**
+   If USER-PROVIDED STUDY METADATA is present, write 3-4 sentences synthesizing the statistical results directly in the context of the user's specific clinical/research objectives. Answer the question: 'Did the model achieve what the user specifically wanted?' If no user metadata is provided, write 'No specific research context was provided by the user.'
+
 - "executive_summary":
    **Must contain exactly four clearly labeled paragraphs:**
    **CLINICAL BACKGROUND:** 1-2 sentences synthesizing the specific disease, cohort, and research goals IF USER-PROVIDED STUDY METADATA is present in the DATA (otherwise state "No specific clinical context provided.").
@@ -782,7 +804,7 @@ EXPERT REPORT (Follow these EXACT sections and instructions. All section values 
    ### Stage 2 — Discrimination Analysis
    [PLOT: roc_curve]
    [PLOT: pr_curve]
-   Critique discrimination power. If ROC-AUC > 0.95, heavily warn about potential data leakage or overfitting. Highlight the specific trade-offs between sensitivity and precision, especially observing the PR curve if the dataset is imbalanced.
+   Critique discrimination power. If ROC-AUC > 0.95, evaluate if this is due to potential data leakage/overfitting, OR if the dataset features are simply highly deterministic/separable (e.g. sensor data, direct biological markers). Do not blindly assume data leakage if the data naturally has a strong signal. Highlight the specific trade-offs between sensitivity and precision, especially observing the PR curve if the dataset is imbalanced.
    > 💡 **Key Insight:** [One sentence summarizing the most important takeaway from this stage.]
    
    ### Stage 3 — Error Analysis
@@ -829,6 +851,7 @@ EXPERT REPORT (Follow these EXACT sections and instructions. All section values 
 Your output MUST be a valid JSON object matching this exact schema (replace "..." with your actual generated markdown string, do NOT output literal "..." placeholders):
 {{
   "expert": {{
+    "context_analysis": "...",
     "executive_summary": "...",
     "preprocessing_and_data_quality": "...",
     "findings": "...",
@@ -935,6 +958,13 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
             payload["options"] = options
 
         url = f"{self.base_url}/chat/completions"
+        if "11434" in self.base_url:
+            # Use native Ollama API to guarantee num_ctx is respected
+            url = self.base_url.replace("/v1", "/api/chat")
+            payload["format"] = "json"
+            if "response_format" in payload:
+                del payload["response_format"]
+
         request_timeout = settings.LLM_REQUEST_TIMEOUT_SECONDS
 
         MAX_RETRIES = 3
@@ -1003,7 +1033,12 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 parsed_json = _clean_and_parse_llm_json(result_json)
 
                 def _flatten_to_markdown(val):
-                    if isinstance(val, str): return val
+                    if isinstance(val, str): 
+                        # Ensure any line that looks like Stage X or **Stage X** becomes ### Stage X
+                        # so that the Markdown parser converts it to <hN> for the accordion
+                        val = re.sub(r'^(?:\s*\*\*\s*)?(Stage\s+\d+.*?)(?:\s*\*\*\s*)?$', r'### \1', val, flags=re.MULTILINE|re.IGNORECASE)
+                        val = re.sub(r'^###\s+###\s+', r'### ', val, flags=re.MULTILINE)
+                        return val
                     if isinstance(val, list):
                         # If list of lists (e.g., table rows), render as a proper markdown table
                         if all(isinstance(i, list) for i in val) and len(val) >= 2:
@@ -1015,7 +1050,11 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                     if isinstance(val, dict):
                         parts = []
                         for k, v in val.items():
-                            parts.append(f"**{str(k).replace('_', ' ').title()}**")
+                            key_str = str(k).replace('_', ' ').title()
+                            if key_str.lower().startswith("stage "):
+                                parts.append(f"### {key_str}")
+                            else:
+                                parts.append(f"**{key_str}**")
                             parts.append(_flatten_to_markdown(v))
                         return "\n\n".join(parts)
                     return str(val)
@@ -1023,9 +1062,35 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 # Normalize sections that must be single markdown strings
                 for mode in ("expert",):
                     if mode in parsed_json:
-                        for section in ("findings", "visuals_analysis", "preprocessing_and_data_quality", "conclusion", "recommendations"):
+                        expected_keys = {"context_analysis", "executive_summary", "preprocessing_and_data_quality", "findings", "conclusion", "recommendations", "visuals_analysis"}
+                        
+                        # 1. Fold any hallucinated keys into findings
+                        if isinstance(parsed_json[mode], dict):
+                            extra_keys = [k for k in parsed_json[mode].keys() if k not in expected_keys]
+                            if extra_keys:
+                                if "findings" not in parsed_json[mode]:
+                                    parsed_json[mode]["findings"] = ""
+                                else:
+                                    if isinstance(parsed_json[mode]["findings"], (dict, list)):
+                                        parsed_json[mode]["findings"] = _flatten_to_markdown(parsed_json[mode]["findings"])
+                                    elif not isinstance(parsed_json[mode]["findings"], str):
+                                        parsed_json[mode]["findings"] = str(parsed_json[mode]["findings"])
+                                
+                                for k in extra_keys:
+                                    val = parsed_json[mode].pop(k)
+                                    key_str = str(k).replace('_', ' ').title()
+                                    flat_val = _flatten_to_markdown(val)
+                                    if key_str.lower().startswith("stage "):
+                                        parsed_json[mode]["findings"] += f"\n\n### {key_str}\n{flat_val}"
+                                    else:
+                                        parsed_json[mode]["findings"] += f"\n\n**{key_str}**\n{flat_val}"
+
+                        # 2. Normalize the standard keys
+                        for section in expected_keys:
                             if section in parsed_json[mode]:
                                 if isinstance(parsed_json[mode][section], (dict, list)):
+                                    parsed_json[mode][section] = _flatten_to_markdown(parsed_json[mode][section])
+                                elif isinstance(parsed_json[mode][section], str):
                                     parsed_json[mode][section] = _flatten_to_markdown(parsed_json[mode][section])
 
                 # ── Quality Gates ────────────────────────────────────────────────
@@ -1115,13 +1180,13 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
 
                     if report_id:
                         publish_stream(report_id, json.dumps(fallback))
-                        publish_stream(report_id, "[DONE]")
+                        # publish_stream(report_id, "[DONE]")
                     return fallback
 
         # ── Targeted retry for missing sections ─────────────────────────────
         if quality_result["incomplete_sections"]:
             retryable = [s for s in quality_result["incomplete_sections"]
-                         if s.startswith("expert.") and "(" not in s]
+                         if s.startswith("expert.")]
             if retryable:
                 logger.info(f"LLM output has incomplete sections: {quality_result['incomplete_sections']}. Attempting targeted retry for: {retryable}")
                 
@@ -1212,7 +1277,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
 
         if report_id:
             publish_stream(report_id, json.dumps(parsed_json))
-            publish_stream(report_id, "[DONE]")
+            # publish_stream(report_id, "[DONE]")
 
         return parsed_json
 
@@ -1663,6 +1728,11 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                     '"findings": A detailed Markdown string analyzing model performance. '
                     'Include a Markdown table with metrics. Discuss discrimination, errors, and feature importance.'
                 )
+            elif name == "context_analysis":
+                section_instructions.append(
+                    '"context_analysis": A single Markdown string of 3-4 sentences synthesizing results '
+                    'in the context of the user-provided study metadata. If no metadata, write "No specific research context provided."'
+                )
             else:
                 section_instructions.append(
                     f'"{name}": A substantive Markdown string (at least 100 words).'
@@ -1671,13 +1741,13 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
         instructions_text = "\n".join(f"- {inst}" for inst in section_instructions)
 
         messages = [
-            {"role": "system", "content": "You are a clinical biostatistics AI. CRITICAL: Do NOT write any thinking process or reasoning preamble. Output ONLY valid JSON directly starting immediately with '{'."},
+            {"role": "system", "content": "You are a clinical biostatistics AI. CRITICAL: Output ONLY a single valid JSON object containing all requested keys inside the same object '{ ... }'. Do NOT output multiple separate JSON objects."},
             {"role": "user", "content": (
-                f"A clinical ML report was generated but is missing these sections: {section_list}.\n"
+                f"A clinical ML report was generated but the following sections failed validation or were missing: {section_list}.\n"
                 f"The report already contains: {', '.join(existing_keys)}.\n\n"
                 f"=== DATA ===\n{truncated_data}\n=== END DATA ===\n\n"
                 f"Generate a JSON object containing ONLY these keys:\n{instructions_text}\n\n"
-                f"Use ONLY metric values from the DATA. Output ONLY the JSON object."
+                f"Use ONLY exact metric values from the DATA. Do not hallucinate or guess numbers. Output ONLY the JSON object."
             )}
         ]
 
@@ -1692,6 +1762,11 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
             "think": False,
             "reasoning_effort": "none"
         }
+        
+        if "api/chat" in url:
+            payload["format"] = "json"
+            if "response_format" in payload:
+                del payload["response_format"]
 
         options = {"num_predict": retry_max_tokens}
         # Always set context window — without this, models like qwen3.5
@@ -1798,9 +1873,9 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
         # 2. Section completeness (each section should have substantive content)
         for mode in ("expert",):
             mode_data = narrative.get(mode, {})
-            required_sections = ["executive_summary", "findings", "conclusion", "recommendations"]
+            required_sections = ["context_analysis", "executive_summary", "findings", "conclusion", "recommendations"]
             if mode == "expert":
-                required_sections.insert(1, "preprocessing_and_data_quality")
+                required_sections.insert(2, "preprocessing_and_data_quality")
                 if visuals_summary:
                     required_sections.append("visuals_analysis")
             for section in required_sections:
@@ -1814,6 +1889,8 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 min_length = 30
                 if section in ("preprocessing_and_data_quality", "recommendations"):
                     min_length = 10
+                elif section == "findings":
+                    min_length = 300
                     
                 if len(content_str) < min_length:
                     result["incomplete_sections"].append(f"{mode}.{section}")
@@ -1961,6 +2038,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                 "preprocessing_and_data_quality": "No LLM-written preprocessing narrative is available. Review the structured preprocessing choices, metrics, and plots shown elsewhere in the report.",
                 "findings": "No LLM-written findings are available. Use the metric cards, model performance table, confusion matrix, ROC curve, and generated plots for the factual results.",
                 "visuals_analysis": "No LLM-written visual analysis is available. The generated plot files are still embedded in the report for direct inspection.",
+                "context_analysis": "No LLM-written context analysis is available because narrative generation failed or was not configured.",
                 "conclusion": "No LLM-written conclusion is available because narrative generation failed or was not configured.",
                 "recommendations": "Review the deterministic ML outputs directly, check the LLM service/model configuration, and rerun narrative generation when the LLM is available."
             },

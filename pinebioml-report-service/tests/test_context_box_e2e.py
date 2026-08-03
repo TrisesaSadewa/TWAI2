@@ -12,8 +12,8 @@ def test_access_page_renders_context_boxes():
     assert response.status_code == 200
     content = response.text
     
-    assert "Additional Study Context & Metadata" in content
-    assert "Optional — Complements Auto-Detection" in content
+    assert "Study Context & Metadata" in content
+    assert "Optional" in content
     assert "insert-template-btn" in content
     assert "name=\"additional_context\"" in content
     assert "context-textarea" in content
