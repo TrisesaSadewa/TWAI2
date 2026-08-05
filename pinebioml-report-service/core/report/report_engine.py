@@ -238,7 +238,7 @@ class ReportEngine:
             "narrative_source": narrative_source,
             "narrative_status": narrative_status,
             "narrative_notice": narrative_meta.get("reason", ""),
-            "model_name": models.get("analysis", "PineBioML Default"),
+            "model_name": models.get("analysis", settings.LLM_MODEL),
             "created_at": datetime.utcnow().isoformat() + "Z",
             "updated_at": datetime.utcnow().isoformat() + "Z"
         }

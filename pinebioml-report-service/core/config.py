@@ -37,6 +37,26 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "context_tokens": 8192,
         "temperature":  0.15,
     },
+    "granite4.1:8b": {
+        "ollama_tag":   "granite4.1:8b",
+        "tier":         2,
+        "vram_gb":      6.0,
+        "roles":        ["analysis"],
+        "description":  "Granite 4.1 8B",
+        "max_tokens":   8192,
+        "context_tokens": 16384,
+        "temperature":  0.15,
+    },
+    "llama3.1:8b": {
+        "ollama_tag":   "llama3.1:8b",
+        "tier":         2,
+        "vram_gb":      6.0,
+        "roles":        ["analysis"],
+        "description":  "Llama 3.1 8B",
+        "max_tokens":   8192,
+        "context_tokens": 16384,
+        "temperature":  0.15,
+    },
     "qwen3.5:9b": {
         "ollama_tag":   "qwen3.5:9b",
         "tier":         2,
@@ -124,6 +144,11 @@ _SUPPORTED_MODELS["qwen3-vl"] = "qwen3-vl:8b"
 _SUPPORTED_MODELS["qwen3.5"] = "qwen3.5:9b"
 _SUPPORTED_MODELS["qwen2.5-coder"] = "qwen2.5-coder:14b"
 _SUPPORTED_MODELS["deepseek-r1"] = "deepseek-r1:14b"
+_SUPPORTED_MODELS["granite4.1"] = "granite4.1:8b"
+_SUPPORTED_MODELS["granite"] = "granite4.1:8b"
+_SUPPORTED_MODELS["llama3.1"] = "llama3.1:8b"
+_SUPPORTED_MODELS["llama3"] = "llama3.1:8b"
+_SUPPORTED_MODELS["llama"] = "llama3.1:8b"
 _SUPPORTED_MODELS["granite-embedding"] = "ibm-granite/granite-embedding-311m-multilingual-r2"
 
 
@@ -195,13 +220,14 @@ class Settings(BaseSettings):
     # LLM Settings (supports both Ollama local and OpenAI-compatible cloud API)
     LLM_API_KEY: Optional[str] = None
     LLM_API_BASE_URL: str = "http://localhost:11434/v1"
-    LLM_MODEL: str = "qwen3.5:9b"
+    LLM_MODEL: str = "granite4.1:8b"
+    BACKUP_LLM_MODEL: str = "llama3.1:8b"
     WRITER_DEPLOYMENT: str = "gpu"
-    CPU_DEPLOYMENT_WRITER_MODEL: str = "qwen3.5:9b"
+    CPU_DEPLOYMENT_WRITER_MODEL: str = "granite4.1:8b"
     LLM_REQUEST_TIMEOUT_SECONDS: int = 900
 
-    # Tier-2 hallucination verifier model (Reuses warm qwen3.5:9b in VRAM for 0 swap delay)
-    VERIFIER_MODEL: str = "qwen3.5:9b"
+    # Tier-2 hallucination verifier model (Reuses warm granite4.1:8b in VRAM for 0 swap delay)
+    VERIFIER_MODEL: str = "granite4.1:8b"
 
     # Threshold tuning for binary classification on imbalanced data. After fit,
     # the decision threshold for the minority class is searched (0.05-0.95) to

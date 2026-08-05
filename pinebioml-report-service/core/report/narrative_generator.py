@@ -472,7 +472,13 @@ class NarrativeGenerator:
                 logger.info(f"Triggering LLM narrative generation using {resolved_model} (tier {tier})...")
 
                 fallback_llm = None
-                fallback_tag = settings.SUPPORTED_MODELS.get("deepseek-r1:8b", "deepseek-r1:8b")
+                backup_key = models.get("backup") or models.get("fallback")
+                if backup_key and backup_key in settings.SUPPORTED_MODELS:
+                    fallback_tag = settings.SUPPORTED_MODELS[backup_key]
+                else:
+                    backup_default = getattr(settings, "BACKUP_LLM_MODEL", "llama3.1:8b")
+                    fallback_tag = settings.SUPPORTED_MODELS.get(backup_default, backup_default)
+
                 if resolved_model != fallback_tag:
                     fallback_llm = fallback_tag
 
@@ -1008,6 +1014,7 @@ Output ONLY the JSON object. Do NOT include markdown code fences around it."""
                     result_json = ""
                 # Stream DONE notification will happen after quality gates pass
             else:
+                payload["stream"] = False
                 resp = requests.post(url, headers=headers, json=payload, timeout=request_timeout)
                 resp.raise_for_status()
                 resp_content, resp_reasoning = _extract_llm_response_text(resp.json())
